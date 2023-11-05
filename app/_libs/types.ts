@@ -1,0 +1,9 @@
+export type TFormMode = "create" | "update" | null;
+
+export type TRowData = {
+    [key: string]: string | number | Date,
+};
+
+export type TInputType = {
+    [key: string]: "number" | "select" | "text" | "password" | "dynamic" | "hidden" | "readonly"
+}
