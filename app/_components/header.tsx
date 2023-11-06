@@ -150,23 +150,13 @@ export default function Header() {
                     </div>
 
                     <div className="hidden sm:contents">
-                        {session ?
                         <>
-                            {rightNavLinksA.map((link) => {
+                            {(session ? rightNavLinksA : rightNavLinksB).map((link) => {
                                 return (
                                     <Link key={link.name} className={twMerge("no-underline", pathname === link.href && "text-purple-500 dark:text-purple-200")} href={link.href}>{link.name}</Link>
                                 );
                             })}
                         </>
-                        :
-                        <>
-                            {rightNavLinksB.map((link) => {
-                                return (
-                                    <Link key={link.name} className={twMerge("no-underline", pathname === link.href && "text-purple-500 dark:text-purple-200")} href={link.href}>{link.name}</Link>
-                                );
-                            })}
-                        </>
-                        }
                     </div>
 
                     </div>
