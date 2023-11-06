@@ -4,9 +4,9 @@ import '@/app/globals.css'
 import type { Metadata } from 'next'
 import AuthProvider from '@/app/_components/auth_provider'
 import { getServerSession } from "next-auth/next"
-// import { Inter } from 'next/font/google'
+import { Inter } from 'next/font/google'
 
-// const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Template App',
@@ -25,7 +25,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={typeof window !== "undefined" && localStorage.getItem("darkMode") === "true" ? "dark": "light"}>
       <AuthProvider session={session}>
-        <body>
+        <body className={`${inter.className} antialiased`}>
 
           <div className="w-full bg-white dark:bg-zinc-900">
             <div className="flex flex-col h-screen lg:ml-72 xl:ml-80">
