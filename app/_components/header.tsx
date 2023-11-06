@@ -9,6 +9,25 @@ export default function Header() {
 
     const { data: session } = useSession();
 
+    const leftNavLinks = [
+        { name: "Home", href: "/", icon: "" },
+    ];
+
+    const midNavLinks = [
+        { name: "ProtectedPage", href: "/protected", icon: "" },
+        { name: "RestrictedPage", href: "/restricted", icon: "" },
+    ];
+
+    const rightNavLinksA = [
+        { name: session?.user.email, href: "/auth/user/" + session?.user.user_uid, icon: "" },
+        { name: "Sign Out", href: "/auth/signOut", icon: "" },
+    ];
+
+    const rightNavLinksB = [
+        { name: "Sign In", href: "/auth/signIn", icon: "" },
+        { name: "Sign Up", href: "/auth/signUp", icon: "" },
+    ];
+
     const [isShowNav, setIsShowNav] = useState(false);
 
     const handleNavClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -49,7 +68,11 @@ export default function Header() {
             <div className="contents lg:block lg:w-72 lg:pointer-events-auto lg:overflow-y-auto lg:border-r-4 lg:border-zinc-900 lg:px-6 lg:pb-8 lg:pt-4 lg:dark:border-white xl:w-80">
                 <div className="hidden lg:flex">
                     <nav>
-                        <Link className="no-underline" href="/">Home</Link>
+                        {leftNavLinks.map((link) => {
+                            return (
+                                <Link key={link.name} className="no-underline" href={link.href}>{link.name}</Link>
+                            );
+                        })}
                     </nav>
                 </div>
                 
@@ -81,8 +104,11 @@ export default function Header() {
 
                     <div className="flex items-center gap-5">
                     <nav className="hidden md:flex md:items-center md:gap-8">
-                        <Link className="no-underline" href="/protected">ProtectedPage</Link>
-                        <Link className="no-underline" href="/restricted">RestrictedPage</Link>
+                        {midNavLinks.map((link) => {
+                            return (
+                                <Link key={link.name} className="no-underline" href={link.href}>{link.name}</Link>
+                            );
+                        })}
                     </nav>
 
                     <div className="hidden md:block md:h-5 md:w-px md:bg-zinc-900 md:dark:bg-white" />
@@ -110,13 +136,19 @@ export default function Header() {
                     <div className="hidden sm:contents">
                         {session ?
                         <>
-                            <Link className="no-underline" href={"/auth/user/" + session.user.user_uid}>{session.user.email}</Link>
-                            <Link className="no-underline" href="/auth/signOut">Sign Out</Link>
+                            {rightNavLinksA.map((link) => {
+                                return (
+                                    <Link key={link.name} className="no-underline" href={link.href}>{link.name}</Link>
+                                );
+                            })}
                         </>
                         :
                         <>
-                            <Link className="no-underline" href="/auth/signIn">Sign In</Link>
-                            <Link className="no-underline" href="/auth/signUp">Sign Up</Link>
+                            {rightNavLinksB.map((link) => {
+                                return (
+                                    <Link key={link.name} className="no-underline" href={link.href}>{link.name}</Link>
+                                );
+                            })}
                         </>
                         }
                     </div>
