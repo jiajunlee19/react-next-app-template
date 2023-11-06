@@ -58,7 +58,7 @@ export async function createBoxType(formData: FormData) {
     });
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message }
+        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
     };
 
     try {
@@ -105,7 +105,7 @@ export async function updateBoxType(formData: FormData) {
     });
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message }
+        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
     };
 
     try {
@@ -149,7 +149,7 @@ export async function deleteBoxType(formData: FormData) {
     });
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message }
+        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
     };
 
     try {

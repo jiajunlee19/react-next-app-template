@@ -21,7 +21,7 @@ export async function signIn(email: TEmailSchema, password: TPasswordSchema) {
     });
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message }
+        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
     };
 
     try {
@@ -56,7 +56,7 @@ export async function signIn(email: TEmailSchema, password: TPasswordSchema) {
         }
     
         if (!parsedResult.success) {
-            return { error: parsedResult.error.message }
+            return { error: parsedResult.error.message.split('"message": "').pop()?.split('",')[0] }
         };
 
         if (parsedResult.data.password && (await bcrypt.compare(parsedForm.data.password, parsedResult.data.password))) {
@@ -94,7 +94,7 @@ export async function signUp(email: TEmailSchema, password: TPasswordSchema) {
     });
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message }
+        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
     };
 
     try {
@@ -140,7 +140,7 @@ export async function updateUser(formData: FormData) {
     });
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message }
+        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
     };
 
     try {
@@ -184,7 +184,7 @@ export async function deleteUser(formData: FormData) {
     });
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message }
+        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
     };
 
     try {
@@ -226,7 +226,7 @@ export async function updateRole(formData: FormData) {
     });
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message }
+        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
     };
 
     try {
@@ -266,7 +266,7 @@ export async function getUserByEmail(email: TEmailSchema) {
     const parsedForm = emailSchema.safeParse(email);
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message }
+        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
     };
 
     try {
@@ -300,7 +300,7 @@ export async function getUserByEmail(email: TEmailSchema) {
         }
     
         if (!parsedResult.success) {
-            return { error: parsedResult.error.message }
+            return { error: parsedResult.error.message.split('"message": "').pop()?.split('",')[0] }
         };
 
         return parsedResult.data
