@@ -4,6 +4,8 @@ import { useSession } from "next-auth/react"
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import SearchBar from "@/app/_components/basic/search_bar";
+import { usePathname } from "next/navigation"
+import { twMerge } from "tailwind-merge";
 
 export default function Header() {
 
@@ -27,6 +29,16 @@ export default function Header() {
         { name: "Sign In", href: "/auth/signIn", icon: "" },
         { name: "Sign Up", href: "/auth/signUp", icon: "" },
     ];
+
+    const actionNavLinks = [
+        { name: "Manage Box", href: "/box", icon: "" },
+        { name: "Manage Tray", href: "/tray", icon: "" },
+        { name: "Manage Lot", href: "/lot", icon: "" },
+        { name: "Manage Box Type", href: "/box_type", icon: "" },
+        { name: "Manage Tray Type", href: "/tray_type", icon: "" },
+    ];
+
+    const pathname = usePathname();
 
     const [isShowNav, setIsShowNav] = useState(false);
 
@@ -70,7 +82,7 @@ export default function Header() {
                     <nav>
                         {leftNavLinks.map((link) => {
                             return (
-                                <Link key={link.name} className="no-underline" href={link.href}>{link.name}</Link>
+                                <Link key={link.name} className={twMerge("no-underline", (pathname === link.href || pathname === "/") && "text-purple-500 dark:text-purple-200")} href={link.href}>{link.name}</Link>
                             );
                         })}
                     </nav>
@@ -94,7 +106,11 @@ export default function Header() {
                         </button>
                         }
                         <nav>
-                            <Link className="no-underline" href="/">Home</Link>
+                            {leftNavLinks.map((link) => {
+                                return (
+                                    <Link key={link.name} className={twMerge("no-underline", (pathname === link.href || pathname === "/") && "text-purple-500 dark:text-purple-200")} href={link.href}>{link.name}</Link>
+                                );
+                            })}
                         </nav>
                     </div>
 
@@ -106,7 +122,7 @@ export default function Header() {
                     <nav className="hidden md:flex md:items-center md:gap-8">
                         {midNavLinks.map((link) => {
                             return (
-                                <Link key={link.name} className="no-underline" href={link.href}>{link.name}</Link>
+                                <Link key={link.name} className={twMerge("no-underline", pathname === link.href && "text-purple-500 dark:text-purple-200")} href={link.href}>{link.name}</Link>
                             );
                         })}
                     </nav>
@@ -138,7 +154,7 @@ export default function Header() {
                         <>
                             {rightNavLinksA.map((link) => {
                                 return (
-                                    <Link key={link.name} className="no-underline" href={link.href}>{link.name}</Link>
+                                    <Link key={link.name} className={twMerge("no-underline", pathname === link.href && "text-purple-500 dark:text-purple-200")} href={link.href}>{link.name}</Link>
                                 );
                             })}
                         </>
@@ -146,7 +162,7 @@ export default function Header() {
                         <>
                             {rightNavLinksB.map((link) => {
                                 return (
-                                    <Link key={link.name} className="no-underline" href={link.href}>{link.name}</Link>
+                                    <Link key={link.name} className={twMerge("no-underline", pathname === link.href && "text-purple-500 dark:text-purple-200")} href={link.href}>{link.name}</Link>
                                 );
                             })}
                         </>
@@ -170,15 +186,13 @@ export default function Header() {
                                 <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/5 transform-none origin-[50%_50%_1px]" />
                                 {/* <div className="absolute top-1 left-2 h-6 w-px bg-emerald-500 transform-none origin-[50%_50%_1px]" /> */}
                                 <ul role="list">
-                                    <li className="relative">
-                                        <Link className="no-underline py-1 pl-4 pr-3 truncate" href="/">Manage Box</Link>
-                                    </li>
-                                    <li className="relative">
-                                        <Link className="no-underline py-1 pl-4 pr-3 truncate" href="/">Manage Tray</Link>
-                                    </li>
-                                    <li className="relative">
-                                        <Link className="no-underline py-1 pl-4 pr-3 truncate" href="/">Manage Lot</Link>
-                                    </li>
+                                    {actionNavLinks.map((link) => {
+                                        return (
+                                            <li className="relative">
+                                                <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "text-purple-500 dark:text-purple-200")} href={link.href}>{link.name}</Link>
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             </div>
                         </li>
@@ -190,12 +204,13 @@ export default function Header() {
                                 <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/5 transform-none origin-[50%_50%_1px]" />
                                 {/* <div className="absolute top-1 left-2 h-6 w-px bg-emerald-500 transform-none origin-[50%_50%_1px]" /> */}
                                 <ul role="list">
-                                    <li className="relative">
-                                        <Link className="no-underline py-1 pl-4 pr-3 truncate" href="/protected">ProtectedPage</Link>
-                                    </li>
-                                    <li className="relative">
-                                    <Link className="no-underline py-1 pl-4 pr-3 truncate" href="/restricted">RestrictedPage</Link>
-                                    </li>
+                                    {midNavLinks.map((link) => {
+                                        return (
+                                            <li className="relative">
+                                                <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "text-purple-500 dark:text-purple-200")} href={link.href}>{link.name}</Link>
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             </div>
                         </li>
@@ -207,20 +222,13 @@ export default function Header() {
                                 <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/5 transform-none origin-[50%_50%_1px]" />
                                 {/* <div className="absolute top-1 left-2 h-6 w-px bg-emerald-500 transform-none origin-[50%_50%_1px]" /> */}
                                 <ul role="list">
-                                    <li className="relative">
-                                        {session ?
-                                        <Link className="no-underline py-1 pl-4 pr-3 truncate" href={"/auth/user/" + session.user.user_uid}>{session.user.email}</Link>
-                                        :
-                                        <Link className="no-underline py-1 pl-4 pr-3 truncate" href="/auth/signIn">Sign In</Link>
-                                        }
-                                    </li>
-                                    <li className="relative">
-                                        {session ?
-                                        <Link className="no-underline py-1 pl-4 pr-3 truncate" href="/auth/signOut">Sign Out</Link>
-                                        :
-                                        <Link className="no-underline py-1 pl-4 pr-3 truncate" href="/auth/signUp">Sign Up</Link>   
-                                        }
-                                    </li>
+                                    { (session ? rightNavLinksA : rightNavLinksB).map((link) => {
+                                        return (
+                                            <li className="relative">
+                                                <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "text-purple-500 dark:text-purple-200")} href={link.href}>{link.name}</Link>
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             </div>
                         </li>
