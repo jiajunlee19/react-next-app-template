@@ -30,6 +30,7 @@ CREATE TABLE "packing"."tray_type" (
 CREATE TABLE "packing"."box" (
     box_uid UNIQUEIDENTIFIER NOT NULL,
     box_type_uid UNIQUEIDENTIFIER NOT NULL,
+    shipdoc_uid UNIQUEIDENTIFIER NOT NULL,
     box_status VARCHAR(50) NOT NULL,
     box_createdAt DATETIME NOT NULL,
     box_updatedAt DATETIME NOT NULL,
@@ -37,6 +38,10 @@ CREATE TABLE "packing"."box" (
     CONSTRAINT pk_box_uid PRIMARY KEY CLUSTERED (box_uid),
     CONSTRAINT fk_box_type_uid FOREIGN KEY (box_type_uid)
         REFERENCES "packing"."box_type" (box_type_uid)
+        ON DELETE NO ACTION
+        ON UPDATE NO ACTION
+    CONSTRAINT fk_shipdoc_uid FOREIGN KEY (shipdoc_uid)
+        REFERENCES "packing"."shipdoc" (shipdoc_uid)
         ON DELETE NO ACTION
         ON UPDATE NO ACTION
 );
@@ -62,7 +67,6 @@ CREATE TABLE "packing"."tray" (
 CREATE TABLE "packing"."lot" (
     lot_uid UNIQUEIDENTIFIER NOT NULL,
     tray_uid UNIQUEIDENTIFIER NOT NULL,
-    shipdoc_uid UNIQUEIDENTIFIER NOT NULL,
     lot_id VARCHAR(50) NOT NULL,
     lot_qty INT NOT NULL,
     lot_createdAt DATETIME NOT NULL,
@@ -73,32 +77,23 @@ CREATE TABLE "packing"."lot" (
         REFERENCES "packing"."tray" (tray_uid)
         ON DELETE NO ACTION
         ON UPDATE NO ACTION,
-    CONSTRAINT fk_shipdoc_uid FOREIGN KEY (shipdoc_uid)
-        REFERENCES "packing"."shipdoc" (shipdoc_uid)
-        ON DELETE NO ACTION
-        ON UPDATE NO ACTION
 );
 
 CREATE TABLE "packing"."shipdoc" (
     shipdoc_uid UNIQUEIDENTIFIER NOT NULL,
-    box_uid UNIQUEIDENTIFIER NOT NULL,
     shipdoc_number INT NOT NULL,
     shipdoc_contact VARCHAR(50) NOT NULL,
     shipdoc_createdAt DATETIME NOT NULL,
     shipdoc_updatedAt DATETIME NOT NULL,
 
     CONSTRAINT pk_shipdoc_uid PRIMARY KEY CLUSTERED (shipdoc_uid)
-    CONSTRAINT fk_box_uid FOREIGN KEY (box_uid)
-        REFERENCES "packing"."box" (box_uid)
-        ON DELETE NO ACTION
-        ON UPDATE NO ACTION
 );
 
 CREATE TABLE "packing"."user" (
     user_uid UNIQUEIDENTIFIER NOT NULL,
     email VARCHAR(100) NOT NULL,
     password VARCHAR(100) NOT NULL,
-    role VARCHAR(100) NOT NULL,
+    role VARCHAR(50) NOT NULL,
     user_createdAt DATETIME NOT NULL,
     user_updatedAt DATETIME NOT NULL
 )

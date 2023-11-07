@@ -52,14 +52,15 @@ enum Status {
 model Box {
   box_uid String @db.Uuid @id @unique
   box_type_uid String @db.Uuid
+  shipdoc_uid String @db.Uuid
   box_status Status @default(active)
   box_createdAt DateTime @db.Timestamp()
   box_updatedAt DateTime @db.Timestamp()
 
   trays Tray[]
-  shipdocs Shipdoc[]
 
   fk_box_type_uid BoxType @relation(fields: [box_type_uid], references: [box_type_uid], onDelete: Restrict, onUpdate: Restrict)
+  fk_shipdoc_uid Shipdoc @relation(fields: [shipdoc_uid], references: [shipdoc_uid], onDelete: Restrict, onUpdate: Restrict)
 
   @@map(name: "box")
   @@schema("packing")
@@ -97,13 +98,12 @@ model Lot {
 
 model Shipdoc {
   shipdoc_uid String @db.Uuid @id @unique
-  box_uid String @db.Uuid
   shipdoc_number Int @db.Integer
   shipdoc_contact String @db.VarChar(50)
   shipdoc_createdAt DateTime @db.Timestamp()
   shipdoc_updatedAt DateTime @db.Timestamp()
 
-  fk_box_uid Box @relation(fields: [box_uid], references: [box_uid], onDelete: Restrict, onUpdate: Restrict)
+  Boxes Box[]
 
   @@map(name: "shipdoc")
   @@schema("packing")
