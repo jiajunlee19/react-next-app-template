@@ -2,7 +2,7 @@
 
 import { hash } from "bcrypt";
 
-export const user = [
+export const users = [
   {
     user_uid: '1493ac72-2669-5f17-a7c2-b78dca0f0344',
     email: 'jiajunlee@email.com',
@@ -13,7 +13,7 @@ export const user = [
   }
 ]
 
-export const shipdoc = [
+export const shipdocs = [
   {
     shipdoc_uid: '3e6e459a-f89d-4754-925d-4b90e831ddfc',
     shipdoc_number: '1723456',
@@ -23,7 +23,7 @@ export const shipdoc = [
   }
 ]
 
-export const box_type = [
+export const box_types = [
   {
     box_type_uid: '4a7e6e73-55f9-4bd8-a73c-f6eebe94fe69',
     box_part_number: '503-500168',
@@ -33,7 +33,7 @@ export const box_type = [
   }
 ]
 
-export const tray_type = [
+export const tray_types = [
   {
     tray_type_uid: '6f760732-bd3e-43a1-a549-7a962d7e54af',
     tray_part_number: '503-500187',
@@ -43,7 +43,7 @@ export const tray_type = [
   }
 ]
 
-export const box = [
+export const boxes = [
   {
     box_uid: '192e9679-c737-40ce-a38a-55ed00e80af4',
     box_type_uid: '4a7e6e73-55f9-4bd8-a73c-f6eebe94fe69',
@@ -54,7 +54,7 @@ export const box = [
   }
 ]
 
-export const tray = [
+export const trays = [
   {
     tray_uid: 'f13f07ae-4880-4994-a9f7-0c527d6e455c',
     box_uid: '192e9679-c737-40ce-a38a-55ed00e80af4',
@@ -64,7 +64,7 @@ export const tray = [
   }
 ]
 
-export const lot = [
+export const lots = [
   {
     lot_uid: '493eea20-f424-4a09-9ebc-f1d0a8e37fa7',
     tray_uid: 'f13f07ae-4880-4994-a9f7-0c527d6e455c',
