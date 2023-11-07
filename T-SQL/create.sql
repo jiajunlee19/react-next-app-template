@@ -1,8 +1,8 @@
 DROP TABLE iF EXISTS "packing"."user";
-DROP TABLE IF EXISTS "packing"."shipdoc";
 DROP TABLE IF EXISTS "packing"."lot";
 DROP TABLE IF EXISTS "packing"."tray";
 DROP TABLE IF EXISTS "packing"."box";
+DROP TABLE IF EXISTS "packing"."shipdoc";
 DROP TABLE IF EXISTS "packing"."tray_type";
 DROP TABLE IF EXISTS "packing"."box_type";
 
@@ -25,6 +25,16 @@ CREATE TABLE "packing"."tray_type" (
     tray_type_updatedAt DATETIME NOT NULL,
 
     CONSTRAINT pk_tray_type_uid PRIMARY KEY CLUSTERED (tray_type_uid)
+);
+
+CREATE TABLE "packing"."shipdoc" (
+    shipdoc_uid UNIQUEIDENTIFIER NOT NULL,
+    shipdoc_number INT NOT NULL,
+    shipdoc_contact VARCHAR(50) NOT NULL,
+    shipdoc_createdAt DATETIME NOT NULL,
+    shipdoc_updatedAt DATETIME NOT NULL,
+
+    CONSTRAINT pk_shipdoc_uid PRIMARY KEY CLUSTERED (shipdoc_uid)
 );
 
 CREATE TABLE "packing"."box" (
@@ -77,16 +87,6 @@ CREATE TABLE "packing"."lot" (
         REFERENCES "packing"."tray" (tray_uid)
         ON DELETE NO ACTION
         ON UPDATE NO ACTION,
-);
-
-CREATE TABLE "packing"."shipdoc" (
-    shipdoc_uid UNIQUEIDENTIFIER NOT NULL,
-    shipdoc_number INT NOT NULL,
-    shipdoc_contact VARCHAR(50) NOT NULL,
-    shipdoc_createdAt DATETIME NOT NULL,
-    shipdoc_updatedAt DATETIME NOT NULL,
-
-    CONSTRAINT pk_shipdoc_uid PRIMARY KEY CLUSTERED (shipdoc_uid)
 );
 
 CREATE TABLE "packing"."user" (
