@@ -1,11 +1,19 @@
-DROP TABLE iF EXISTS "packing"."user";
 DROP TABLE IF EXISTS "packing"."shipdoc";
 DROP TABLE IF EXISTS "packing"."lot";
 DROP TABLE IF EXISTS "packing"."tray";
 DROP TABLE IF EXISTS "packing"."box";
 DROP TABLE IF EXISTS "packing"."tray_type";
 DROP TABLE IF EXISTS "packing"."box_type";
+DROP TABLE iF EXISTS "packing"."user";
 
+CREATE TABLE "packing"."user" (
+    user_uid UNIQUEIDENTIFIER NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    user_createdAt DATETIME NOT NULL,
+    user_updatedAt DATETIME NOT NULL
+)
 
 CREATE TABLE "packing"."box_type" (
     box_type_uid UNIQUEIDENTIFIER NOT NULL,
@@ -88,12 +96,3 @@ CREATE TABLE "packing"."lot" (
         ON DELETE NO ACTION
         ON UPDATE NO ACTION,
 );
-
-CREATE TABLE "packing"."user" (
-    user_uid UNIQUEIDENTIFIER NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    password VARCHAR(100) NOT NULL,
-    role VARCHAR(50) NOT NULL,
-    user_createdAt DATETIME NOT NULL,
-    user_updatedAt DATETIME NOT NULL
-)
