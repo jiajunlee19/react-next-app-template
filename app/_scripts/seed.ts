@@ -8,7 +8,7 @@ import sql from 'mssql';
 import { sqlConfig } from "@/app/_libs/sql_config";
 import { getErrorMessage } from "@/app/_libs/error_handler";
 import * as bcrypt from 'bcrypt';
-import { createBoxSchema, createLotSchema, createShipdocSchema, createTraySchema } from "@/app/_libs/zod_server";
+import { createBoxSchema, createLotSchema, createShipdocSchema, createTraySchema, createTrayTypeSchema } from "@/app/_libs/zod_server";
 
 async function seedUser() {
 
@@ -213,12 +213,53 @@ async function seedBox() {
 
 };
 
+async function seedTrayType() {
+
+    const parsedForm = createTrayTypeSchema.array().safeParse(tray_types);
+
+    if(!parsedForm.success) {
+        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
+    }
+
+    try {
+        if (parsedEnv.DB_TYPE === 'PRISMA') {
+            const result = await Promise.all(parsedForm.data.map( async (d) => {
+                await prisma.trayType.create({
+                    data: d,
+                })
+            }));
+        }
+        else {
+            let pool = await sql.connect(sqlConfig);
+            const result = await Promise.all(parsedForm.data.map( async (d) => {
+                pool.request()
+                .input('schema', sql.VarChar, 'packing')
+                .input('table', sql.VarChar, 'tray_type')
+                .input('tray_type_uid', sql.VarChar, d.tray_type_uid)
+                .input('tray_part_number', sql.VarChar, d.tray_part_number)
+                .input('tray_max_drive', sql.Int, d.tray_max_drive)
+                .input('tray_type_createdAt', sql.DateTime, d.tray_type_createdAt)
+                .input('tray_type_updatedAt', sql.DateTime, d.tray_type_updatedAt)
+                .query`INSERT INTO "@schema"."@table" 
+                        (tray_type_uid, tray_part_number, tray_max_drive, tray_type_createdAt, tray_type_updatedAt)
+                        VALUES (@tray_type_uid, @tray_part_number, @tray_max_drive, @tray_type_createdAt, @tray_type_updatedAt);
+                `;
+            }));
+        }
+        return { success: `Successfully seed tray_type` }
+    } catch (err) {
+        return { error: getErrorMessage(err)}
+    }
+
+};
+
 async function main() {
     console.log(await seedUser());
     console.log(await seedShipdoc());
     console.log(await seedLot());
     console.log(await seedTray());
     console.log(await seedBox());
+    console.log(await seedTrayType());
 };
 
 // Run main
