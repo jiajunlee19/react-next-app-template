@@ -178,7 +178,7 @@ export default function Header() {
                                 <ul role="list">
                                     {actionNavLinks.map((link) => {
                                         return (
-                                            <li className="relative">
+                                            <li key={link.name} className="relative">
                                                 <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "text-purple-500 dark:text-purple-200")} href={link.href}>{link.name}</Link>
                                             </li>
                                         );
@@ -196,7 +196,7 @@ export default function Header() {
                                 <ul role="list">
                                     {midNavLinks.map((link) => {
                                         return (
-                                            <li className="relative">
+                                            <li key={link.name} className="relative">
                                                 <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "text-purple-500 dark:text-purple-200")} href={link.href}>{link.name}</Link>
                                             </li>
                                         );
@@ -214,7 +214,7 @@ export default function Header() {
                                 <ul role="list">
                                     { (session ? rightNavLinksA : rightNavLinksB).map((link) => {
                                         return (
-                                            <li className="relative">
+                                            <li key={link.name} className="relative">
                                                 <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "text-purple-500 dark:text-purple-200")} href={link.href}>{link.name}</Link>
                                             </li>
                                         );
