@@ -7,24 +7,25 @@ export type TPasswordSchema = z.infer<typeof passwordSchema>;
 export const passwordSchema = z.string().min(8, {message: "Password must have minimum length of 8 !"});
 
 
-export type TSignInSchema = z.infer<typeof signInSchema>;
+export type TSignUpSchema = z.infer<typeof signUpSchema>;
 
-export const signInSchema = z.object({
+export const signUpSchema = z.object({
+    user_uid: z.string().min(1).uuid(),
     email: emailSchema,
     password: passwordSchema,
+    role: z.enum(["user", "admin", "boss"]),
+    user_createdAt: z.coerce.date(),
+    user_updatedAt: z.coerce.date(),
 });
 
 
-export type TSignUpSchema = z.infer<typeof signUpSchema>;
+export type TSignInSchema = z.infer<typeof signInSchema>;
 
-export const signUpSchema = signInSchema.merge(
-    z.object({  
-        user_uid: z.string().min(1).uuid(),
-        role: z.enum(["user", "admin", "boss"]),
-        user_createdAt: z.coerce.date(),
-        user_updatedAt: z.coerce.date(),
-    })
-);
+export const signInSchema = signUpSchema.pick({
+    email: true,
+    password: true,
+});
+
 
 
 export type TReadUserSchema = z.infer<typeof readUserSchema>;
@@ -34,22 +35,24 @@ export const readUserSchema = signUpSchema.omit({
     user_updatedAt: true,
 });
 
+
+
 export type TReadUserWithoutPassSchema = z.infer<typeof readUserWithoutPassSchema>;
 
-export const readUserWithoutPassSchema = signUpSchema.omit({
+export const readUserWithoutPassSchema = readUserSchema.omit({
     password: true,
-    user_createdAt: true,
-    user_updatedAt: true,
 });
+
 
 
 export type TUpdateUserSchema = z.infer<typeof updateUserSchema>;
 
-export const updateUserSchema = signUpSchema.omit({
-    email: true,
-    role: true,
-    user_createdAt: true,
+export const updateUserSchema = signUpSchema.pick({
+    user_uid: true,
+    password: true,
+    user_updatedAt: true,
 });
+
 
 
 export type TDeleteUserSchema = z.infer<typeof deleteUserSchema>;
@@ -59,10 +62,11 @@ export const deleteUserSchema = signUpSchema.pick({
 });
 
 
+
 export type TUpdateRoleSchema = z.infer<typeof updateRoleSchema>;
 
-export const updateRoleSchema = signUpSchema.omit({
-    email: true,
-    password: true,
-    user_createdAt: true,
+export const updateRoleSchema = signUpSchema.pick({
+    user_uid: true,
+    role: true,
+    user_updatedAt: true,
 });
