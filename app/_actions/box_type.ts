@@ -9,7 +9,7 @@ import { getErrorMessage } from '@/app/_libs/error_handler';
 import { revalidatePath } from 'next/cache';
 import prisma from '@/prisma/prisma';
 
-export const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
+const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 const schema = 'packing';
 const table = 'box_type';
 
