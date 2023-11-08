@@ -1,4 +1,4 @@
-// This file contains placeholder data that you'll used for dev only, it will then be replacing with data.js in prod.
+// This file contains placeholder data that you'll used for dev only, you can seed this into database using "npm run seed"
 
 import { hash } from "bcrypt";
 
