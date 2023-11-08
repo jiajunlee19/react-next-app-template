@@ -1,7 +1,7 @@
-DROP TABLE IF EXISTS "packing"."shipdoc";
 DROP TABLE IF EXISTS "packing"."lot";
 DROP TABLE IF EXISTS "packing"."tray";
 DROP TABLE IF EXISTS "packing"."box";
+DROP TABLE IF EXISTS "packing"."shipdoc";
 DROP TABLE IF EXISTS "packing"."tray_type";
 DROP TABLE IF EXISTS "packing"."box_type";
 DROP TABLE iF EXISTS "packing"."user";

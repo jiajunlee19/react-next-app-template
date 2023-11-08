@@ -26,19 +26,6 @@ model User {
   @@schema("packing")
 }
 
-model Shipdoc {
-  shipdoc_uid String @db.Uuid @id @unique
-  shipdoc_number Int @db.Integer
-  shipdoc_contact String @db.VarChar(50)
-  shipdoc_createdAt DateTime @db.Timestamp()
-  shipdoc_updatedAt DateTime @db.Timestamp()
-
-  Boxes Box[]
-
-  @@map(name: "shipdoc")
-  @@schema("packing")
-}
-
 model BoxType {
   box_type_uid String @db.Uuid @id @unique
   box_part_number String @db.VarChar(50)
@@ -64,6 +51,19 @@ model TrayType {
   @@map(name: "tray_type")
   @@schema("packing")
 
+}
+
+model Shipdoc {
+  shipdoc_uid String @db.Uuid @id @unique
+  shipdoc_number Int @db.Integer
+  shipdoc_contact String @db.VarChar(50)
+  shipdoc_createdAt DateTime @db.Timestamp()
+  shipdoc_updatedAt DateTime @db.Timestamp()
+
+  Boxes Box[]
+
+  @@map(name: "shipdoc")
+  @@schema("packing")
 }
 
 enum Status {
