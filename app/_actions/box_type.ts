@@ -4,11 +4,12 @@ import { v5 as uuidv5 } from 'uuid';
 import sql from 'mssql';
 import { sqlConfig } from "@/app/_libs/sql_config";
 import { readBoxTypeSchema, createBoxTypeSchema, updateBoxTypeSchema, deleteBoxTypeSchema } from "@/app/_libs/zod_server";
-import { parsedEnv, UUID5_SECRET } from '@/app/_libs/zod_env';
+import { parsedEnv } from '@/app/_libs/zod_env';
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import { revalidatePath } from 'next/cache';
 import prisma from '@/prisma/prisma';
 
+export const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 const schema = 'packing';
 const table = 'box_type';
 

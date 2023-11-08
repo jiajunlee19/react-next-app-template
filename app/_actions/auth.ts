@@ -7,9 +7,10 @@ import { sqlConfig } from "@/app/_libs/sql_config";
 import { type TEmailSchema, type TPasswordSchema, emailSchema, signInSchema, signUpSchema, readUserSchema, readUserWithoutPassSchema, updateUserSchema, deleteUserSchema, updateRoleSchema } from "@/app/_libs/zod_auth";
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import { signJwtToken } from '@/app/_libs/jwt';
-import { UUID5_SECRET, parsedEnv } from '@/app/_libs/zod_env';
+import { parsedEnv } from '@/app/_libs/zod_env';
 import prisma from '@/prisma/prisma';
 
+export const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 const schema = 'packing';
 const table = 'box_type';
 

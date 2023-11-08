@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { v5 as uuidv5 } from 'uuid';
+// import { v5 as uuidv5 } from 'uuid';
 
 export const envSchema = z.object({
 
@@ -39,4 +39,4 @@ export const envSchema = z.object({
 });
 
 export const parsedEnv = envSchema.parse(process.env);
-export const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
+// export const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
