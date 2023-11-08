@@ -48,7 +48,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
         }'
         ```
     - `darkMode: class` is added to control toggle between light/dark theme with `className="dark: ..."`.
-2. [globals.css](/app/globals.css)
+2. Default base styles are globally applied in [globals.css](/app/globals.css).
 
 <br>
 
@@ -85,9 +85,33 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 <br>
 
-# Seed the database
+# Navigating between pages
+1. `next/link` is used to navigate between pages without rerendering the whole page.
+2. Conditionally render link color to indicate what page the user is currently viewing in [header.tsx](./app/_components/header.tsx).
+    ```
+    import Link from 'next/link';
+    import { usePathname } from 'next/navigation';
+    import { twMerge } from "tailwind-merge";
+
+    ...
+
+    const pathname = usePathname();
+
+    return (
+    <Link key={link.name} 
+        className={twMerge("no-underline", (pathname === link.href || pathname === "/") && 
+                    "text-purple-500 dark:text-purple-200")} 
+        href={link.href}>{link.name}
+    </Link>
+    );
+    ```
+
+<br>
+
+# Seeding the database
 1. Initial placeholder-data to be loaded is defined in [data_placeholder.js](app/_scripts/data_placeholder.js).
-2. Seed functions are defined in [seed.ts](app/_scripts/seed.ts).
+2. Seed functions are defined in [seed.ts](app/_scripts/seed.ts). 
+    - `Promise.all` is used to initiate all promises and receive all responses at the same time in single transaction.
 3. In [package.json](package.json), `"seed": " dotenv -e .env -- npx esrun ./app/_script/seed.ts"` is included in scripts.
     ```
     scripts: {
@@ -107,5 +131,23 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
     { success: 'Successfully seed trays' }
     { success: 'Successfully seed lots' }
     ```
+
+<br>
+
+# Data fetching with Server Action
+1. No API layer is required, server actions can directly query database from server-side.
+2. See example on one of the server action [/_actions/box_type.ts](./app/_actions/box_type.ts).
+    - CRUD async/await functions are used to execute CRUD operations on database
+    - [Prisma](./prisma/prisma.ts) is used as an ORM via `import prisma from '@/prisma/prisma';`
+    - `revalidatePath` is used to remove the stored cache and force-fetch the latest data after the CRUD operation.
+
+<br>
+
+# Streaming
+1. Without streaming, the page is as fast as your slowest data load.
+    - Simulate slow data loading with `await new Promise((resolve) => setTimeout(resolve, 3000));`.
+    - The page will only loads when all required data in the page is loaded.
+2. [loading.tsx](/app/loading.tsx) is built on top of Suspense, which fallback to a skeleton UI while page content is loading.
+3. To be more granular to stream specific components, the specific components can be wrapped with Suspense.
 
 <br>
