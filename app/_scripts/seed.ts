@@ -8,7 +8,7 @@ import sql from 'mssql';
 import { sqlConfig } from "@/app/_libs/sql_config";
 import { getErrorMessage } from "@/app/_libs/error_handler";
 import * as bcrypt from 'bcrypt';
-import { createBoxSchema, createLotSchema, createShipdocSchema, createTraySchema, createTrayTypeSchema } from "@/app/_libs/zod_server";
+import { createShipdocSchema, createLotSchema, createTraySchema, createBoxSchema, createTrayTypeSchema, createBoxTypeSchema } from "@/app/_libs/zod_server";
 
 async function seedUser() {
 
@@ -253,6 +253,46 @@ async function seedTrayType() {
 
 };
 
+async function seedBoxType() {
+
+    const parsedForm = createBoxTypeSchema.array().safeParse(box_types);
+
+    if(!parsedForm.success) {
+        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
+    }
+
+    try {
+        if (parsedEnv.DB_TYPE === 'PRISMA') {
+            const result = await Promise.all(parsedForm.data.map( async (d) => {
+                await prisma.boxType.create({
+                    data: d,
+                })
+            }));
+        }
+        else {
+            let pool = await sql.connect(sqlConfig);
+            const result = await Promise.all(parsedForm.data.map( async (d) => {
+                pool.request()
+                .input('schema', sql.VarChar, 'packing')
+                .input('table', sql.VarChar, 'box_type')
+                .input('box_type_uid', sql.VarChar, d.box_type_uid)
+                .input('box_part_number', sql.VarChar, d.box_part_number)
+                .input('box_max_tray', sql.Int, d.box_max_tray)
+                .input('box_type_createdAt', sql.DateTime, d.box_type_createdAt)
+                .input('box_type_updatedAt', sql.DateTime, d.box_type_updatedAt)
+                .query`INSERT INTO "@schema"."@table" 
+                        (box_type_uid, box_part_number, box_max_tray, box_type_createdAt, box_type_updatedAt)
+                        VALUES (@box_type_uid, @box_part_number, @box_max_tray, @box_type_createdAt, @box_type_updatedAt);
+                `;
+            }));
+        }
+        return { success: `Successfully seed box_type` }
+    } catch (err) {
+        return { error: getErrorMessage(err)}
+    }
+
+};
+
 async function main() {
     console.log(await seedUser());
     console.log(await seedShipdoc());
@@ -260,6 +300,7 @@ async function main() {
     console.log(await seedTray());
     console.log(await seedBox());
     console.log(await seedTrayType());
+    console.log(await seedBoxType());
 };
 
 // Run main
