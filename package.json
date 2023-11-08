@@ -40,7 +40,6 @@
     "postcss": "latest",
     "prisma": "^5.5.2",
     "tailwindcss": "latest",
-    "tsx": "^3.14.0",
     "typescript": "latest"
   }
 }
