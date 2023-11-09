@@ -20,13 +20,13 @@
     @apply text-black dark:text-white
   }
 
-  a {
+  a, .link {
     @apply underline text-blue-600 whitespace-nowrap
           hover:text-purple-500 transition 
             dark:text-blue-300 dark:hover:text-purple-200 dark:transition
   }
 
-  button {
+  button, .btn {
     @apply p-[1%] border rounded-xl whitespace-nowrap
             hover:transition hover:duration-300 hover:opacity-80 hover:font-semibold
             hover:active:font-bold
