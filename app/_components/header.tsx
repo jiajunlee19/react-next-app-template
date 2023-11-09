@@ -31,11 +31,12 @@ export default function Header() {
     ];
 
     const actionNavLinks = [
+        { name: "Manage Box Type", href: "/box_type", icon: "" },
+        { name: "Manage Tray Type", href: "/tray_type", icon: "" },
+        { name: "Manage Shipdoc", href: "/shipdoc", icon: "" },
         { name: "Manage Box", href: "/box", icon: "" },
         { name: "Manage Tray", href: "/tray", icon: "" },
         { name: "Manage Lot", href: "/lot", icon: "" },
-        { name: "Manage Box Type", href: "/box_type", icon: "" },
-        { name: "Manage Tray Type", href: "/tray_type", icon: "" },
     ];
 
     const pathname = usePathname();
