@@ -25,9 +25,8 @@ export async function signIn(email: TEmailSchema, password: TPasswordSchema) {
         return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
     };
 
+    let parsedResult;
     try {
-        
-        let parsedResult;
         if (parsedEnv.DB_TYPE === 'PRISMA') {
             const result = await prisma.user.findFirst({
                 where: {
@@ -67,8 +66,6 @@ export async function signIn(email: TEmailSchema, password: TPasswordSchema) {
                 ...userWithoutPassword,
                 jwtToken,
             };
-
-            // revalidatePath('/');
             return userWithToken
         }
         else {
@@ -121,13 +118,12 @@ export async function signUp(email: TEmailSchema, password: TPasswordSchema) {
                                     VALUES (@user_uid, @email, @password, @role, @user_createdAt, @user_updatedAt);
                             `;
         }
-
-        return { success: `Successfully created user ${parsedForm.data.user_uid}` }
     } 
     catch (err) {
         return { error: getErrorMessage(err)}
     }
 
+    return { success: `Successfully created user ${parsedForm.data.user_uid}` }
 };
 
 export async function updateUser(formData: FormData) {
@@ -167,13 +163,12 @@ export async function updateUser(formData: FormData) {
                                     WHERE user_uid = @user_uid;
                             `;
         }
-
-        return { success: `Successfully updated user ${parsedForm.data.user_uid}` }
     } 
     catch (err) {
         return { error: getErrorMessage(err)}
     }
 
+    return { success: `Successfully updated user ${parsedForm.data.user_uid}` }
 };
 
 export async function deleteUser(formData: FormData) {
@@ -207,13 +202,12 @@ export async function deleteUser(formData: FormData) {
                                     WHERE user_uid = @user_uid;
                             `;
         }
-
-        return { success: `Successfully deleted user ${parsedForm.data.user_uid}` }
     } 
     catch (err) {
         return { error: getErrorMessage(err)}
     }
 
+    return { success: `Successfully deleted user ${parsedForm.data.user_uid}` }
 };
 
 export async function updateRole(formData: FormData) {
@@ -253,13 +247,12 @@ export async function updateRole(formData: FormData) {
                                     WHERE user_uid = @user_uid;
                             `;
         }
-
-        return { success: `Successfully updated role for user ${parsedForm.data.user_uid}` }
     } 
     catch (err) {
         return { error: getErrorMessage(err)}
     }
 
+    return { success: `Successfully updated role for user ${parsedForm.data.user_uid}` }
 };
 
 export async function getUserByEmail(email: TEmailSchema) {
@@ -270,9 +263,8 @@ export async function getUserByEmail(email: TEmailSchema) {
         return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
     };
 
+    let parsedResult;
     try {
-        
-        let parsedResult;
         if (parsedEnv.DB_TYPE === 'PRISMA') {
             const result = await prisma.user.findFirst({
                 where: {
@@ -303,11 +295,10 @@ export async function getUserByEmail(email: TEmailSchema) {
         if (!parsedResult.success) {
             return { error: parsedResult.error.message.split('"message": "').pop()?.split('",')[0] }
         };
-
-        return parsedResult.data
-        
     } 
     catch (err) {
         return { error: getErrorMessage(err)}
     }
+
+    return parsedResult.data
 };

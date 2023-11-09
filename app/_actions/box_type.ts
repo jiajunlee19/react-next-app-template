@@ -14,8 +14,8 @@ const schema = 'packing';
 const table = 'box_type';
 
 export async function readBoxType() {
+    let parsedForm;
     try {
-        let parsedForm;
         if (parsedEnv.DB_TYPE === 'PRISMA') {
             const result = await prisma.boxType.findMany({
 
@@ -84,13 +84,13 @@ export async function createBoxType(formData: FormData) {
                                     VALUES (@box_type_uid, @box_part_number, @box_max_tray, @box_type_createdAt, @box_type_updatedAt);
                             `;
         }
-
-        revalidatePath('/box_type');
-        return { success: `Successfully created box_type ${parsedForm.data.box_type_uid}` }
     } 
     catch (err) {
         return { error: getErrorMessage(err)}
     }
+
+    revalidatePath('/box_type');
+    return { success: `Successfully created box_type ${parsedForm.data.box_type_uid}` }
 };
 
 
@@ -133,13 +133,13 @@ export async function updateBoxType(formData: FormData) {
                                     WHERE box_type_uid = @box_type_uid;
                             `;
         }
-
-        revalidatePath('/box_type');
-        return { success: `Successfully updated box_type ${parsedForm.data.box_type_uid}` }
     } 
     catch (err) {
         return { error: getErrorMessage(err)}
     }
+
+    revalidatePath('/box_type');
+    return { success: `Successfully updated box_type ${parsedForm.data.box_type_uid}` }
 };
 
 
@@ -172,11 +172,11 @@ export async function deleteBoxType(formData: FormData) {
                                     WHERE box_type_uid = @box_type_uid;
                             `;
         }
-
-        revalidatePath('/box_type');
-        return { success: `Successfully deleted box_type ${parsedForm.data.box_type_uid}` }
     } 
     catch (err) {
         return { error: getErrorMessage(err)}
     }
+
+    revalidatePath('/box_type');
+    return { success: `Successfully deleted box_type ${parsedForm.data.box_type_uid}` }
 };
