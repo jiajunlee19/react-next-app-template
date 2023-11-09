@@ -143,11 +143,29 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 <br>
 
-# Streaming
+# Streaming / Partial-Rendering
 1. Without streaming, the page is as fast as your slowest data load.
     - Simulate slow data loading with `await new Promise((resolve) => setTimeout(resolve, 3000));`.
     - The page will only loads when all required data in the page is loaded.
-2. [loading.tsx](/app/loading.tsx) is built on top of Suspense, which fallback to a skeleton UI while page content is loading.
-3. To be more granular to stream specific components, the specific components can be wrapped with Suspense.
+2. Streaming is implemented to prevent slow data requests from blocking your whole page
+    - [loading.tsx](/app/loading.tsx) is built on top of Suspense, which fallback to a skeleton UI while page content is loading.
+    - To be more granular to stream specific components, the specific components can be wrapped with Suspense.
+        ```
+        import { Suspense } from 'react';
+        ...
 
+        <Suspense fallback={<>Loading</>}>
+            ...
+        </Suspense>
+        ```
+    - It is a good practice to move data fetching down to the components that need it, to stream specific component granularly.
+
+<br>
+
+# Search and Pagination
+1. Page menu is generated with `generatePagination` defined in [pagination.ts](/app/_libs/pagination.ts)
+    - If totalPage <= 7, show [1, 2, 3, 4, 5, 6, 7]
+    - If totalPage > 7 and currentPage is within first 3 page, show like [1, 2, 3, ..., 9, 10]
+    - If totalPage > 7 and currentPage is within the last 3 pages, show like [1, 2, ..., 8, 9, 10]
+    - If totalPage > 7 and currentPage is somewhere in the middle, show like [1, ..., 4, 5, 6, ..., 10]
 <br>
