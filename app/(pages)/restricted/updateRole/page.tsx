@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     description: 'Developed by jiajunlee',
 };
 
-export default async function UpdateRolePage({searchParams}: {searchParams: {email: string}} ) {
+export default async function UpdateRolePage({searchParams}: {searchParams?: {email?: string}} ) {
 
     const session = await getServerSession();
 
