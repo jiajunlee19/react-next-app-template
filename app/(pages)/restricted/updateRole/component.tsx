@@ -1,13 +1,19 @@
 'use client'
 
-import { updateUser, deleteUser, getUserByEmail } from "@/app/_actions/auth";
+import { updateUser, deleteUser } from "@/app/_actions/auth";
 import SubmitButton from "@/app/_components/basic/button_submit";
+import { TReadUserWithoutPassSchema } from "@/app/_libs/zod_auth";
 import { signOut, useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { redirect, useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useRef } from "react";
 import { toast } from "react-hot-toast";
+import { useDebouncedCallback } from 'use-debounce';
 
-export default function UpdateRoleComponent() {
+type TUpdateRoleComponentProps = {
+    user: TReadUserWithoutPassSchema,
+};
+
+export default function UpdateRoleComponent( {user}: TUpdateRoleComponentProps ) {
 
     const { data: session } = useSession();
 
@@ -16,22 +22,41 @@ export default function UpdateRoleComponent() {
     }
 
     const formRef = useRef<HTMLFormElement>(null);
-    const emailRef = useRef("");
-    const roleRef = useRef("");
 
-    async function userRef()  {
-        const result = await getUserByEmail(emailRef?.current);
-        if ("error" in result) {
-            toast.error(result.message);
-            return ""
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+    const { replace } = useRouter();
+
+    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+        // URLSearchParams is used for manipulating the URL query parameters
+        const params = new URLSearchParams(searchParams);
+
+        // set params with value and delete params if no value
+        if (e.target.value) {
+            params.set("email", e.target.value);
         }
         else {
-            return result.user_uid
+            params.delete("email");
         }
+
+        // replace url with params, without refreshing the page
+        replace(`${pathname}?${params.toString()}`)
+
     };
 
-    const handleSubmitClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleUpdateClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        const confirmMsg = 'Are you sure to update role for this user?'
 
+        //if any button other than submit is clicked, preventDefault submit routing!
+        if (!window.confirm(confirmMsg)) {
+            e.preventDefault();
+            return;
+        };
+        return; //proceed to submit form
+    };
+
+    const handleDeleteClick = (e: React.MouseEvent<HTMLButtonElement>) => {
         const input = window.prompt("Are you sure to delete this user?\nIf yes, enter 'delete' to confirm, this action cannot be undone.")
         if (input?.toLowerCase() !== 'delete') {
             e.preventDefault();
@@ -54,16 +79,21 @@ export default function UpdateRoleComponent() {
                         formRef.current?.reset();
                     }
                 }>
-                <input name="user_uid" type="text" defaultValue={session.user.user_uid} readOnly formNoValidate />
+                <input name="user_uid" type="text" defaultValue={user.user_uid} readOnly formNoValidate />
                 <label htmlFor="email">Email: </label>
-                <input name="email" type="email" placeholder="Enter your email" defaultValue={session.user.email} onChange={(e) => emailRef.current = e.target.value} required formNoValidate />
+                <input name="email" type="email" placeholder="Enter your email" defaultValue={searchParams.get("email")?.toString() || session.user.email} onChange={useDebouncedCallback(handleEmailChange, 1000)} required formNoValidate />
                 <label htmlFor="role">Role: </label>
-                <select name="role" defaultValue={session.user.role} onChange={(e) => roleRef.current = e.target.value} required>
-                    <option value="user">user</option>
-                    <option value="admin">admin</option>
-                    <option value="boss">boss</option>
+                <select name="role" defaultValue={user.role} required>
+                    {["user", "admin", "boss"].map((role) => {
+                        if (role === session.user.role) {
+                            return <option key={role} defaultValue={role}>{role}</option>
+                        }
+                        else {
+                            return <option key={role} value={role}>{role}</option>
+                        }
+                    })}
                 </select>
-                <SubmitButton buttonClass="btn-ok w-40 mr-4 mt-4" buttonTitle="Update" onButtonClick={() => null} submitingButtonTitle="Updating" />
+                <SubmitButton buttonClass="btn-ok w-40 mr-4 mt-4" buttonTitle="Update" onButtonClick={handleUpdateClick} submitingButtonTitle="Updating" />
                 <button type="button" className="btn-cancel w-40 mr-4 mt-4" onClick={() => formRef.current?.reset()}>Reset</button>
             </form>
 
@@ -81,8 +111,8 @@ export default function UpdateRoleComponent() {
                         }
                     }
                 }>
-                <input name="user_uid" type="text" value={session.user.user_uid} hidden readOnly formNoValidate />
-                <SubmitButton buttonClass="btn-cancel w-80 mr-4 mt-8" buttonTitle={"Delete " + (emailRef.current ? emailRef.current : session.user.email)} onButtonClick={handleSubmitClick} submitingButtonTitle="Deleting" />
+                <input name="user_uid" type="text" defaultValue={searchParams.get("email")?.toString() || session.user.email} hidden readOnly formNoValidate />
+                <SubmitButton buttonClass="btn-cancel w-80 mr-4 mt-8" buttonTitle={"Delete " + searchParams.get("email")?.toString() || session.user.email} onButtonClick={handleDeleteClick} submitingButtonTitle="Deleting" />
             </form>
         </>
     );

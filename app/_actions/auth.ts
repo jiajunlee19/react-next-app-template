@@ -9,6 +9,7 @@ import { getErrorMessage } from '@/app/_libs/error_handler';
 import { signJwtToken } from '@/app/_libs/jwt';
 import { parsedEnv } from '@/app/_libs/zod_env';
 import prisma from '@/prisma/prisma';
+import { unstable_noStore as noStore } from 'next/cache';
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 const schema = 'packing';
@@ -291,15 +292,12 @@ export async function updateRole(formData: FormData) {
     return { message: `Successfully updated role for user ${parsedForm.data.user_uid}` }
 };
 
-export async function getUserByEmail(email: TEmailSchema) {
-
+export async function readUserByEmail(email: TEmailSchema) {
+    noStore();
     const parsedForm = emailSchema.safeParse(email);
 
     if (!parsedForm.success) {
-        return { 
-            error: parsedForm.error.flatten().fieldErrors,
-            message: "Invalid input provided, failed to read user!"
-        };  
+        throw new Error(parsedForm.error.message)
     };
 
     let parsedResult;
@@ -315,7 +313,7 @@ export async function getUserByEmail(email: TEmailSchema) {
                     role: true,
                 },
             })
-            parsedResult = readUserWithoutPassSchema.safeParse(result);
+            parsedResult = readUserWithoutPassSchema.safeParse(result || []);
         }
 
         else {
@@ -328,21 +326,15 @@ export async function getUserByEmail(email: TEmailSchema) {
                                     FROM "@schema"."@table"
                                     WHERE email = @email;
                             `;
-            parsedResult = readUserWithoutPassSchema.safeParse(result.recordset);
+            parsedResult = readUserWithoutPassSchema.safeParse(result.recordset || []);
         }
     
         if (!parsedResult.success) {
-            return { 
-                error: parsedResult.error.flatten().fieldErrors,
-                message: "Invalid user provided, failed to read user!"
-            };  
+            throw new Error(parsedResult.error.message)
         };
     } 
     catch (err) {
-        return { 
-            error: {error: getErrorMessage(err)},
-            message: "Invalid user provided, failed to read user!"
-        };    
+        throw new Error(getErrorMessage(err))
     }
 
     return parsedResult.data
