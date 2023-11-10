@@ -5,7 +5,7 @@ import { type TReadBoxTypeSchema } from '@/app/_libs/zod_server';
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-    title: 'Template App - Home',
+    title: 'Box Type',
     description: 'Developed by jiajunlee',
 };
 

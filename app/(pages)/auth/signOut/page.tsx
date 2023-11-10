@@ -2,7 +2,7 @@ import SignOutComponent from "@/app/(pages)/auth/signOut/component";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Template App - Sign Out',
+    title: 'Sign Out',
     description: 'Developed by jiajunlee',
 };
 

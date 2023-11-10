@@ -9,9 +9,12 @@ import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Template App',
+  title: {
+    template: '%s | Template App',
+    default: 'Template App',
+  },
   description: 'Developed by jiajunlee',
-}
+};
 
 export default async function RootLayout({
   children,

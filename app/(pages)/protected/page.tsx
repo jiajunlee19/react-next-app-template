@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Template App - Protected',
+    title: 'Protected',
     description: 'Developed by jiajunlee',
 };
 

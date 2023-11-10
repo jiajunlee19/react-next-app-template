@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import UserComponent from '@/app/(pages)/auth/user/[user_uid]/component';
 
 export const metadata: Metadata = {
-    title: 'Template App - User',
+    title: 'User',
     description: 'Developed by jiajunlee',
 };
 

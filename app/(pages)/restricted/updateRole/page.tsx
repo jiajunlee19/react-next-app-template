@@ -5,7 +5,7 @@ import UpdateRoleComponent from '@/app/(pages)/restricted/updateRole/component';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Template App - Update Role',
+    title: 'Update Role',
     description: 'Developed by jiajunlee',
 };
 

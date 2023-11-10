@@ -4,7 +4,7 @@ import Form from "@/app/_components/basic/form";
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-    title: 'Template App - Create Box Type',
+    title: 'Create Box Type',
     description: 'Developed by jiajunlee',
 };
 

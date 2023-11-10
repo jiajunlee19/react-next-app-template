@@ -2,7 +2,7 @@ import SignUpComponent from "@/app/(pages)/auth/signUp/component";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Template App - Sign Up',
+    title: 'Sign Up',
     description: 'Developed by jiajunlee',
 };
 

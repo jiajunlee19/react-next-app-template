@@ -5,7 +5,7 @@ import type { Metadata } from 'next'
 import Breadcrumbs from "@/app/_components/basic/breadcrumbs";
 
 export const metadata: Metadata = {
-    title: 'Template App - Update Box Type',
+    title: 'Update Box Type',
     description: 'Developed by jiajunlee',
 };
 
