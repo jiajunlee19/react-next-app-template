@@ -9,7 +9,7 @@ export default function GlobalError({
 }) {
   return (
     <html>
-      <body>
+      <body className="flex items-center justify-center h-screen">
         <h2>Something went wrong!</h2>
         <button onClick={() => reset()}>Try again</button>
       </body>
