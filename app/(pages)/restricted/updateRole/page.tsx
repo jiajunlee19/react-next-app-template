@@ -13,7 +13,7 @@ export default async function UpdateRolePage({searchParams}: {searchParams: {ema
 
     const session = await getServerSession();
 
-    if (!session) {
+    if (!session || session.user.role !== 'boss') {
         redirect("/denied");
     }
 

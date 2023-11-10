@@ -17,7 +17,7 @@ export default function UpdateRoleComponent( {user}: TUpdateRoleComponentProps )
 
     const { data: session } = useSession();
 
-    if (!session) {
+    if (!session || session.user.role !== 'boss') {
         redirect("/denied");
     }
 

@@ -304,3 +304,44 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
     - If totalPage > 7 and currentPage is within the last 3 pages, show like [1, 2, ..., 8, 9, 10]
     - If totalPage > 7 and currentPage is somewhere in the middle, show like [1, ..., 4, 5, 6, ..., 10]
 <br>
+
+# Authentication & Authorization
+1. Authentication is enabled with nextAuth, options are defined in [nextAuth_options.ts](./app/_libs/nextAuth_options.ts).
+2. To use nextAuth, [layout.tsx](./app/layout.tsx) is wrapped with [auth_provider](./app/_components/auth_provider.tsx).
+    ```
+    import AuthProvider from '@/app/_components/auth_provider'
+    import { getServerSession } from "next-auth/next"
+
+    ...
+    const session = await getServerSession();
+
+        ...
+        <AuthProvider session={session}>
+            {children}
+        </AuthProvider>
+        
+        ...
+    ```
+3. Each specified page/routes are protected by [middleware.ts](middleware.ts).
+    ```
+    export const config = { matcher: ["/protected/:path*", "/restricted/:path*"] }
+    ```
+4. Authorization is also defined in [middleware.ts](middleware.ts) with `role`.
+    ```
+    if (request.nextUrl.pathname.startsWith("/protected")
+        && request.nextauth.token?.role !== "admin"
+        && request.nextauth.token?.role !== "boss")
+    {
+        return NextResponse.rewrite(
+            new URL("/denied", request.url)
+        )
+    }
+    ```
+5. Sign Up Page is defined in [/auth/signUp/page.tsx](./app/\(pages\)/auth/signUp/page.tsx).
+6. Sign In Page is defined in [/auth/signIn/page.tsx](./app/\(pages\)/auth/signIn/page.tsx).
+7. Sign Out Page is defined in [/auth/signOut/page.tsx](./app/\(pages\)/auth/signOut/page.tsx).
+8. New user are defaulted as `role="user"`.
+9. User's role can be updated in [restricted/updateRole/page.tsx](./app/\(pages\)/restricted/updateRole/page.tsx), which can only be accessed by `role="boss"` as defined in [middleware.ts](middleware.ts).
+
+
+<br>
