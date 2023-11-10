@@ -323,14 +323,17 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 <br>
 
 # Authentication & Authorization
-1. Authentication is enabled with nextAuth, options are defined in [nextAuth_options.ts](/app/_libs/nextAuth_options.ts).
+1. Authentication is enabled with nextAuth.
+    - Options are defined in [nextAuth_options.ts](/app/_libs/nextAuth_options.ts).
+    - API Handler are defined in [/api/auth/[...nextauth]/route.ts](/app/api/auth/[...nextauth]/route.ts).
 2. To use nextAuth, [layout.tsx](/app/layout.tsx) is wrapped with [auth_provider](/app/_components/auth_provider.tsx).
     ```
     import AuthProvider from '@/app/_components/auth_provider'
     import { getServerSession } from "next-auth/next"
+    import { options } from '@/app/_libs/nextAuth_options'
 
     ...
-    const session = await getServerSession();
+    const session = await getServerSession(options);
 
         ...
         <AuthProvider session={session}>
