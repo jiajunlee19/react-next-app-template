@@ -140,6 +140,16 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
     - CRUD async/await functions are used to execute CRUD operations on database
     - [Prisma](./prisma/prisma.ts) is used as an ORM via `import prisma from '@/prisma/prisma';`
     - `revalidatePath` is used to remove the stored cache and force-fetch the latest data after the CRUD operation.
+3. For actions requiring dynamic rendering, `noStore()` is specified to prevent the response from being cached.
+    ```
+    import { unstable_noStore as noStore } from 'next/cache';
+
+    export async function fetch() {
+        // This is equivalent to in fetch(..., {cache: 'no-store'}).
+        noStore();
+        ...
+    }
+    ```
 
 <br>
 
