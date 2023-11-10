@@ -64,6 +64,11 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 <br>
 
+# Global Error Hander
+[global-error.tsx](app/global-error.tsx) is defined to handle global unexpected errors, allow users to retry/refresh the page.
+
+<br>
+
 # Optimizing Font & Images
 1. `next/font` module is used to display fonts and it's defined in [layout.tsx](/app/layout.tsx).
     - Font files are downloaded at build time into static assest, minimizing additional network requests.
