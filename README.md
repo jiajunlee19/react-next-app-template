@@ -153,6 +153,56 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 <br>
 
+# Server Action Form & Error Handling
+1. See example of server action [/_actions/box_type.ts](./app/_actions/box_type.ts) , flatten field errors are being returned.
+    ```
+        ...
+
+        return { 
+        error: parsedForm.error.flatten().fieldErrors,
+        message: "Invalid input provided, failed to create box_type!"
+    };
+    ```
+2. In [form.tsx](./app//_components//basic//form.tsx), each form field is handled with `state.error` with the help of `useFormState`.
+    ```
+    import { useFormState } from "react-dom";
+
+    const initialState  = { message: null, errors: {} };
+    const [state, dispatch] = useFormState(formAction, initialState);
+
+    ...
+    <form>
+        ...
+
+        {state.error?.[key] && 
+        <p id={key+"-error"} aria-live="polite" className="mb-[2%] font-semibold text-red-500 dark:text-red-500">
+            {state.error[key][0]}
+        </p>
+        }
+
+        ...
+    </form>
+    ```
+3. In [button_submit.tsx](./app/_components/basic/button_submit.tsx), `useFormStatus` is used to conditionally disable the submit button during form submission.
+    ```
+    import {useFormStatus} from 'react-dom';
+    ...
+
+        // useFormStatus gives a pending boolean, use this to tell if the button should be disabled or not
+        const { pending } = useFormStatus();
+
+        return (
+            <button className={buttonClass} type="submit" disabled={pending} onClick={onButtonClick}>
+                {pending ? submitingButtonTitle : buttonTitle}
+            </button>
+        );
+    };
+
+    ...
+    ```
+
+<br>
+
 # Streaming / Partial-Rendering
 1. Without streaming, the page is as fast as your slowest data load.
     - Simulate slow data loading with `await new Promise((resolve) => setTimeout(resolve, 3000));`.
