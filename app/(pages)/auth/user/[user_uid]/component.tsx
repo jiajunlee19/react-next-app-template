@@ -33,11 +33,11 @@ export default function UserComponent({ params }: { params: {user_uid: string} }
             
             <form ref={formRef} action={ async (formData) => {
                         const result = await updateUser(formData);
-                        if (result?.error) {
-                            toast.error(result.error);
+                        if (result?.error && result?.message) {
+                            toast.error(result.message);
                         }
-                        else if (result?.success) {
-                            toast.success(result.success);
+                        else if (result?.message) {
+                            toast.success(result.message);
                         }
                         formRef.current?.reset();
                     }
@@ -55,11 +55,11 @@ export default function UserComponent({ params }: { params: {user_uid: string} }
 
             <form action={ async (formData) => {
                         const result = await deleteUser(formData);
-                        if (result?.error) {
-                            toast.error(result.error);
+                        if (result?.error && result?.message) {
+                            toast.error(result.message);
                         }
-                        else if (result?.success) {
-                            toast.success(result.success);
+                        else if (result?.message) {
+                            toast.success(result.message);
                             await signOut({
                                 redirect: true,
                                 callbackUrl: "/",

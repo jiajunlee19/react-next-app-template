@@ -41,6 +41,7 @@ export default function SignInComponent() {
                             callbackUrl: "/",
                         });
                         formRef.current?.reset();
+                        
                         if (result?.error) {
                             toast.error("Invalid credentials provided !");
                         }

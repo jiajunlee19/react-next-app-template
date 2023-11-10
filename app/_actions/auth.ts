@@ -22,7 +22,10 @@ export async function signIn(email: TEmailSchema, password: TPasswordSchema) {
     });
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
+        return { 
+            error: parsedForm.error.flatten().fieldErrors,
+            message: "Invalid input provided, failed to sign in!"
+        };
     };
 
     let parsedResult;
@@ -56,7 +59,10 @@ export async function signIn(email: TEmailSchema, password: TPasswordSchema) {
         }
     
         if (!parsedResult.success) {
-            return { error: parsedResult.error.message.split('"message": "').pop()?.split('",')[0] }
+            return { 
+                error: parsedResult.error.flatten().fieldErrors,
+                message: "Invalid user provided, failed to sign in!"
+            };
         };
 
         if (parsedResult.data.password && (await bcrypt.compare(parsedForm.data.password, parsedResult.data.password))) {
@@ -69,11 +75,17 @@ export async function signIn(email: TEmailSchema, password: TPasswordSchema) {
             return userWithToken
         }
         else {
-            return { error: "Invalid Credentials !" }
+            return { 
+                error: {error: "Invalid user provided, failed to sign in!"},
+                message: "Invalid user provided, failed to sign in!"
+            };
         }
     } 
     catch (err) {
-        return { error: getErrorMessage(err)}
+        return { 
+            error: {error: getErrorMessage(err)},
+            message: "Invalid user provided, failed to sign in!"
+        };
     }
 
 };
@@ -92,7 +104,10 @@ export async function signUp(email: TEmailSchema, password: TPasswordSchema) {
     });
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
+        return { 
+            error: parsedForm.error.flatten().fieldErrors,
+            message: "Invalid input provided, failed to sign up!"
+        };
     };
 
     try {
@@ -120,10 +135,13 @@ export async function signUp(email: TEmailSchema, password: TPasswordSchema) {
         }
     } 
     catch (err) {
-        return { error: getErrorMessage(err)}
+        return { 
+            error: {error: getErrorMessage(err)},
+            message: "Invalid user provided, failed to sign up!"
+        };
     }
 
-    return { success: `Successfully created user ${parsedForm.data.user_uid}` }
+    return { message: `Successfully created user ${parsedForm.data.user_uid}` }
 };
 
 export async function updateUser(formData: FormData) {
@@ -137,7 +155,10 @@ export async function updateUser(formData: FormData) {
     });
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
+        return { 
+            error: parsedForm.error.flatten().fieldErrors,
+            message: "Invalid input provided, failed to update user!"
+        };
     };
 
     try {
@@ -165,10 +186,13 @@ export async function updateUser(formData: FormData) {
         }
     } 
     catch (err) {
-        return { error: getErrorMessage(err)}
+        return { 
+            error: {error: getErrorMessage(err)},
+            message: "Invalid user provided, failed to sign up!"
+        };
     }
 
-    return { success: `Successfully updated user ${parsedForm.data.user_uid}` }
+    return { message: `Successfully updated user ${parsedForm.data.user_uid}` }
 };
 
 export async function deleteUser(formData: FormData) {
@@ -180,7 +204,10 @@ export async function deleteUser(formData: FormData) {
     });
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
+        return { 
+            error: parsedForm.error.flatten().fieldErrors,
+            message: "Invalid input provided, failed to delete user!"
+        };    
     };
 
     try {
@@ -204,10 +231,13 @@ export async function deleteUser(formData: FormData) {
         }
     } 
     catch (err) {
-        return { error: getErrorMessage(err)}
+        return { 
+            error: {error: getErrorMessage(err)},
+            message: "Invalid user provided, failed to delete user!"
+        };
     }
 
-    return { success: `Successfully deleted user ${parsedForm.data.user_uid}` }
+    return { message: `Successfully deleted user ${parsedForm.data.user_uid}` }
 };
 
 export async function updateRole(formData: FormData) {
@@ -221,7 +251,10 @@ export async function updateRole(formData: FormData) {
     });
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
+        return { 
+            error: parsedForm.error.flatten().fieldErrors,
+            message: "Invalid input provided, failed to update role!"
+        };  
     };
 
     try {
@@ -249,10 +282,13 @@ export async function updateRole(formData: FormData) {
         }
     } 
     catch (err) {
-        return { error: getErrorMessage(err)}
+        return { 
+            error: {error: getErrorMessage(err)},
+            message: "Invalid user provided, failed to update role!"
+        };
     }
 
-    return { success: `Successfully updated role for user ${parsedForm.data.user_uid}` }
+    return { message: `Successfully updated role for user ${parsedForm.data.user_uid}` }
 };
 
 export async function getUserByEmail(email: TEmailSchema) {
@@ -260,7 +296,10 @@ export async function getUserByEmail(email: TEmailSchema) {
     const parsedForm = emailSchema.safeParse(email);
 
     if (!parsedForm.success) {
-        return { error: parsedForm.error.message.split('"message": "').pop()?.split('",')[0] }
+        return { 
+            error: parsedForm.error.flatten().fieldErrors,
+            message: "Invalid input provided, failed to read user!"
+        };  
     };
 
     let parsedResult;
@@ -293,11 +332,17 @@ export async function getUserByEmail(email: TEmailSchema) {
         }
     
         if (!parsedResult.success) {
-            return { error: parsedResult.error.message.split('"message": "').pop()?.split('",')[0] }
+            return { 
+                error: parsedResult.error.flatten().fieldErrors,
+                message: "Invalid user provided, failed to read user!"
+            };  
         };
     } 
     catch (err) {
-        return { error: getErrorMessage(err)}
+        return { 
+            error: {error: getErrorMessage(err)},
+            message: "Invalid user provided, failed to read user!"
+        };    
     }
 
     return parsedResult.data

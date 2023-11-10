@@ -37,11 +37,11 @@ export default function SignUpComponent() {
             <form ref={formRef} action={ async (formData) => {
                         const result = await signUp(emailRef.current, passwordRef.current);
                         formRef.current?.reset();
-                        if (result?.error) {
-                            toast.error(result.error);
+                        if (result?.error && result?.message) {
+                            toast.error(result.message);
                         }
-                        else if (result?.success) {
-                            toast.success(result.success);
+                        else if (result?.message) {
+                            toast.success(result.message);
                             await signIn("credentials", {
                                 email: emailRef.current,
                                 password: passwordRef.current,
