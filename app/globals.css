@@ -16,7 +16,7 @@
     @apply text-xl font-bold my-[1%] text-black dark:text-white
   }
 
-  p {
+  p, span {
     @apply text-black dark:text-white
   }
 
