@@ -72,7 +72,7 @@ export default function Main( {fetchedData, createButtonTitle, columnListDisplay
                     </Link>
 
                     <form action={dispatch}>
-                        <input type="hidden" name={primaryKey} value={fetchedData[i][primaryKey].toString()} required readOnly formNoValidate/>
+                        <input type="hidden" name={primaryKey} defaultValue={fetchedData[i][primaryKey].toString()} required readOnly formNoValidate/>
                         <SubmitButton buttonClass="btn-primary w-min p-1" buttonTitle={<TrashIcon className="h-5" />} onButtonClick={handleDeleteClick} submitingButtonTitle={<TrashIcon className="h-5" />} />
                     </form>
                 </td>
