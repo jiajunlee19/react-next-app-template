@@ -313,7 +313,7 @@ export async function readUserByEmail(email: TEmailSchema) {
                     role: true,
                 },
             })
-            parsedResult = readUserWithoutPassSchema.safeParse(result || []);
+            parsedResult = readUserWithoutPassSchema.safeParse(result || {});
         }
 
         else {
@@ -326,7 +326,7 @@ export async function readUserByEmail(email: TEmailSchema) {
                                     FROM "@schema"."@table"
                                     WHERE email = @email;
                             `;
-            parsedResult = readUserWithoutPassSchema.safeParse(result.recordset || []);
+            parsedResult = readUserWithoutPassSchema.safeParse(result.recordset[0] || {});
         }
     
         if (!parsedResult.success) {

@@ -10,7 +10,7 @@ import { toast } from "react-hot-toast";
 import { useDebouncedCallback } from 'use-debounce';
 
 type TUpdateRoleComponentProps = {
-    user: TReadUserWithoutPassSchema,
+    user: TReadUserWithoutPassSchema | null,
 };
 
 export default function UpdateRoleComponent( {user}: TUpdateRoleComponentProps ) {
@@ -46,6 +46,7 @@ export default function UpdateRoleComponent( {user}: TUpdateRoleComponentProps )
     };
 
     const handleUpdateClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        
         const confirmMsg = 'Are you sure to update role for this user?'
 
         //if any button other than submit is clicked, preventDefault submit routing!
@@ -79,13 +80,13 @@ export default function UpdateRoleComponent( {user}: TUpdateRoleComponentProps )
                         formRef.current?.reset();
                     }
                 }>
-                <input name="user_uid" type="text" defaultValue={user.user_uid} readOnly formNoValidate />
+                <input name="user_uid" type="text" defaultValue={user?.user_uid || session.user.user_uid} readOnly formNoValidate />
                 <label htmlFor="email">Email: </label>
-                <input name="email" type="email" placeholder="Enter your email" defaultValue={searchParams.get("email")?.toString() || session.user.email} onChange={useDebouncedCallback(handleEmailChange, 1000)} required formNoValidate />
+                <input name="email" type="email" placeholder="Enter your email" defaultValue={searchParams.get("email")?.toString() || session.user.email} onBlur={handleEmailChange} onChange={useDebouncedCallback(handleEmailChange, 3000)} required formNoValidate />
                 <label htmlFor="role">Role: </label>
-                <select name="role" defaultValue={user.role} required>
+                <select name="role" defaultValue={user?.role || session.user.role } required>
                     {["user", "admin", "boss"].map((role) => {
-                        if (role === session.user.role) {
+                        if (role === (user?.role || session.user.role) ) {
                             return <option key={role} defaultValue={role}>{role}</option>
                         }
                         else {

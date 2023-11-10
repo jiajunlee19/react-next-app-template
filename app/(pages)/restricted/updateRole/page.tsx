@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     description: 'Developed by jiajunlee',
 };
 
-export default async function UpdateRolePage() {
+export default async function UpdateRolePage({searchParams}: {searchParams: {email: string}} ) {
 
     const session = await getServerSession();
 
@@ -17,9 +17,14 @@ export default async function UpdateRolePage() {
         redirect("/denied");
     }
 
-    const user = await readUserByEmail(session.user.email);
+    const email = searchParams?.email?.toString() || session.user.email; 
+    let user;
 
-    // const user = await readUserByEmail(searchParams.get("email")?.toString() || session.user.email);
+    try {
+        user = await readUserByEmail(email);
+    } catch (err) {
+        user = null;
+    }
 
     return (
        <UpdateRoleComponent user={user}/>
