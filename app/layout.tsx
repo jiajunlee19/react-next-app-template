@@ -4,6 +4,7 @@ import '@/app/globals.css'
 import type { Metadata } from 'next'
 import AuthProvider from '@/app/_components/auth_provider'
 import { getServerSession } from "next-auth/next"
+import { options } from '@/app/_libs/nextAuth_options'
 import { Inter } from 'next/font/google'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -22,7 +23,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
 
-    const session = await getServerSession();
+    const session = await getServerSession(options);
     // console.log(session?.user)
 
   return (
