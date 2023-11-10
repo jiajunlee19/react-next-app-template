@@ -2,6 +2,7 @@ import { readBoxTypeById, updateBoxType } from "@/app/_actions/box_type";
 import Form from "@/app/_components/basic/form";
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next'
+import Breadcrumbs from "@/app/_components/basic/breadcrumbs";
 
 export const metadata: Metadata = {
     title: 'Template App - Update Box Type',
@@ -21,18 +22,24 @@ export default async function UpdateBoxType({params}: {params: {box_type_uid: st
     }
 
     return (
-        <Form 
-            formTitle="Update Box Type"
-            inputType={{
-                'box_type_uid': 'hidden',
-                'box_part_number': 'readonly',
-                'box_max_tray': 'number',
-            }}
-            rowData={box_type}
-            selectOptionData={null}
-            action="update"
-            formAction={updateBoxType}
-            redirectLink="/box_type"
-        />
+        <>
+            <Breadcrumbs breadcrumbs={[
+                {label: "Box Type", href: "/box_type", active: false},
+                {label: `Update ${box_type_uid}`, href: `/box_type/${box_type_uid}/update`, active: true}
+            ]} />
+            <Form 
+                formTitle="Update Box Type"
+                inputType={{
+                    'box_type_uid': 'hidden',
+                    'box_part_number': 'readonly',
+                    'box_max_tray': 'number',
+                }}
+                rowData={box_type}
+                selectOptionData={null}
+                action="update"
+                formAction={updateBoxType}
+                redirectLink="/box_type"
+            />
+        </>
     );
 };
