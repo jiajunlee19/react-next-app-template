@@ -105,6 +105,11 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
     </Link>
     );
     ```
+3. Similarly, [breadcrumbs.tsx](./app/_components/basic/breadcrumbs.tsx) is used to conditional provide navbar on top of subpages.
+    ```
+    <main-page-label> / <current-page-label>
+    ```
+    - Example can be found in [/box_type/create/page.tsx](./app/\(pages\)/box_type/create/page.tsx).
 
 <br>
 
@@ -237,6 +242,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
         <input ... defaultValue={params.get('query')?.toString()} />
     ...
     ```
+    - Example can be found in [/restricted/updateRole/component.tsx](./app/\(pages\)/restricted/updateRole/component.tsx).
 
 <br>
 
