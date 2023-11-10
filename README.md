@@ -203,6 +203,43 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 <br>
 
+# State Management with SearchParams
+1. Instead of managing state using `useState`, `useSearchParams` is used to manage state embedded in url.
+    - User can save the current state by bookmarking the url for revisit or share to other users.
+    - URL parameters are directly comsumed on server-side, making it easier to render the page's initial state.
+2. The user input is always keep in-sync with the URL SearchParams.
+    ```
+    import { useSearchParams, usePathname, useRouter } from "next/navigation";
+
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+    const { replace } = useRouter();
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+        // URLSearchParams is used for manipulating the URL query parameters
+        const params = new URLSearchParams(searchParams);
+
+        // set params with value and delete params if no value
+        if (e.target.value) {
+            params.set('query', e.target.value);
+        }
+        else {
+            params.delete('query');
+        }
+
+        // replace url with params, without refreshing the page
+        replace(`${pathname}?${params.toString()}`)
+
+    };
+
+    ...
+        <input ... defaultValue={params.get('query')?.toString()} />
+    ...
+    ```
+
+<br>
+
 # Streaming / Partial-Rendering
 1. Without streaming, the page is as fast as your slowest data load.
     - Simulate slow data loading with `await new Promise((resolve) => setTimeout(resolve, 3000));`.
