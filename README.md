@@ -243,10 +243,11 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 # Debouncing Technique
 1. We do not want to send query the database on every keystroke, to save database resource and optimize performance.
 2. Deboucing technique is a good practice that limits the rate at which a function can fire.
-3. `use-debounce` is used here, the function will only fire once the user has stop typing for a specific duration.
+3. `use-debounce` is used here. The function will only fire when either of the below conditions are met.
+    - the user has stop typing for a specific duration
+    - the input field losses focus or become blur
     ```
-    // wait until user stop typing for 1000milliseconds/1second, then fire the function
-    <input ... onChange={useDebouncedCallback(handleInputChange, 1000)} />
+    <input ... onBlur={handleInputChange} onChange={useDebouncedCallback(handleInputChange, 1000)} />
     ```
 
 <br>
