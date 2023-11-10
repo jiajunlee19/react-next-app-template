@@ -55,7 +55,7 @@
   }
 
   input, select {
-    @apply block w-full border rounded-sm p-[1%] mb-[2%] placeholder:italic
+    @apply block w-full border rounded-sm p-[1%] mb-[0%] placeholder:italic
           border-black bg-white text-black
           dark:border-white dark:bg-zinc-900 dark:text-white
   }

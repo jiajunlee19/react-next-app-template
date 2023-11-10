@@ -7,3 +7,12 @@ export type TRowData = {
 export type TInputType = {
     [key: string]: "number" | "select" | "text" | "password" | "dynamic" | "hidden" | "readonly"
 }
+
+export type State = {
+    error?: {
+        [key: string]: string[]
+    } |  null,
+    message: string | null,
+};
+
+export type StatePromise = Promise<State>;

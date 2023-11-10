@@ -1,59 +1,28 @@
 'use client'
 
-import { type TInputType, type TFormMode, type TRowData } from "@/app/_libs/types";
+import { type TInputType, type TFormMode, type TRowData, type State, type StatePromise } from "@/app/_libs/types";
 import SubmitButton from "@/app/_components/basic/button_submit";
 import Form from "@/app/_components/basic/form";
 import { toast } from "react-hot-toast";
 import { useState } from "react";
 import { accessNestedObject, createNestedObject } from "@/app/_libs/nested_object";
 import { getString } from "@/app/_libs/toString_handler";
+import Link from "next/link";
+import { useFormState } from "react-dom";
+import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 type MainProps = {
     fetchedData: TRowData[],
-    inputTypeCreate: TInputType,
-    inputTypeUpdate: TInputType,
     createButtonTitle: string,
-    createFormTitle: string,
-    updateFormTitle: string,
     columnListDisplay: string[],
     primaryKey: string,
-    selectOptionData: TRowData[],
-    selectPrimaryKey: string,
-    selectPrimaryKeyList: string[],
-    createAction: (formData: FormData) => Promise<{success?: string, error?: string}>,
-    updateAction: (formData: FormData) => Promise<{success?: string, error?: string}>,
-    deleteAction: (formData: FormData) => Promise<{success?: string, error?: string}>,
+    deleteAction: (prevState: State, formData: FormData) => StatePromise, 
 };
 
-export default function Main( {fetchedData, inputTypeCreate, inputTypeUpdate, createButtonTitle, createFormTitle, updateFormTitle, columnListDisplay, primaryKey, selectOptionData, selectPrimaryKey, selectPrimaryKeyList, createAction, updateAction, deleteAction}: MainProps ) {
+export default function Main( {fetchedData, createButtonTitle, columnListDisplay, primaryKey, deleteAction}: MainProps ) {
     
-    // A state that controls whether a form should show, acceptable values: null/insert/update
-    const [isShowForm, setIsShowForm] = useState<TFormMode>(null);   
-
-    // Init rowData column keys accordingly based on isShowForm state
-    let initRowData = fetchedData[0];
-    if (isShowForm === 'create') {
-        initRowData = Object.fromEntries(Object.entries(fetchedData[0] || {}).filter( ([key,val]) => Object.keys(inputTypeCreate).includes(key)));
-    }
-    else if (isShowForm === 'update') {
-        initRowData = Object.fromEntries(Object.entries(fetchedData[0] || {}).filter( ([key,val]) => Object.keys(inputTypeUpdate).includes(key)));
-    }
-
-
-    // A state that controls rowData when form input changes
-    const [rowData, setRowData] = useState<TRowData>(initRowData);
-
-
-    const handleShowFormClick = (action: TFormMode) => (e: React.MouseEvent<HTMLButtonElement>) => {
-        setIsShowForm(action);
-    };
-
-
-    const handleUpdateClick = (d: TRowData) => (e: React.MouseEvent<HTMLButtonElement>) => {
-        setRowData(d);
-        setIsShowForm('update');
-    };
-
+    const initialState  = { message: null, errors: {} };
+    const [state, dispatch] = useFormState(deleteAction, initialState);
 
     const handleDeleteClick = (e: React.MouseEvent<HTMLButtonElement>) => {
 
@@ -66,60 +35,6 @@ export default function Main( {fetchedData, inputTypeCreate, inputTypeUpdate, cr
         };
         return; //proceed to submit form
     };
-
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // set row data dynamically when input changes
-        setRowData(
-            {...rowData, [e.target.name]: e.target.value}
-        );
-    };
-
-    const handleDynamicChange = (selectPrimaryKey: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-        // creating nested object based on primaryKey hierachy list
-        let selectOptionDict: {[key: string]: any} = {};
-        selectOptionData?.forEach(row => {
-            const hierachyList = selectPrimaryKeyList.map(column => {
-                return getString(row[column]);
-            });
-            createNestedObject(selectOptionDict, hierachyList, row);
-        });
-
-        // this only applies to 'select' type, where an additional primaryKey will be changed at the same time
-        if (e.target.value) {
-            setRowData(
-                {...rowData, [e.target.name]: e.target.value, [selectPrimaryKey]: selectOptionDict[e.target.value][selectPrimaryKey]}
-                // {...rowData, [e.target.name]: e.target.value, [selectPrimaryKey]: accessNestedObject( selectOptionDict, [e.target.value, selectPrimaryKey] )}
-            );
-        };
-    };
-
-
-    const handleSubmitClick = (action: TFormMode) => (e: React.MouseEvent<HTMLButtonElement>) => {
-
-        // set confirmMsg
-        let confirmMsg = 'Confirm?';
-        if (action === 'create') {
-            confirmMsg = 'Are you sure to add this new item?';
-        }
-        
-        else if (action === 'update') {
-            confirmMsg = 'Are you sure to update this item?'
-        }
-
-        //if any button other than submit is clicked, preventDefault submit routing!
-        if (!window.confirm(confirmMsg)) {
-            e.preventDefault();
-            return;
-        };
-        // onSetIsShowForm(null); //proceed to submit form
-    };
-
-
-    const handleCancelClick = () => {
-        setIsShowForm(null);
-    };
-
 
     // Filter columns based on columnList provided
     const filteredData = fetchedData.map((row) => {
@@ -149,22 +64,16 @@ export default function Main( {fetchedData, inputTypeCreate, inputTypeUpdate, cr
             //use each table row UID as key value 
             <tr key={fetchedData[i][primaryKey].toString()}>
                 {tableData}
-                <td>
-                    <button className="btn-primary p-1 mb-0.5" onClick={handleUpdateClick(fetchedData[i])}>update</button>
-                    <br/>
+                <td className="flex gap-1 justify-center align-middle">
+                    <Link className="no-underline text-white dark:text-emerald-400 hover:text-white hover:dark:text-emerald-400" href={`/box_type/${fetchedData[i][primaryKey]}/update`}>
+                        <button className="btn-primary w-min p-1">
+                            <PencilIcon className="h-5" />
+                        </button>
+                    </Link>
 
-                    <form action={ async (formData) => {
-                                const result = await deleteAction(formData);
-                                if (result?.error) {
-                                    toast.error(result.error);
-                                }
-                                else if (result?.success) {
-                                    toast.success(result.success);
-                                }
-                            }
-                        }>
+                    <form action={dispatch}>
                         <input type="hidden" name={primaryKey} value={fetchedData[i][primaryKey].toString()} required readOnly formNoValidate/>
-                        <SubmitButton buttonClass="btn-primary p-1 mb-0.5" buttonTitle="delete" onButtonClick={handleDeleteClick} submitingButtonTitle="deleting" />
+                        <SubmitButton buttonClass="btn-primary w-min p-1" buttonTitle={<TrashIcon className="h-5" />} onButtonClick={handleDeleteClick} submitingButtonTitle={<TrashIcon className="h-5" />} />
                     </form>
                 </td>
             </tr>
@@ -172,12 +81,21 @@ export default function Main( {fetchedData, inputTypeCreate, inputTypeUpdate, cr
 
     });
 
+    if (state.message && state.error) {
+        toast.error(state.message);
+    }
+    else if (state.message) {
+        toast.success(state.message);
+    }
+
 
     return (
         <>
-            <button className="btn-primary" onClick={handleShowFormClick('create')}>{createButtonTitle}</button>
-            <Form formClassName={isShowForm === 'create' ? 'form-popout form-popout-show': 'form-popout form-popout-hide'} formTitle={createFormTitle} inputType={inputTypeCreate} rowData={rowData} selectOptionData={selectOptionData} onInputChange={handleInputChange} onDynamicChange={handleDynamicChange(selectPrimaryKey)} onSubmitClick={handleSubmitClick('create')} onCancelClick={handleCancelClick} formAction={createAction} />
-            <Form formClassName={isShowForm === 'update' ? 'form-popout form-popout-show': 'form-popout form-popout-hide'} formTitle={updateFormTitle} inputType={inputTypeUpdate} rowData={rowData} selectOptionData={selectOptionData} onInputChange={handleInputChange} onDynamicChange={handleDynamicChange(selectPrimaryKey)} onSubmitClick={handleSubmitClick('update')} onCancelClick={handleCancelClick} formAction={updateAction} />
+            <Link className="no-underline text-white dark:text-emerald-400 hover:text-white hover:dark:text-emerald-400" href="/box_type/create">
+                <button className="btn-primary w-min">
+                    {createButtonTitle}
+                </button>
+            </Link>
 
             <table>
                 <thead>

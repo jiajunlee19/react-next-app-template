@@ -133,6 +133,7 @@ export type TReadBoxTypeSchema = z.infer<typeof readBoxTypeSchema>;
 export const readBoxTypeSchema = createBoxTypeSchema.partial();
 
 export const updateBoxTypeSchema = createBoxTypeSchema.omit({
+    box_part_number: true,
     box_type_createdAt: true,
 });
 

@@ -1,36 +1,58 @@
-import React, { useRef } from "react";
+"use client"
+
+import React, { useEffect, useRef } from "react";
 import SubmitButton from "@/app/_components/basic/button_submit";
-import { type TInputType, type TRowData } from "@/app/_libs/types";
+import { type TInputType, type TRowData, type State, type StatePromise, type TFormMode } from "@/app/_libs/types";
 import { toast } from "react-hot-toast";
 import { getString } from "@/app/_libs/toString_handler";
+import { useFormState } from "react-dom";
+import { redirect } from "next/navigation";
+import Link from "next/link";
 
 type FormProps = {
-    formClassName: string,
     formTitle: string,
     inputType: TInputType,
-    rowData: TRowData,
-    selectOptionData: TRowData[],
-    onInputChange: React.ChangeEventHandler, 
-    onDynamicChange: React.ChangeEventHandler, 
-    onSubmitClick: React.MouseEventHandler, 
-    onCancelClick: React.MouseEventHandler, 
-    formAction: (formData: FormData) => Promise<{success?: string, error?: string}>, 
+    rowData: TRowData | null,
+    selectOptionData: TRowData[] | null,
+    action: TFormMode,
+    formAction: (prevState: State, formData: FormData) => StatePromise, 
+    redirectLink: string,
 };
 
-export default function Form( {formClassName, formTitle, inputType, rowData, selectOptionData, onInputChange, onDynamicChange, onSubmitClick, onCancelClick, formAction}: FormProps ) {
+export default function Form( {formTitle, inputType, rowData, selectOptionData, action, formAction, redirectLink}: FormProps ) {
 
-    // declare formRef, we can perform form-related action based on this later
+    const initialState  = { message: null, errors: {} };
+    const [state, dispatch] = useFormState(formAction, initialState);
+
     const formRef = useRef<HTMLFormElement>(null);
 
+    const handleSubmitClick = (action: TFormMode) => (e: React.MouseEvent<HTMLButtonElement>) => {
+
+        // set confirmMsg
+        let confirmMsg = 'Confirm?';
+        if (action === 'create') {
+            confirmMsg = 'Are you sure to add this new item?';
+        }
+        
+        else if (action === 'update') {
+            confirmMsg = 'Are you sure to update this item?'
+        }
+
+        //if any button other than submit is clicked, preventDefault submit routing!
+        if (!window.confirm(confirmMsg)) {
+            e.preventDefault();
+            return;
+        };
+    };
 
     // Generate select options
-    function generateSelectOption(key: string, selectOptionData: TRowData[]): React.JSX.Element[] {
+    function generateSelectOption(key: string, selectOptionData: TRowData[] | null) {
 
         // map each row into select option
-        const selectOption = selectOptionData.map((row) => {
+        const selectOption = selectOptionData?.map((row) => {
 
             return (
-                <option key={getString(row?.[key])} value={getString(row?.[key])}>{getString(row?.[key])}</option>
+                <option key={getString(row?.[key])} defaultValue={getString(row?.[key])}>{getString(row?.[key])}</option>
             );
         });
 
@@ -39,62 +61,87 @@ export default function Form( {formClassName, formTitle, inputType, rowData, sel
 
 
     // Generate form inputs
-    function generateFormInput(inputType: TInputType, rowData: TRowData, selectOptionData: TRowData[]) {
+    function generateFormInput(inputType: TInputType, rowData: TRowData | null, selectOptionData: TRowData[] | null) {
 
         const inputs = Object.keys(inputType).map(key => {
 
             if (inputType[key] === 'hidden') {
                 return (
                     <React.Fragment key={key}>
-                        <input name={key} className="input" type="text" placeholder="placeholder" value={getString(rowData?.[key])} onChange={onInputChange} required readOnly hidden formNoValidate />
+                        <input name={key} className="input" type="text" placeholder="placeholder" defaultValue={getString(rowData?.[key])} required readOnly hidden formNoValidate />
                     </React.Fragment>
                 );
             }
-
+    
             else if (inputType[key] === 'readonly') {
                 return (
                     <React.Fragment key={key}>
                         <label className="label" htmlFor={key}>{key}: </label>
-                        <input name={key} className="input" type="text" placeholder="placeholder" value={getString(rowData?.[key])} onChange={onInputChange} required readOnly formNoValidate />
+                        <input name={key} className="input" type="text" placeholder="placeholder" defaultValue={getString(rowData?.[key])} required readOnly formNoValidate />
+                        {state.error?.[key] && 
+                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] font-semibold text-red-500 dark:text-red-500">
+                            {state.error[key][0]}
+                        </p>
+                        }
                     </React.Fragment>
                 );
             }
-
+    
             else if (inputType[key] === 'select') {
                 return (
                     <React.Fragment key={key}>
                         <label className="label" htmlFor={key}>{key}: </label>
-                        <select name={key} className="input" onChange={onDynamicChange} required>
-                            <option value=""></option>
+                        <select name={key} className="input" defaultValue="" required>
+                            <option value="select an item" disabled></option>
                             {generateSelectOption(key, selectOptionData)}
                         </select>
+                        {state.error?.[key] && 
+                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] font-semibold text-red-500 dark:text-red-500">
+                            {state.error[key][0]}
+                        </p>
+                        }
                     </React.Fragment>
                 );
             }
-
+    
             else if (inputType[key] === 'dynamic') {
                 return (
                     <React.Fragment key={key}>
                         <label className="label" htmlFor={key}>{key}: </label>
-                        <input name={key} className="input" type="text" placeholder="placeholder" value={getString(rowData?.[key])} onChange={onInputChange} required readOnly formNoValidate />
+                        <input name={key} className="input" type="text" placeholder="placeholder" defaultValue={getString(rowData?.[key])} required readOnly formNoValidate />
+                        {state.error?.[key] && 
+                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] font-semibold text-red-500 dark:text-red-500">
+                            {state.error[key][0]}
+                        </p>
+                        }
                     </React.Fragment>
                 );
             }
-
+    
             else if (inputType[key] === 'number') {
                 return (
                     <React.Fragment key={key}>
                         <label className="label" htmlFor={key}>{key}: </label>
-                        <input name={key} className="input" type="number" step="any" onChange={onInputChange} required formNoValidate />
+                        <input name={key} className="input" type="number" step="any" required formNoValidate />
+                        {state.error?.[key] && 
+                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] font-semibold text-red-500 dark:text-red-500">
+                            {state.error[key][0]}
+                        </p>
+                        }
                     </React.Fragment>
                 );
             }
-
+    
             else {
                 return (
                     <React.Fragment key={key}>
                         <label className="label" htmlFor={key}>{key}: </label>
-                        <input name={key} className="input" type={inputType[key]} onChange={onInputChange} required formNoValidate />
+                        <input name={key} className="input" type={inputType[key]} required formNoValidate />
+                        {state.error?.[key] && 
+                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] font-semibold text-red-500 dark:text-red-500">
+                            {state.error[key][0]}
+                        </p>
+                        }
                     </React.Fragment>
                 );
             }
@@ -105,26 +152,25 @@ export default function Form( {formClassName, formTitle, inputType, rowData, sel
         );
     };
 
+    if (state.message && state.error) {
+        toast.error(state.message);
+    }
+    else if (state.message) {
+        toast.success(state.message);
+        redirect(redirectLink);
+    }
 
     return (
-        <div className={formClassName}>
-            <form ref={formRef} className="my-[2%] mx-[2%]" action={ async (formData) => {
-                        const result = await formAction(formData);
-                        if (result?.error) {
-                            toast.error(result.error);
-                        }
-                        else if (result?.success) {
-                            toast.success(result.success);
-                        }
-                        formRef.current?.reset();
-                    }
-                }>
-                <h2>{formTitle}</h2>
-                {generateFormInput(inputType, rowData, selectOptionData)}
-                <SubmitButton buttonClass="btn-ok w-40 mr-4 mt-4" buttonTitle="Submit" onButtonClick={onSubmitClick} submitingButtonTitle="Submitting" />
-                <button type="button" className="btn-cancel w-40 mr-4 mt-4" onClick={onCancelClick}>Close</button>
-                <button type="button" className="btn-cancel w-40 mr-4 mt-4" onClick={() => formRef.current?.reset()}>Reset</button>
-            </form>
-        </div>
+        <form ref={formRef} className="my-[2%] mx-[2%]" action={dispatch}>
+            <h2>{formTitle}</h2>
+            {generateFormInput(inputType, rowData, selectOptionData)}
+            <SubmitButton buttonClass="btn-ok w-40 mr-4 mt-10" buttonTitle="Submit" onButtonClick={handleSubmitClick(action)} submitingButtonTitle="Submitting" />
+            <Link className="no-underline text-black dark:text-white hover:text-black hover:dark:text-white" href={redirectLink}>
+                <button type="button" className="btn-cancel w-40 mr-4 mt-4">
+                    Close
+                </button>
+            </Link>
+            <button type="button" className="btn-cancel w-40 mr-4 mt-4" onClick={() => formRef.current?.reset()}>Reset</button>
+        </form>
     );
 };

@@ -47,7 +47,7 @@ export default async function Home() {
   return (
     <>
       <h1>{pageTitle}</h1>
-      <Main fetchedData={fetchedData} inputTypeCreate={inputTypeCreate} inputTypeUpdate={inputTypeUpdate} createButtonTitle={createButtonTitle} createFormTitle={createFormTitle} updateFormTitle={updateFormTitle} columnListDisplay={columnListDisplay} primaryKey={primaryKey} selectOptionData={selectOptionData} selectPrimaryKey={selectPrimaryKey} selectPrimaryKeyList={selectPrimaryKeyList} createAction={createAction} updateAction={updateAction} deleteAction={deleteAction} />
+      <Main fetchedData={fetchedData} createButtonTitle={createButtonTitle} columnListDisplay={columnListDisplay} primaryKey={primaryKey} deleteAction={deleteAction} />
     </>
   )
 }

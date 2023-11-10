@@ -1,10 +1,11 @@
-import {useFormStatus} from 'react-dom'
+import {useFormStatus} from 'react-dom';
+import React from 'react';
 
 type SubmitButtonProps = {
     buttonClass: string,
-    buttonTitle: string,
+    buttonTitle: string | React.JSX.Element,
     onButtonClick: React.MouseEventHandler,
-    submitingButtonTitle: string,
+    submitingButtonTitle: string | React.JSX.Element,
 };
 
 export default function SubmitButton( {buttonClass, buttonTitle, onButtonClick, submitingButtonTitle}: SubmitButtonProps ) {
