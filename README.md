@@ -1,7 +1,12 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Intro
+This is a template repo App built on top of [Next.js](https://nextjs.org/) by [jiajunlee](https://github.com/jiajunlee19). 
+<br>
+Feel free to clone and customize accordingly.
+<br>
+Most important concepts used in this project are described in below sections.
+<br>
 
-## Getting Started
-
+# Getting Started
 First, run the development server:
 
 ```bash
@@ -16,24 +21,31 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+<br>
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+# Metadata
+1. In the main [layout.tsx](/app/layout.tsx), metadata title template and default are defined.
+    ```
+    import type { Metadata } from 'next';
 
-## Learn More
+    export const metadata: Metadata = {
+        title: {
+            template: '%s | Template App',
+            default: 'Template App',
+        },
+        description: 'Developed by jiajunlee',
+        metadataBase: new URL('https://github.com/jiajunlee19'),
+    };
+    ```
+2. Each page.tsx can have its own metadata title, their title will be replacing `%s` defined in main [layout.tsx](/app/layout.tsx).
+    ```
+    // this page title will be "Home | Template App"
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+    export const metadata: Metadata = {
+        title: 'Home',
+        description: 'Developed by jiajunlee',
+    };
+    ```
 
 <br>
 
@@ -86,7 +98,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 <br>
 
 # Improving Accessibility
-1. In [form.tsx](./app/_components/basic/form.tsx), aria relations are established to politely notify user when the error is updated.
+1. In [form.tsx](/app/_components/basic/form.tsx), aria relations are established to politely notify user when the error is updated.
     ```
     <input aria-describedby={key+"-error"} ... />
     <p id={key+"-error"} aria-live="polite" ... ">
@@ -107,7 +119,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 # Navigating between pages
 1. `next/link` is used to navigate between pages without rerendering the whole page.
-2. Conditionally render link color to indicate what page the user is currently viewing in [header.tsx](./app/_components/header.tsx).
+2. Conditionally render link color to indicate what page the user is currently viewing in [header.tsx](/app/_components/header.tsx).
     ```
     import Link from 'next/link';
     import { usePathname } from 'next/navigation';
@@ -125,11 +137,11 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
     </Link>
     );
     ```
-3. Similarly, [breadcrumbs.tsx](./app/_components/basic/breadcrumbs.tsx) is used to conditional provide navbar on top of subpages.
+3. Similarly, [breadcrumbs.tsx](/app/_components/basic/breadcrumbs.tsx) is used to conditional provide navbar on top of subpages.
     ```
     <main-page-label> / <current-page-label>
     ```
-    - Example can be found in [/box_type/create/page.tsx](./app/\(pages\)/box_type/create/page.tsx).
+    - Example can be found in [/box_type/create/page.tsx](/app/\(pages\)/box_type/create/page.tsx).
 
 <br>
 
@@ -137,12 +149,12 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 1. Initial placeholder-data to be loaded is defined in [data_placeholder.js](app/_scripts/data_placeholder.js).
 2. Seed functions are defined in [seed.ts](app/_scripts/seed.ts). 
     - `Promise.all` is used to initiate all promises and receive all responses at the same time in single transaction.
-3. In [package.json](package.json), `"seed": " dotenv -e .env -- npx esrun ./app/_script/seed.ts"` is included in scripts.
+3. In [package.json](package.json), `"seed": " dotenv -e .env -- npx esrun /app/_script/seed.ts"` is included in scripts.
     ```
     scripts: {
         ... ,
 
-        "seed": " dotenv -e .env -- npx esrun ./app/_script/seed.ts"
+        "seed": " dotenv -e .env -- npx esrun /app/_script/seed.ts"
     }
     ```
 4. Run `npm run seed`
@@ -161,9 +173,9 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 # Data fetching with Server Action
 1. No API layer is required, server actions can directly query database from server-side.
-2. See example on one of the server action [/_actions/box_type.ts](./app/_actions/box_type.ts).
+2. See example on one of the server action [/_actions/box_type.ts](/app/_actions/box_type.ts).
     - CRUD async/await functions are used to execute CRUD operations on database
-    - [Prisma](./prisma/prisma.ts) is used as an ORM via `import prisma from '@/prisma/prisma';`
+    - [Prisma](/prisma/prisma.ts) is used as an ORM via `import prisma from '@/prisma/prisma';`
     - `revalidatePath` is used to remove the stored cache and force-fetch the latest data after the CRUD operation.
 3. For actions requiring dynamic rendering, `noStore()` is specified to prevent the response from being cached.
     ```
@@ -179,7 +191,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 <br>
 
 # Server Action Form & Error Handling
-1. See example of server action [/_actions/box_type.ts](./app/_actions/box_type.ts) , flatten field errors are being returned.
+1. See example of server action [/_actions/box_type.ts](/app/_actions/box_type.ts) , flatten field errors are being returned.
     ```
         ...
 
@@ -188,7 +200,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
         message: "Invalid input provided, failed to create box_type!"
     };
     ```
-2. In [form.tsx](./app//_components//basic//form.tsx), each form field is handled with `state.error` with the help of `useFormState`.
+2. In [form.tsx](/app/_components//basic//form.tsx), each form field is handled with `state.error` with the help of `useFormState`.
     ```
     import { useFormState } from "react-dom";
 
@@ -208,7 +220,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
         ...
     </form>
     ```
-3. In [button_submit.tsx](./app/_components/basic/button_submit.tsx), `useFormStatus` is used to conditionally disable the submit button during form submission.
+3. In [button_submit.tsx](/app/_components/basic/button_submit.tsx), `useFormStatus` is used to conditionally disable the submit button during form submission.
     ```
     import {useFormStatus} from 'react-dom';
     ...
@@ -262,7 +274,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
         <input ... defaultValue={params.get('query')?.toString()} />
     ...
     ```
-    - Example can be found in [/restricted/updateRole/component.tsx](./app/\(pages\)/restricted/updateRole/component.tsx).
+    - Example can be found in [/restricted/updateRole/component.tsx](/app/\(pages\)/restricted/updateRole/component.tsx).
 
 <br>
 
@@ -306,8 +318,8 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 <br>
 
 # Authentication & Authorization
-1. Authentication is enabled with nextAuth, options are defined in [nextAuth_options.ts](./app/_libs/nextAuth_options.ts).
-2. To use nextAuth, [layout.tsx](./app/layout.tsx) is wrapped with [auth_provider](./app/_components/auth_provider.tsx).
+1. Authentication is enabled with nextAuth, options are defined in [nextAuth_options.ts](/app/_libs/nextAuth_options.ts).
+2. To use nextAuth, [layout.tsx](/app/layout.tsx) is wrapped with [auth_provider](/app/_components/auth_provider.tsx).
     ```
     import AuthProvider from '@/app/_components/auth_provider'
     import { getServerSession } from "next-auth/next"
@@ -337,11 +349,27 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
         )
     }
     ```
-5. Sign Up Page is defined in [/auth/signUp/page.tsx](./app/\(pages\)/auth/signUp/page.tsx).
-6. Sign In Page is defined in [/auth/signIn/page.tsx](./app/\(pages\)/auth/signIn/page.tsx).
-7. Sign Out Page is defined in [/auth/signOut/page.tsx](./app/\(pages\)/auth/signOut/page.tsx).
+5. Sign Up Page is defined in [/auth/signUp/page.tsx](/app/\(pages\)/auth/signUp/page.tsx).
+6. Sign In Page is defined in [/auth/signIn/page.tsx](/app/\(pages\)/auth/signIn/page.tsx).
+7. Sign Out Page is defined in [/auth/signOut/page.tsx](/app/\(pages\)/auth/signOut/page.tsx).
 8. New user are defaulted as `role="user"`.
-9. User's role can be updated in [restricted/updateRole/page.tsx](./app/\(pages\)/restricted/updateRole/page.tsx), which can only be accessed by `role="boss"` as defined in [middleware.ts](middleware.ts).
+9. User's role can be updated in [restricted/updateRole/page.tsx](/app/\(pages\)/restricted/updateRole/page.tsx), which can only be accessed by `role="boss"` as defined in [middleware.ts](middleware.ts).
 
+<br>
+
+# Learn More
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+
+<br>
+
+# Deploy on Vercel
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
 
 <br>
