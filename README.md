@@ -240,6 +240,17 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 <br>
 
+# Debouncing Technique
+1. We do not want to send query the database on every keystroke, to save database resource and optimize performance.
+2. Deboucing technique is a good practice that limits the rate at which a function can fire.
+3. `use-debounce` is used here, the function will only fire once the user has stop typing for a specific duration.
+    ```
+    // wait until user stop typing for 1000milliseconds/1second, then fire the function
+    <input ... onChange={useDebouncedCallback(handleInputChange, 1000)} />
+    ```
+
+<br>
+
 # Streaming / Partial-Rendering
 1. Without streaming, the page is as fast as your slowest data load.
     - Simulate slow data loading with `await new Promise((resolve) => setTimeout(resolve, 3000));`.
@@ -259,7 +270,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 <br>
 
-# Search and Pagination
+# Pagination
 1. Page menu is generated with `generatePagination` defined in [pagination.ts](/app/_libs/pagination.ts)
     - If totalPage <= 7, show [1, 2, 3, 4, 5, 6, 7]
     - If totalPage > 7 and currentPage is within first 3 page, show like [1, 2, 3, ..., 9, 10]
