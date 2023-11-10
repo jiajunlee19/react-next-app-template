@@ -85,6 +85,26 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 <br>
 
+# Improving Accessibility
+1. In [form.tsx](./app/_components/basic/form.tsx), aria relations are established to politely notify user when the error is updated.
+    ```
+    <input aria-describedby={key+"-error"} ... />
+    <p id={key+"-error"} aria-live="polite" ... ">
+        ...
+    </p>
+    ```
+2. In [package.json](package.json), `"lint": "next lint"`` is added to help catching accessibility issues.
+    ```
+    "scripts": {
+        ...
+
+        "lint": "next lint"
+    },
+    ```
+3. Run `npm run lint` in terminal to check if there's any accessibility issues to be fixed.
+
+<br>
+
 # Navigating between pages
 1. `next/link` is used to navigate between pages without rerendering the whole page.
 2. Conditionally render link color to indicate what page the user is currently viewing in [header.tsx](./app/_components/header.tsx).
