@@ -1,4 +1,5 @@
-import { readBoxType, createBoxType, updateBoxType, deleteBoxType } from "@/app/_actions/box_type";
+import { readBoxType, createBoxType, updateBoxType, deleteBoxType, readBoxTypeTotalPage, readBoxTypeByPage } from "@/app/_actions/box_type";
+import Pagination from "@/app/_components/basic/pagination";
 import Main from "@/app/_components/main";
 import { type TInputType, type TRowData } from '@/app/_libs/types';
 import { type TReadBoxTypeSchema } from '@/app/_libs/zod_server';
@@ -9,11 +10,15 @@ export const metadata: Metadata = {
     description: 'Developed by jiajunlee',
 };
 
-export default async function Home() {
+export default async function BoxType({ searchParams }: { searchParams?: { itemsPerPage?: string, currentPage?: string } }) {
 
+  const itemsPerPage = Number(searchParams?.itemsPerPage) || 10;
+  const currentPage = Number(searchParams?.currentPage) || 1;
+  const totalPage = await readBoxTypeTotalPage(itemsPerPage);
+  
   const pageTitle = 'Manage Box Type';
 
-  const fetchedData: TReadBoxTypeSchema[] = await readBoxType();
+  const fetchedData: TReadBoxTypeSchema[] = await readBoxTypeByPage(itemsPerPage, currentPage);
 
   const inputTypeCreate: TInputType = {
     'box_part_number': 'text',
@@ -48,6 +53,7 @@ export default async function Home() {
     <>
       <h1>{pageTitle}</h1>
       <Main fetchedData={fetchedData} createButtonTitle={createButtonTitle} columnListDisplay={columnListDisplay} primaryKey={primaryKey} deleteAction={deleteAction} />
+      <Pagination totalPage={totalPage} />
     </>
   )
 }

@@ -15,6 +15,77 @@ const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 const schema = 'packing';
 const table = 'box_type';
 
+export async function readBoxTypeTotalPage(itemsPerPage: number) {
+    noStore();
+    let parsedForm;
+    try {
+        if (parsedEnv.DB_TYPE === 'PRISMA') {
+            const result = await prisma.boxType.findMany({
+
+            });
+            parsedForm = readBoxTypeSchema.array().safeParse(result);
+        }
+        else {
+            let pool = await sql.connect(sqlConfig);
+            const result = await pool.request()
+                            .input('schema', sql.VarChar, schema)
+                            .input('table', sql.VarChar, table)
+                            .query`SELECT box_type_uid, box_part_number, box_max_tray, box_type_createdAt, box_type_updatedAt 
+                                    FROM "@schema"."@table";
+                            `;
+            parsedForm = readBoxTypeSchema.array().safeParse(result.recordset);
+        }
+
+        if (!parsedForm.success) {
+            throw new Error(parsedForm.error.message)
+        };
+    } 
+    catch (err) {
+        throw new Error(getErrorMessage(err))
+    }
+    const totalPage = Math.ceil(parsedForm.data.length / itemsPerPage);
+    return totalPage
+};
+
+export async function readBoxTypeByPage(itemsPerPage: number, currentPage: number) {
+    noStore();
+    const OFFSET = (currentPage - 1) * itemsPerPage;
+    let parsedForm;
+    try {
+        if (parsedEnv.DB_TYPE === 'PRISMA') {
+            const result = await prisma.boxType.findMany({
+                skip: OFFSET,
+                take: itemsPerPage,
+            });
+            parsedForm = readBoxTypeSchema.array().safeParse(result);
+        }
+        else {
+            let pool = await sql.connect(sqlConfig);
+            const result = await pool.request()
+                            .input('schema', sql.VarChar, schema)
+                            .input('table', sql.VarChar, table)
+                            .input('offset', sql.Int, OFFSET)
+                            .input('limit', sql.Int, itemsPerPage)
+                            .query`SELECT box_type_uid, box_part_number, box_max_tray, box_type_createdAt, box_type_updatedAt 
+                                    FROM "@schema"."@table"
+                                    OFFSET @offset ROWS
+                                    FETCH NEXT @limit ROWS ONLY;
+                            `;
+            parsedForm = readBoxTypeSchema.array().safeParse(result.recordset);
+        }
+
+        if (!parsedForm.success) {
+            throw new Error(parsedForm.error.message)
+        };
+    } 
+    catch (err) {
+        throw new Error(getErrorMessage(err))
+    }
+
+    revalidatePath('/box_type');
+    return parsedForm.data
+};
+
 export async function readBoxType() {
     let parsedForm;
     try {
@@ -30,7 +101,7 @@ export async function readBoxType() {
                             .input('schema', sql.VarChar, schema)
                             .input('table', sql.VarChar, table)
                             .query`SELECT box_type_uid, box_part_number, box_max_tray, box_type_createdAt, box_type_updatedAt 
-                                    FROM "@schema"."@table"
+                                    FROM "@schema"."@table";
                             `;
             parsedForm = readBoxTypeSchema.array().safeParse(result.recordset);
         }
