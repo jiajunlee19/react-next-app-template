@@ -49,6 +49,14 @@ export async function readBoxTypeTotalPage(itemsPerPage: number) {
 
 export async function readBoxTypeByPage(itemsPerPage: number, currentPage: number) {
     noStore();
+
+    // <dev only> 
+    // Artifically delay the response, to view the Suspense fallback skeleton
+    // console.log("waiting 3sec")
+    // await new Promise((resolve) => setTimeout(resolve, 3000));
+    // console.log("ok")
+    // <dev only>
+
     const OFFSET = (currentPage - 1) * itemsPerPage;
     let parsedForm;
     try {
