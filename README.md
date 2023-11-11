@@ -315,11 +315,29 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 <br>
 
 # Pagination
-1. Page menu is generated with `generatePagination` defined in [pagination.ts](/app/_libs/pagination.ts)
+1. Page list is generated with `generatePagination` defined in [pagination.ts](/app/_libs/pagination.ts)
     - If totalPage <= 7, show [1, 2, 3, 4, 5, 6, 7]
     - If totalPage > 7 and currentPage is within first 3 page, show like [1, 2, 3, ..., 9, 10]
     - If totalPage > 7 and currentPage is within the last 3 pages, show like [1, 2, ..., 8, 9, 10]
     - If totalPage > 7 and currentPage is somewhere in the middle, show like [1, ..., 4, 5, 6, ..., 10]
+2. Page nav component is generated in [pagination.tsx](/app/_components/basic/pagination.tsx).
+3. Pagination is achieved by getting `currentPage` from searchParams and `totalPage` from server action.
+    ```
+    export default async function BoxType({ searchParams }: { searchParams?: { currentPage?: string } }) {
+        const currentPage = Number(searchParams?.currentPage) || 1;
+        const totalPage = await readBoxTypeTotalPage();
+
+        ...
+
+        return (
+            <>
+                ...
+                <Pagination totalPage={totalPage} />
+            </>
+        );
+    };
+    ```
+
 <br>
 
 # Authentication & Authorization
