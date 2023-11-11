@@ -228,10 +228,10 @@ export async function updateBoxType(prevState: State, formData: FormData): State
 };
 
 
-export async function deleteBoxType(prevState: State, formData: FormData): StatePromise {
+export async function deleteBoxType(box_type_uid: string): StatePromise {
 
     const parsedForm = deleteBoxTypeSchema.safeParse({
-        box_type_uid: formData.get('box_type_uid'),
+        box_type_uid: box_type_uid,
     });
 
     if (!parsedForm.success) {
