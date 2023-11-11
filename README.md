@@ -301,7 +301,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
     - The page will only loads when all required data in the page is loaded.
 2. Streaming is implemented to prevent slow data requests from blocking your whole page
     - [loading.tsx](/app/loading.tsx) is built on top of Suspense, which fallback to a skeleton UI while page content is loading.
-    - To be more granular to stream specific components, the specific components can be wrapped with Suspense.
+    - To be more granular to stream specific components, the specific components can be wrapped with Suspense fallback to [skeletons.tsx](/app/_components/basic/skeletons.tsx).
         ```
         import { Suspense } from 'react';
         ...
