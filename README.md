@@ -1,10 +1,7 @@
 # Intro
-This is a template react-next-all built on top of [Next.js](https://nextjs.org/) by [jiajunlee](https://github.com/jiajunlee19). 
-<br>
-Feel free to clone the template repo and customize accordingly.
-<br>
-Most important concepts used in this project are described in below sections.
-<br>
+- This is a template react-next-all built on top of [Next.js](https://nextjs.org/) by [jiajunlee](https://github.com/jiajunlee19). 
+- Feel free to clone the template repo and customize accordingly.
+- Most important concepts used in this project are described in below sections.
 
 # Getting Started
 1. Duplicate [.env.template](.env.template) into [.env](.env), and set environment variables there.
@@ -43,7 +40,7 @@ Most important concepts used in this project are described in below sections.
 <br>
 
 # Tailwind CSS Styling
-1. Tailwind configs are setup in [tailwin.config.ts](/tailwind.config.ts)
+1. Tailwind configs are setup in [tailwind.config.ts](/tailwind.config.ts)
     - To let tailwind knows where to apply tailwind styling, App directory is defined in contents.
         ```js
         content: [
