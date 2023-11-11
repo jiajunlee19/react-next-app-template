@@ -1,7 +1,7 @@
-import { type TRowData, type State, type StatePromise } from "@/app/_libs/types";
+import { type TRowData, type StatePromise } from "@/app/_libs/types";
 import { getString } from "@/app/_libs/toString_handler";
-import UpdateButton from "./basic/button_update";
-import DeleteButton from "./basic/button_delete";
+import UpdateButton from "@/app/_components/basic/button_update";
+import DeleteButton from "@/app/_components/basic/button_delete";
 
 type DataTableProps = {
     itemsPerPage: number,
