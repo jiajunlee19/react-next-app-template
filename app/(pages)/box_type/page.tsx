@@ -18,9 +18,9 @@ export default async function BoxType({ searchParams }: { searchParams?: { items
   
   const pageTitle = 'Manage Box Type';
 
-  const fetchedData: TReadBoxTypeSchema[] = await readBoxTypeByPage(itemsPerPage, currentPage);
-
   const createButtonTitle = 'Create New Box Type';
+
+  const readAction = readBoxTypeByPage;
 
   const columnListDisplay: (keyof TReadBoxTypeSchema)[] = ['box_type_uid', 'box_part_number', 'box_max_tray'];
   
@@ -39,7 +39,7 @@ export default async function BoxType({ searchParams }: { searchParams?: { items
               {createButtonTitle}
           </button>
       </Link>
-      <DataTable fetchedData={fetchedData} columnListDisplay={columnListDisplay} primaryKey={primaryKey} hrefUpdate={hrefUpdate} deleteAction={deleteAction} />
+      <DataTable itemsPerPage={itemsPerPage} currentPage={currentPage} readAction={readAction} columnListDisplay={columnListDisplay} primaryKey={primaryKey} hrefUpdate={hrefUpdate} deleteAction={deleteAction} />
       <Pagination totalPage={totalPage} />
     </>
   )

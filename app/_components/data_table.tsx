@@ -1,20 +1,22 @@
-'use client'
-
 import { type TRowData, type State, type StatePromise } from "@/app/_libs/types";
 import { getString } from "@/app/_libs/toString_handler";
 import UpdateButton from "./basic/button_update";
 import DeleteButton from "./basic/button_delete";
 
 type DataTableProps = {
-    fetchedData: TRowData[],
+    itemsPerPage: number,
+    currentPage: number,
+    readAction: (itemsPerPage: number, currentPage: number) => Promise<TRowData[]>
     columnListDisplay: string[],
     hrefUpdate: string,
     primaryKey: string,
     deleteAction: (deleteId: string) => StatePromise, 
 };
 
-export default function DataTable( {fetchedData, columnListDisplay, primaryKey, hrefUpdate, deleteAction}: DataTableProps ) {
+export default async function DataTable( { itemsPerPage, currentPage, readAction, columnListDisplay, primaryKey, hrefUpdate, deleteAction }: DataTableProps ) {
     
+    const fetchedData = await readAction(itemsPerPage, currentPage);
+
     // Filter columns based on columnList provided
     const filteredData = fetchedData.map((row) => {
         return Object.fromEntries(Object.entries(row).filter( ([key,val]) => columnListDisplay.includes(key)));
