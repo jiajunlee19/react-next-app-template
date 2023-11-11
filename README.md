@@ -1,31 +1,25 @@
 # Intro
-This is a template repo App built on top of [Next.js](https://nextjs.org/) by [jiajunlee](https://github.com/jiajunlee19). 
+This is a template react-next-all built on top of [Next.js](https://nextjs.org/) by [jiajunlee](https://github.com/jiajunlee19). 
 <br>
-Feel free to clone and customize accordingly.
+Feel free to clone the template repo and customize accordingly.
 <br>
 Most important concepts used in this project are described in below sections.
 <br>
 
 # Getting Started
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Duplicate [.env.template](.env.template) into [.env](.env), and set environment variables there.
+2. Initialize by `npm i`, then run the development server by `npm run dev`.
+    ```bash
+    npm i
+    npm run dev
+    ```
+3. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 <br>
 
 # Metadata
 1. In the main [layout.tsx](/app/layout.tsx), metadata title template and default are defined.
-    ```
+    ```ts
     import type { Metadata } from 'next';
 
     export const metadata: Metadata = {
@@ -38,9 +32,8 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
     };
     ```
 2. Each page.tsx can have its own metadata title, their title will be replacing `%s` defined in main [layout.tsx](/app/layout.tsx).
-    ```
+    ```ts
     // this page title will be "Home | Template App"
-
     export const metadata: Metadata = {
         title: 'Home',
         description: 'Developed by jiajunlee',
@@ -52,12 +45,12 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 # Tailwind CSS Styling
 1. Tailwind configs are setup in [tailwin.config.ts](/tailwind.config.ts)
     - To let tailwind knows where to apply tailwind styling, App directory is defined in contents.
-        ```
-        contents: {
-            ... ,
-
-            './app/**/*.{js,ts,jsx,tsx,mdx
-        }'
+        ```js
+        content: [
+            './pages/**/*.{js,ts,jsx,tsx,mdx}',
+            './components/**/*.{js,ts,jsx,tsx,mdx}',
+            './app/**/*.{js,ts,jsx,tsx,mdx}',
+        ],
         ```
     - `darkMode: class` is added to control toggle between light/dark theme with `className="dark: ..."`.
 2. Default base styles are globally applied in [globals.css](/app/globals.css).
@@ -73,7 +66,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 1. `next/font` module is used to display fonts and it's defined in [layout.tsx](/app/layout.tsx).
     - Font files are downloaded at build time into static assest, minimizing additional network requests.
     - `Antialiased` class is used to smooth out the font touch.
-    ```
+    ```ts
     import { Inter } from 'next/font/google'
     const inter = Inter({ subsets: ['latin'] })
 
@@ -104,14 +97,14 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 # Improving Accessibility
 1. In [form.tsx](/app/_components/basic/form.tsx), aria relations are established to politely notify user when the error is updated.
-    ```
+    ```js
     <input aria-describedby={key+"-error"} ... />
-    <p id={key+"-error"} aria-live="polite" ... ">
+    <p id={key+"-error"} aria-live="polite" ... >
         ...
     </p>
     ```
 2. In [package.json](package.json), `"lint": "next lint"`` is added to help catching accessibility issues.
-    ```
+    ```js
     "scripts": {
         ...
 
@@ -125,7 +118,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 # Navigating between pages
 1. `next/link` is used to navigate between pages without rerendering the whole page.
 2. Conditionally render link color to indicate what page the user is currently viewing in [header.tsx](/app/_components/header.tsx).
-    ```
+    ```ts
     import Link from 'next/link';
     import { usePathname } from 'next/navigation';
     import { twMerge } from "tailwind-merge";
@@ -155,7 +148,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 2. Seed functions are defined in [seed.ts](app/_scripts/seed.ts). 
     - `Promise.all` is used to initiate all promises and receive all responses at the same time in single transaction.
 3. In [package.json](package.json), `"seed": " dotenv -e .env -- npx esrun /app/_script/seed.ts"` is included in scripts.
-    ```
+    ```js
     scripts: {
         ... ,
 
@@ -183,7 +176,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
     - [Prisma](/prisma/prisma.ts) is used as an ORM via `import prisma from '@/prisma/prisma';`
     - `revalidatePath` is used to remove the stored cache and force-fetch the latest data after the CRUD operation.
 3. For actions requiring dynamic rendering, `noStore()` is specified to prevent the response from being cached.
-    ```
+    ```ts
     import { unstable_noStore as noStore } from 'next/cache';
 
     export async function fetch() {
@@ -197,7 +190,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 # Server Action Form & Error Handling
 1. See example of server action [/_actions/box_type.ts](/app/_actions/box_type.ts) , flatten field errors are being returned.
-    ```
+    ```ts
         ...
 
         return { 
@@ -206,7 +199,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
     };
     ```
 2. In [form.tsx](/app/_components//basic//form.tsx), each form field is handled with `state.error` with the help of `useFormState`.
-    ```
+    ```ts
     import { useFormState } from "react-dom";
 
     const initialState  = { message: null, errors: {} };
@@ -226,19 +219,19 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
     </form>
     ```
 3. In [button_submit.tsx](/app/_components/basic/button_submit.tsx), `useFormStatus` is used to conditionally disable the submit button during form submission.
-    ```
+    ```ts
     import {useFormStatus} from 'react-dom';
     ...
 
-        // useFormStatus gives a pending boolean, use this to tell if the button should be disabled or not
-        const { pending } = useFormStatus();
+    // useFormStatus gives a pending boolean, use this to tell if the button should be disabled or not
+    const { pending } = useFormStatus();
 
+        ...
         return (
             <button className={buttonClass} type="submit" disabled={pending} onClick={onButtonClick}>
                 {pending ? submitingButtonTitle : buttonTitle}
             </button>
         );
-    };
 
     ...
     ```
@@ -250,7 +243,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
     - User can save the current state by bookmarking the url for revisit or share to other users.
     - URL parameters are directly comsumed on server-side, making it easier to render the page's initial state.
 2. The user input is always keep in-sync with the URL SearchParams.
-    ```
+    ```ts
     import { useSearchParams, usePathname, useRouter } from "next/navigation";
 
     const searchParams = useSearchParams();
@@ -289,7 +282,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 3. `use-debounce` is used here. The function will only fire when either of the below conditions are met.
     - the user has stop typing for a specific duration
     - the input field losses focus or become blur
-    ```
+    ```ts
     <input ... onBlur={handleInputChange} onChange={useDebouncedCallback(handleInputChange, 1000)} />
     ```
 
@@ -302,7 +295,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 2. Streaming is implemented to prevent slow data requests from blocking your whole page
     - [loading.tsx](/app/loading.tsx) is built on top of Suspense, which fallback to a skeleton UI while page content is loading.
     - To be more granular to stream specific components, the specific components can be wrapped with Suspense fallback to [skeletons.tsx](/app/_components/basic/skeletons.tsx).
-        ```
+        ```ts
         import { Suspense } from 'react';
         ...
 
@@ -322,7 +315,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
     - If totalPage > 7 and currentPage is somewhere in the middle, show like [1, ..., 4, 5, 6, ..., 10]
 2. Page nav component is generated in [pagination.tsx](/app/_components/basic/pagination.tsx).
 3. Pagination is achieved by getting `currentPage` from searchParams and `totalPage` from server action.
-    ```
+    ```ts
     export default async function BoxType({ searchParams }: { searchParams?: { currentPage?: string } }) {
         const currentPage = Number(searchParams?.currentPage) || 1;
         const totalPage = await readBoxTypeTotalPage();
@@ -350,7 +343,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
     import { getServerSession } from "next-auth/next"
     import { options } from '@/app/_libs/nextAuth_options'
 
-    ...
+    ...ts
     const session = await getServerSession(options);
 
         ...
@@ -361,7 +354,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
         ...
     ```
 3. Each specified page/routes are protected by [middleware.ts](middleware.ts).
-    ```
+    ```ts
     export const config = { matcher: ["/protected/:path*", "/restricted/:path*"] }
     ```
 4. Authorization is also defined in [middleware.ts](middleware.ts) with `role`.
