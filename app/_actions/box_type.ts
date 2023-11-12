@@ -15,13 +15,30 @@ const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 const schema = 'packing';
 const table = 'box_type';
 
-export async function readBoxTypeTotalPage(itemsPerPage: number) {
+export async function readBoxTypeTotalPage(itemsPerPage: number, query?: string) {
     noStore();
+    const queryChecked = query && "";
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
             const result = await prisma.boxType.findMany({
-
+                where: {
+                    ...(query &&
+                        {
+                            OR: [
+                                {
+                                    box_type_uid: {
+                                        search: `${query}:*`,
+                                    },
+                                },
+                                {
+                                    box_part_number: {
+                                        search: `${query}:*`,
+                                    },
+                                },
+                            ],
+                        }),
+                },
             });
             parsedForm = readBoxTypeSchema.array().safeParse(result);
         }
@@ -30,8 +47,10 @@ export async function readBoxTypeTotalPage(itemsPerPage: number) {
             const result = await pool.request()
                             .input('schema', sql.VarChar, schema)
                             .input('table', sql.VarChar, table)
+                            .input('query', sql.VarChar, `${queryChecked}%`)
                             .query`SELECT box_type_uid, box_part_number, box_max_tray, box_type_createdAt, box_type_updatedAt 
-                                    FROM "@schema"."@table";
+                                    FROM "@schema"."@table"
+                                    WHERE (box_type_uid like @query OR box_part_number like @query);
                             `;
             parsedForm = readBoxTypeSchema.array().safeParse(result.recordset);
         }
@@ -48,7 +67,7 @@ export async function readBoxTypeTotalPage(itemsPerPage: number) {
     return totalPage
 };
 
-export async function readBoxTypeByPage(itemsPerPage: number, currentPage: number) {
+export async function readBoxTypeByPage(itemsPerPage: number, currentPage: number, query?: string) {
     noStore();
 
     // <dev only> 
@@ -58,11 +77,29 @@ export async function readBoxTypeByPage(itemsPerPage: number, currentPage: numbe
     // console.log("ok")
     // <dev only>
 
+    const queryChecked = query && "";
     const OFFSET = (currentPage - 1) * itemsPerPage;
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
             const result = await prisma.boxType.findMany({
+                where: {
+                    ...(query &&
+                        {
+                            OR: [
+                                {
+                                    box_type_uid: {
+                                        search: `${query}:*`,
+                                    },
+                                },
+                                {
+                                    box_part_number: {
+                                        search: `${query}:*`,
+                                    },
+                                },
+                            ],
+                        }),
+                },
                 skip: OFFSET,
                 take: itemsPerPage,
             });
@@ -75,8 +112,10 @@ export async function readBoxTypeByPage(itemsPerPage: number, currentPage: numbe
                             .input('table', sql.VarChar, table)
                             .input('offset', sql.Int, OFFSET)
                             .input('limit', sql.Int, itemsPerPage)
+                            .input('query', sql.VarChar, `${queryChecked}%`)
                             .query`SELECT box_type_uid, box_part_number, box_max_tray, box_type_createdAt, box_type_updatedAt 
                                     FROM "@schema"."@table"
+                                    WHERE (box_type_uid like @query OR box_part_number like @query)
                                     OFFSET @offset ROWS
                                     FETCH NEXT @limit ROWS ONLY;
                             `;
@@ -94,39 +133,6 @@ export async function readBoxTypeByPage(itemsPerPage: number, currentPage: numbe
     revalidatePath('/box_type');
     return parsedForm.data
 };
-
-export async function readBoxType() {
-    let parsedForm;
-    try {
-        if (parsedEnv.DB_TYPE === 'PRISMA') {
-            const result = await prisma.boxType.findMany({
-
-            });
-            parsedForm = readBoxTypeSchema.array().safeParse(result);
-        }
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('schema', sql.VarChar, schema)
-                            .input('table', sql.VarChar, table)
-                            .query`SELECT box_type_uid, box_part_number, box_max_tray, box_type_createdAt, box_type_updatedAt 
-                                    FROM "@schema"."@table";
-                            `;
-            parsedForm = readBoxTypeSchema.array().safeParse(result.recordset);
-        }
-
-        if (!parsedForm.success) {
-            return []
-        };
-    } 
-    catch (err) {
-        return []
-    }
-
-    revalidatePath('/box_type');
-    return parsedForm.data
-};
-
 
 export async function createBoxType(prevState: State, formData: FormData): StatePromise {
 

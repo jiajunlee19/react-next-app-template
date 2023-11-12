@@ -12,39 +12,41 @@ export const metadata: Metadata = {
     description: 'Developed by jiajunlee',
 };
 
-export default async function BoxType({ searchParams }: { searchParams?: { itemsPerPage?: string, currentPage?: string } }) {
+export default async function BoxType({ searchParams }: { searchParams?: { itemsPerPage?: string, currentPage?: string, query?: string } }) {
 
-  const itemsPerPage = Number(searchParams?.itemsPerPage) || 10;
-  const currentPage = Number(searchParams?.currentPage) || 1;
-  const totalPage = await readBoxTypeTotalPage(itemsPerPage);
-  
-  const pageTitle = 'Manage Box Type';
+    const itemsPerPage = Number(searchParams?.itemsPerPage) || 10;
+    const currentPage = Number(searchParams?.currentPage) || 1;
+    const query = searchParams?.query || undefined;
 
-  const createButtonTitle = 'Create New Box Type';
+    const totalPage = await readBoxTypeTotalPage(itemsPerPage, query);
 
-  const readAction = readBoxTypeByPage;
+    const pageTitle = 'Manage Box Type';
 
-  const columnListDisplay: (keyof TReadBoxTypeSchema)[] = ['box_type_uid', 'box_part_number', 'box_max_tray'];
-  
-  const primaryKey: (keyof TReadBoxTypeSchema) = 'box_type_uid';
+    const createButtonTitle = 'Create New Box Type';
 
-  // "[placeholder-id]" will be replaced by "id" for each row in DataTable
-  const hrefUpdate = "/box_type/[placeholder-id]/update";
+    const readAction = readBoxTypeByPage;
 
-  const deleteAction = deleteBoxType;
+    const columnListDisplay: (keyof TReadBoxTypeSchema)[] = ['box_type_uid', 'box_part_number', 'box_max_tray'];
 
-  return (
-    <>
-        <h1>{pageTitle}</h1>
-        <Link className="no-underline text-white dark:text-emerald-400 hover:text-white hover:dark:text-emerald-400" href="/box_type/create">
-            <button className="btn-primary w-min">
-                {createButtonTitle}
-            </button>
-        </Link>
-        <Suspense fallback={<TableSkeleton columnCount={4} rowCount={10} />}>
-            <DataTable itemsPerPage={itemsPerPage} currentPage={currentPage} readAction={readAction} columnListDisplay={columnListDisplay} primaryKey={primaryKey} hrefUpdate={hrefUpdate} deleteAction={deleteAction} />
-        </Suspense>
-        <Pagination totalPage={totalPage} />
-    </>
-  )
-}
+    const primaryKey: (keyof TReadBoxTypeSchema) = 'box_type_uid';
+
+    // "[placeholder-id]" will be replaced by "id" for each row in DataTable
+    const hrefUpdate = "/box_type/[placeholder-id]/update";
+
+    const deleteAction = deleteBoxType;
+
+    return (
+        <>
+            <h1>{pageTitle}</h1>
+            <Link className="no-underline text-white dark:text-emerald-400 hover:text-white hover:dark:text-emerald-400" href="/box_type/create">
+                <button className="btn-primary w-min">
+                    {createButtonTitle}
+                </button>
+            </Link>
+            <Suspense fallback={<TableSkeleton columnCount={4} rowCount={10} />}>
+                <DataTable itemsPerPage={itemsPerPage} currentPage={currentPage} query={query} readAction={readAction} columnListDisplay={columnListDisplay} primaryKey={primaryKey} hrefUpdate={hrefUpdate} deleteAction={deleteAction} />
+            </Suspense>
+            <Pagination totalPage={totalPage} />
+        </>
+    )
+};
