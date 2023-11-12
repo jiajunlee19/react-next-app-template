@@ -43,43 +43,14 @@ export default function UpdateRoleComponent({ user }: TUpdateRoleComponentProps)
                 inputType={{
                     'user_uid': 'hidden',
                     'email': 'readonly',
-                    'role': 'text',
+                    'role': 'select',
                 }}
                 rowData={user}
-                selectOptionData={null}
+                selectOptionData={[{'role': 'user'}, {'role': 'admin'}, {'role': 'boss'}]}
                 action="update"
                 formAction={updateRole}
                 redirectLink="/restricted/auth/user"
             />
-            
-            {/* <form ref={formRef} action={ async (formData) => {
-                        const result = await updateRole(formData);
-                        if (result?.error && result?.message) {
-                            toast.error(result.message);
-                        }
-                        else if (result?.message) {
-                            toast.success(result.message);
-                        }
-                        formRef.current?.reset();
-                    }
-                }>
-                <input name="user_uid" type="text" defaultValue={user?.user_uid || session.user.user_uid} readOnly formNoValidate />
-                <label htmlFor="email">Email: </label>
-                <input name="email" type="email" placeholder="Enter your email" defaultValue={user.email} required formNoValidate />
-                <label htmlFor="role">Role: </label>
-                <select name="role" defaultValue={user?.role || session.user.role } required>
-                    {["user", "admin", "boss"].map((role) => {
-                        if (role === (user?.role || session.user.role) ) {
-                            return <option key={role} defaultValue={role}>{role}</option>
-                        }
-                        else {
-                            return <option key={role} value={role}>{role}</option>
-                        }
-                    })}
-                </select>
-                <SubmitButton buttonClass="btn-ok w-40 mr-4 mt-4" buttonTitle="Update" onButtonClick={handleUpdateClick} submitingButtonTitle="Updating" />
-                <button type="button" className="btn-cancel w-40 mr-4 mt-4" onClick={() => formRef.current?.reset()}>Reset</button>
-            </form> */}
         </>
     );
 };
