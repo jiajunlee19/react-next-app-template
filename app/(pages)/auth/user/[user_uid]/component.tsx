@@ -11,7 +11,7 @@ export default function UserComponent({ params }: { params: {user_uid: string} }
 
     const { data: session } = useSession();
 
-    if (!session) {
+    if (!session || session.user.user_uid !== params.user_uid) {
         redirect("/denied");
     }
 
