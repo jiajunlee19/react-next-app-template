@@ -82,7 +82,7 @@ export default function FormWithoutState( {formTitle, inputType, rowData, select
                     <React.Fragment key={key}>
                         <label className="label" htmlFor={key}>{key}: </label>
                         <select name={key} aria-describedby={key+"-error"} className="input" defaultValue="" required>
-                            <option value="select an item" disabled></option>
+                            <option value="" disabled></option>
                             {generateSelectOption(key, selectOptionData)}
                         </select>
                     </React.Fragment>
