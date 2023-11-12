@@ -6,16 +6,17 @@ import DeleteButton from "@/app/_components/basic/button_delete";
 type DataTableProps = {
     itemsPerPage: number,
     currentPage: number,
-    readAction: (itemsPerPage: number, currentPage: number) => Promise<TRowData[]>
+    query?: string,
+    readAction: (itemsPerPage: number, currentPage: number, query?: string) => Promise<TRowData[]>
     columnListDisplay: string[],
     primaryKey: string,
     hrefUpdate?: string,
     deleteAction?: (deleteId: string) => StatePromise, 
 };
 
-export default async function DataTable( { itemsPerPage, currentPage, readAction, columnListDisplay, primaryKey, hrefUpdate, deleteAction }: DataTableProps ) {
+export default async function DataTable( { itemsPerPage, currentPage, query, readAction, columnListDisplay, primaryKey, hrefUpdate, deleteAction }: DataTableProps ) {
     
-    const fetchedData = await readAction(itemsPerPage, currentPage);
+    const fetchedData = await readAction(itemsPerPage, currentPage, query);
 
     // Filter columns based on columnList provided
     const filteredData = fetchedData.map((row) => {

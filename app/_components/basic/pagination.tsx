@@ -19,14 +19,40 @@ export default function Pagination({ totalPage }: PaginationProps) {
     const { replace } = useRouter();
     const itemsPerPage = Number(searchParams.get("itemsPerPage")) || 10;
     const currentPage = Number(searchParams.get("currentPage")) || 1;
+    const query = searchParams.get("query") || undefined;
 
     const pages = generatePagination(currentPage, totalPage);
 
-    const createPageUrl = (itemsPerPage: number | string, currentPage: number | string) => {
+    const createPageUrl = (itemsPerPage: number | string, currentPage: number | string, query?: string) => {
         const params = new URLSearchParams(searchParams);
         params.set("itemsPerPage", itemsPerPage.toString())
         params.set("currentPage", currentPage.toString());
+        if (query) {
+            params.set("query", query.toString());
+        }
+        else {
+            params.delete("query");
+        }
         return `${pathname}?${params.toString()}`;
+    };
+
+    const handleQueryChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const params = new URLSearchParams(searchParams);
+        if (e.target.value) {
+            params.set("query", e.target.value);
+        }
+        else {
+            params.delete("query");
+        }
+        if (itemsPerPage && currentPage) {
+            params.set("itemsPerPage", itemsPerPage.toString());
+            params.set("currentPage", currentPage.toString())
+        }
+        else {
+            params.delete("itemsPerPage");
+            params.delete("currentPage");
+        }
+        replace(`${pathname}?${params.toString()}`);
     };
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -39,16 +65,26 @@ export default function Pagination({ totalPage }: PaginationProps) {
             params.delete("itemsPerPage");
             params.delete("currentPage");
         }
+        if (query) {
+            params.set("query", query.toString());
+        }
+        else {
+            params.delete("query");
+        }
         replace(`${pathname}?${params.toString()}`);
     };
      
     return (
         <div className="inline-flex">
             <div className="flex">
+                <label className="h-10 w-min text-sm p-2 mr-1 md:mr-2" htmlFor="query">Find: </label>
+                <input className="h-10 w-min rounded-md text-sm p-2 mr-2 md:mr-4" name="query" type="text" defaultValue={query} onBlur={handleQueryChange} onChange={useDebouncedCallback(handleQueryChange, 3000)} required />
+            </div>
+            <div className="flex">
                 <label className="h-10 w-min text-sm p-2 mr-1 md:mr-2" htmlFor="itemsPerPage">itemsPerPage: </label>
                 <input className="h-10 w-14 rounded-md text-sm p-2 mr-2 md:mr-4" name="itemsPerPage" type="number" step="1" min="1" max="20" defaultValue={itemsPerPage} onBlur={handleInputChange} onChange={useDebouncedCallback(handleInputChange, 3000)} required />
             </div>
-            <PaginationArrow direction="left" href={createPageUrl(itemsPerPage, currentPage-1)} isDisabled={currentPage<=1} />
+            <PaginationArrow direction="left" href={createPageUrl(itemsPerPage, currentPage-1, query)} isDisabled={currentPage<=1} />
             <div className="flex -space-x-px">
                 {
                     pages.map((page, index) => {
@@ -59,12 +95,12 @@ export default function Pagination({ totalPage }: PaginationProps) {
                         if (page === '...') position = 'middle';
 
                         return (
-                            <PaginationNumber key={page} href={createPageUrl(itemsPerPage, page)} page={page} position={position} isActive={currentPage===page} />
+                            <PaginationNumber key={page} href={createPageUrl(itemsPerPage, page, query)} page={page} position={position} isActive={currentPage===page} />
                         );
                     })
                 }
             </div>
-            <PaginationArrow direction="right" href={createPageUrl(itemsPerPage, currentPage+1)} isDisabled={currentPage>=totalPage} />
+            <PaginationArrow direction="right" href={createPageUrl(itemsPerPage, currentPage+1, query)} isDisabled={currentPage>=totalPage} />
         </div>
     )
 };

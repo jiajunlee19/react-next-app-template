@@ -17,6 +17,54 @@ const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 const schema = 'packing';
 const table = 'user';
 
+export async function readUserByEmail(email: TEmailSchema) {
+    noStore();
+    const parsedForm = emailSchema.safeParse(email);
+
+    if (!parsedForm.success) {
+        throw new Error(parsedForm.error.message)
+    };
+
+    let parsedResult;
+    try {
+        if (parsedEnv.DB_TYPE === 'PRISMA') {
+            const result = await prisma.user.findFirst({
+                where: {
+                    email: parsedForm.data,
+                },
+                select: {
+                    user_uid: true,
+                    email: true,
+                    role: true,
+                },
+            })
+            parsedResult = readUserWithoutPassSchema.safeParse(result);
+        }
+
+        else {
+            let pool = await sql.connect(sqlConfig);
+            const result = await pool.request()
+                            .input('schema', sql.VarChar, schema)
+                            .input('table', sql.VarChar, table)
+                            .input('email', sql.VarChar, parsedForm.data)
+                            .query`SELECT user_uid, email, role
+                                    FROM "@schema"."@table"
+                                    WHERE email = @email;
+                            `;
+            parsedResult = readUserWithoutPassSchema.safeParse(result.recordset[0]);
+        }
+    
+        if (!parsedResult.success) {
+            throw new Error(parsedResult.error.message)
+        };
+    } 
+    catch (err) {
+        throw new Error(getErrorMessage(err))
+    }
+
+    return parsedResult.data
+};
+
 export async function readUserTotalPage(itemsPerPage: number) {
     noStore();
     let parsedForm;
@@ -106,56 +154,9 @@ export async function readUserByPage(itemsPerPage: number, currentPage: number) 
     return parsedForm.data
 };
 
-export async function readUserByEmail(email: TEmailSchema) {
+export async function readAdminTotalPage(itemsPerPage: number, query?: string) {
     noStore();
-    const parsedForm = emailSchema.safeParse(email);
-
-    if (!parsedForm.success) {
-        throw new Error(parsedForm.error.message)
-    };
-
-    let parsedResult;
-    try {
-        if (parsedEnv.DB_TYPE === 'PRISMA') {
-            const result = await prisma.user.findFirst({
-                where: {
-                    email: parsedForm.data,
-                },
-                select: {
-                    user_uid: true,
-                    email: true,
-                    role: true,
-                },
-            })
-            parsedResult = readUserWithoutPassSchema.safeParse(result);
-        }
-
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('schema', sql.VarChar, schema)
-                            .input('table', sql.VarChar, table)
-                            .input('email', sql.VarChar, parsedForm.data)
-                            .query`SELECT user_uid, email, role
-                                    FROM "@schema"."@table"
-                                    WHERE email = @email;
-                            `;
-            parsedResult = readUserWithoutPassSchema.safeParse(result.recordset[0]);
-        }
-    
-        if (!parsedResult.success) {
-            throw new Error(parsedResult.error.message)
-        };
-    } 
-    catch (err) {
-        throw new Error(getErrorMessage(err))
-    }
-
-    return parsedResult.data
-};
-
-export async function readAdminTotalPage(itemsPerPage: number) {
-    noStore();
+    const queryChecked = query && "";
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
@@ -166,7 +167,17 @@ export async function readAdminTotalPage(itemsPerPage: number) {
                     role: true,
                 },
                 where: {
-                    role: "admin",
+                    ...(query
+                    ? {
+                        role: "admin",
+                        email: {
+                            search: query,
+                        },
+                    }
+                    :
+                    {
+                        role: "admin",
+                    })
                 },
             });
             parsedForm = readUserWithoutPassSchema.array().safeParse(result);
@@ -177,9 +188,11 @@ export async function readAdminTotalPage(itemsPerPage: number) {
                             .input('schema', sql.VarChar, schema)
                             .input('table', sql.VarChar, table)
                             .input('role', sql.VarChar, 'admin')
+                            .input('query', sql.VarChar, `%${queryChecked}%`)
                             .query`SELECT user_uid, email, role 
                                     FROM "@schema"."@table"
-                                    WHERE role = @role;
+                                    WHERE role = @role
+                                    AND (email like @query);
                             `;
             parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
         }
@@ -196,7 +209,7 @@ export async function readAdminTotalPage(itemsPerPage: number) {
     return totalPage
 };
 
-export async function readAdminByPage(itemsPerPage: number, currentPage: number) {
+export async function readAdminByPage(itemsPerPage: number, currentPage: number, query?: string) {
     noStore();
 
     // <dev only> 
@@ -206,6 +219,7 @@ export async function readAdminByPage(itemsPerPage: number, currentPage: number)
     // console.log("ok")
     // <dev only>
 
+    const queryChecked = query && "";
     const OFFSET = (currentPage - 1) * itemsPerPage;
     let parsedForm;
     try {
@@ -217,7 +231,17 @@ export async function readAdminByPage(itemsPerPage: number, currentPage: number)
                     role: true,
                 },
                 where: {
-                    role: "admin",
+                    ...(query
+                    ? {
+                        role: "admin",
+                        email: {
+                            search: `${query}:*`,
+                        },
+                    }
+                    :
+                    {
+                        role: "admin",
+                    })
                 },
                 skip: OFFSET,
                 take: itemsPerPage,
@@ -232,9 +256,11 @@ export async function readAdminByPage(itemsPerPage: number, currentPage: number)
                             .input('role', sql.VarChar, 'admin')
                             .input('offset', sql.Int, OFFSET)
                             .input('limit', sql.Int, itemsPerPage)
+                            .input('query', sql.VarChar, `%${queryChecked}%`)
                             .query`SELECT user_uid, email, role 
                                     FROM "@schema"."@table"
                                     WHERE role = @role
+                                    AND (email like @query)
                                     OFFSET @offset ROWS
                                     FETCH NEXT @limit ROWS ONLY;
                             `;
