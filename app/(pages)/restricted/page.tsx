@@ -10,7 +10,7 @@ export default function RestrictedPage() {
 
     const authNavLinks = [
         { name: "Manage User", href: "/restricted/auth/user" },
-        { name: "Update User Role by Email", href: "/restricted/auth/updateRole" },
+        { name: "Update User Role by Email", href: "/restricted/auth/updateRoleByEmail" },
     ];
 
     return (
