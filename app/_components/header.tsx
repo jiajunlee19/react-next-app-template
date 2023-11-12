@@ -16,8 +16,8 @@ export default function Header() {
     ];
 
     const midNavLinks = [
-        { name: "ProtectedPage", href: "/protected", icon: "" },
-        { name: "RestrictedPage", href: "/restricted", icon: "" },
+        { name: "History", href: "/history", icon: "" },
+        { name: "AdminList", href: "/adminList", icon: "" },
     ];
 
     const rightNavLinksA = [
