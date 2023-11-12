@@ -13,11 +13,16 @@ export default async function UpdateBoxType({params}: {params: {box_type_uid: st
     
     const box_type_uid = params.box_type_uid;
 
-    const [box_type] = await Promise.all([
-        readBoxTypeById(box_type_uid)
-    ]);
+    let box_type;
+    try {
+        [box_type] = await Promise.all([
+            readBoxTypeById(box_type_uid)
+        ]);
+    } catch (err) {
+        box_type = null; 
+    }
 
-    if (!box_type || Object.keys(box_type).length === 0 ) {
+    if (!box_type) {
         notFound();
     }
 

@@ -291,7 +291,7 @@ export async function readBoxTypeById(box_type_uid: string) {
                     box_type_uid: box_type_uid,
                 }
             });
-            parsedForm = readBoxTypeSchema.safeParse(result || {});
+            parsedForm = readBoxTypeSchema.safeParse(result);
         }
         else {
             let pool = await sql.connect(sqlConfig);
@@ -302,7 +302,7 @@ export async function readBoxTypeById(box_type_uid: string) {
                                     FROM "@schema"."@table"
                                     WHERE box_type_uid = @box_type_uid;
                             `;
-            parsedForm = readBoxTypeSchema.safeParse(result.recordset[0] || {});
+            parsedForm = readBoxTypeSchema.safeParse(result.recordset[0]);
         }
 
         if (!parsedForm.success) {
