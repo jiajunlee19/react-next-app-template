@@ -8,9 +8,9 @@ type DataTableProps = {
     currentPage: number,
     readAction: (itemsPerPage: number, currentPage: number) => Promise<TRowData[]>
     columnListDisplay: string[],
-    hrefUpdate: string,
     primaryKey: string,
-    deleteAction: (deleteId: string) => StatePromise, 
+    hrefUpdate?: string,
+    deleteAction?: (deleteId: string) => StatePromise, 
 };
 
 export default async function DataTable( { itemsPerPage, currentPage, readAction, columnListDisplay, primaryKey, hrefUpdate, deleteAction }: DataTableProps ) {
@@ -31,7 +31,9 @@ export default async function DataTable( { itemsPerPage, currentPage, readAction
                     <th key={key}>{key}</th>      
                 );
             })}
-            <th>action</th>
+            {(!!hrefUpdate || !!deleteAction) &&
+                <th>action</th>
+            }
         </tr>;
 
 
@@ -45,10 +47,13 @@ export default async function DataTable( { itemsPerPage, currentPage, readAction
             //use each table row UID as key value 
             <tr key={fetchedData[i][primaryKey].toString()}>
                 {tableData}
+                
+                {(!!hrefUpdate || !!deleteAction) &&
                 <td className="flex gap-1 justify-center align-middle">
-                    <UpdateButton href={hrefUpdate.replace("[placeholder-id]", fetchedData[i][primaryKey].toString())} />
-                    <DeleteButton deleteId={fetchedData[i][primaryKey].toString()} deleteAction={deleteAction} />
+                    {!!hrefUpdate && <UpdateButton href={hrefUpdate.replace("[placeholder-id]", fetchedData[i][primaryKey].toString())} />}
+                    {!!deleteAction && <DeleteButton deleteId={fetchedData[i][primaryKey].toString()} deleteAction={deleteAction} />}
                 </td>
+                }
             </tr>
         );
 
