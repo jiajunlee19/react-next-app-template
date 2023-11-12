@@ -390,7 +390,7 @@
 7. Sign Out Page is defined in [/auth/signOut/page.tsx](/app/\(pages\)/auth/signOut/page.tsx).
 8. New user are defaulted as `role="user"`.
 9. User with `role="boss` can view all users in [restricted/auth/user/page.tsx](/app/\(pages\)/restricted/auth/user/page.tsx).
-10. User with `role="boss` can update any user's role in [restricted/auth/user/[user_uid]/updateRole/page.tsx](/app/\(pages\)/restricted/auth/user/[user_uid]/updateRole/page.tsx).
+10. User with `role="boss` can update any user's role in [restricted/auth/user/[user_uid]/updateRole/page.tsx](/app/\(pages\)/restricted/auth/user/[user_uid]/updateRole/page.tsx) or [/restricted/auth/updateRoleByEmail/page.tsx](/app/\(pages\)/restricted/auth/updateRoleByEmail/page.tsx).
 
 <br>
 
