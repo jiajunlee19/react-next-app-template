@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 import SubmitButton from "@/app/_components/basic/button_submit";
 import { type TInputType, type TRowData, type State, type StatePromise, type TFormMode } from "@/app/_libs/types";
 import { toast } from "react-hot-toast";
