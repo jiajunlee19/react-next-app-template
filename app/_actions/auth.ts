@@ -154,6 +154,105 @@ export async function readUserByEmail(email: TEmailSchema) {
     return parsedResult.data
 };
 
+export async function readAdminTotalPage(itemsPerPage: number) {
+    noStore();
+    let parsedForm;
+    try {
+        if (parsedEnv.DB_TYPE === 'PRISMA') {
+            const result = await prisma.user.findMany({
+                select: {
+                    user_uid: true,
+                    email: true,
+                    role: true,
+                },
+                where: {
+                    role: "admin",
+                },
+            });
+            parsedForm = readUserWithoutPassSchema.array().safeParse(result);
+        }
+        else {
+            let pool = await sql.connect(sqlConfig);
+            const result = await pool.request()
+                            .input('schema', sql.VarChar, schema)
+                            .input('table', sql.VarChar, table)
+                            .input('role', sql.VarChar, 'admin')
+                            .query`SELECT user_uid, email, role 
+                                    FROM "@schema"."@table"
+                                    WHERE role = @role;
+                            `;
+            parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
+        }
+
+        if (!parsedForm.success) {
+            throw new Error(parsedForm.error.message)
+        };
+    } 
+    catch (err) {
+        throw new Error(getErrorMessage(err))
+    }
+    const totalPage = Math.ceil(parsedForm.data.length / itemsPerPage);
+    revalidatePath('/adminList');
+    return totalPage
+};
+
+export async function readAdminByPage(itemsPerPage: number, currentPage: number) {
+    noStore();
+
+    // <dev only> 
+    // Artifically delay the response, to view the Suspense fallback skeleton
+    // console.log("waiting 3sec")
+    // await new Promise((resolve) => setTimeout(resolve, 3000));
+    // console.log("ok")
+    // <dev only>
+
+    const OFFSET = (currentPage - 1) * itemsPerPage;
+    let parsedForm;
+    try {
+        if (parsedEnv.DB_TYPE === 'PRISMA') {
+            const result = await prisma.user.findMany({
+                select: {
+                    user_uid: true,
+                    email: true,
+                    role: true,
+                },
+                where: {
+                    role: "admin",
+                },
+                skip: OFFSET,
+                take: itemsPerPage,
+            });
+            parsedForm = readUserWithoutPassSchema.array().safeParse(result);
+        }
+        else {
+            let pool = await sql.connect(sqlConfig);
+            const result = await pool.request()
+                            .input('schema', sql.VarChar, schema)
+                            .input('table', sql.VarChar, table)
+                            .input('role', sql.VarChar, 'admin')
+                            .input('offset', sql.Int, OFFSET)
+                            .input('limit', sql.Int, itemsPerPage)
+                            .query`SELECT user_uid, email, role 
+                                    FROM "@schema"."@table"
+                                    WHERE role = @role
+                                    OFFSET @offset ROWS
+                                    FETCH NEXT @limit ROWS ONLY;
+                            `;
+            parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
+        }
+
+        if (!parsedForm.success) {
+            throw new Error(parsedForm.error.message)
+        };
+    } 
+    catch (err) {
+        throw new Error(getErrorMessage(err))
+    }
+
+    revalidatePath('/adminList');
+    return parsedForm.data
+};
+
 export async function signIn(email: TEmailSchema, password: TPasswordSchema) {
 
     const parsedForm = signInSchema.safeParse({
