@@ -20,7 +20,7 @@ export default function RestrictedPage() {
             <nav>
                 {authNavLinks.map((link) => {
                     return (
-                        <li key={link.name}>
+                        <li className="text-black dark:text-white" key={link.name}>
                             <Link href={link.href}>{link.name}</Link>
                         </li>
                     )
