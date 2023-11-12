@@ -41,7 +41,7 @@ export default async function BoxType({ searchParams }: { searchParams?: { items
                 {createButtonTitle}
             </button>
         </Link>
-        <Suspense fallback={<TableSkeleton columnCount={3} rowCount={10} />}>
+        <Suspense fallback={<TableSkeleton columnCount={4} rowCount={10} />}>
             <DataTable itemsPerPage={itemsPerPage} currentPage={currentPage} readAction={readAction} columnListDisplay={columnListDisplay} primaryKey={primaryKey} hrefUpdate={hrefUpdate} deleteAction={deleteAction} />
         </Suspense>
         <Pagination totalPage={totalPage} />
