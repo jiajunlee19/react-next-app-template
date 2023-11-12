@@ -44,6 +44,7 @@ export async function readBoxTypeTotalPage(itemsPerPage: number) {
         throw new Error(getErrorMessage(err))
     }
     const totalPage = Math.ceil(parsedForm.data.length / itemsPerPage);
+    revalidatePath('/box_type');
     return totalPage
 };
 
