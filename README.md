@@ -247,6 +247,7 @@
 # State Management with SearchParams
 1. Instead of managing state using `useState`, `useSearchParams` is used to manage state embedded in url.
     - User can save the current state by bookmarking the url for revisit or share to other users.
+    - User can navigate pages back or forth.
     - URL parameters are directly comsumed on server-side, making it easier to render the page's initial state.
 2. The user input is always keep in-sync with the URL SearchParams.
     ```ts
@@ -278,7 +279,7 @@
         <input ... defaultValue={params.get('query')?.toString()} />
     ...
     ```
-    - Example can be found in [/restricted/updateRole/component.tsx](/app/\(pages\)/restricted/updateRole/component.tsx).
+    - Example can be found in [/restricted/auth/updateRoleByEmail/component.tsx](/app/\(pages\)/restricted/auth/updateRoleByEmail/component.tsx).
 
 <br>
 
@@ -322,7 +323,7 @@
 2. Page nav component is generated in [pagination.tsx](/app/_components/basic/pagination.tsx).
 3. Pagination is achieved by getting `currentPage` from searchParams and `totalPage` from server action.
     ```ts
-    export default async function BoxType({ searchParams }: { searchParams?: { currentPage?: string } }) {
+    export default async function BoxType({ searchParams }: { searchParams?: { currentPage?: string } ... }) {
         const currentPage = Number(searchParams?.currentPage) || 1;
         const totalPage = await readBoxTypeTotalPage();
 
@@ -336,6 +337,21 @@
         );
     };
     ```
+
+<br>
+
+# Search Query
+1. Search query is achieved by getting `query` from searchParams.
+    ```ts
+    export default async function BoxType({ searchParams }: { searchParams?: { ... query?: string } }) {
+
+    const query = searchParams?.query || undefined;
+
+    ...
+    }
+    ```
+2. In server actions, query is passed as argument. The search is implemeneted with `FullTextSearch` for `prisma` or `like` for `raw query`.
+3. See examples in [_actions/box_types.ts](/app/_actions/box_types.ts) and [/box_type/page.tsx](/app/\(pages\)/box_type/page.tsx).
 
 <br>
 
