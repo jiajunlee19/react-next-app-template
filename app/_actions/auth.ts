@@ -6,14 +6,153 @@ import sql from 'mssql';
 import { sqlConfig } from "@/app/_libs/sql_config";
 import { type TEmailSchema, type TPasswordSchema, emailSchema, signInSchema, signUpSchema, readUserSchema, readUserWithoutPassSchema, updateUserSchema, deleteUserSchema, updateRoleSchema } from "@/app/_libs/zod_auth";
 import { getErrorMessage } from '@/app/_libs/error_handler';
+import { revalidatePath } from 'next/cache';
 import { signJwtToken } from '@/app/_libs/jwt';
 import { parsedEnv } from '@/app/_libs/zod_env';
 import prisma from '@/prisma/prisma';
 import { unstable_noStore as noStore } from 'next/cache';
+import { type StatePromise } from '../_libs/types';
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 const schema = 'packing';
-const table = 'box_type';
+const table = 'user';
+
+export async function readUserTotalPage(itemsPerPage: number) {
+    noStore();
+    let parsedForm;
+    try {
+        if (parsedEnv.DB_TYPE === 'PRISMA') {
+            const result = await prisma.user.findMany({
+                select: {
+                    user_uid: true,
+                    email: true,
+                    role: true,
+                },
+            });
+            parsedForm = readUserWithoutPassSchema.array().safeParse(result);
+        }
+        else {
+            let pool = await sql.connect(sqlConfig);
+            const result = await pool.request()
+                            .input('schema', sql.VarChar, schema)
+                            .input('table', sql.VarChar, table)
+                            .query`SELECT user_uid, email, role 
+                                    FROM "@schema"."@table";
+                            `;
+            parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
+        }
+
+        if (!parsedForm.success) {
+            throw new Error(parsedForm.error.message)
+        };
+    } 
+    catch (err) {
+        throw new Error(getErrorMessage(err))
+    }
+    const totalPage = Math.ceil(parsedForm.data.length / itemsPerPage);
+    revalidatePath('/restricted/auth/user');
+    return totalPage
+};
+
+export async function readUserByPage(itemsPerPage: number, currentPage: number) {
+    noStore();
+
+    // <dev only> 
+    // Artifically delay the response, to view the Suspense fallback skeleton
+    // console.log("waiting 3sec")
+    // await new Promise((resolve) => setTimeout(resolve, 3000));
+    // console.log("ok")
+    // <dev only>
+
+    const OFFSET = (currentPage - 1) * itemsPerPage;
+    let parsedForm;
+    try {
+        if (parsedEnv.DB_TYPE === 'PRISMA') {
+            const result = await prisma.user.findMany({
+                select: {
+                    user_uid: true,
+                    email: true,
+                    role: true,
+                },
+                skip: OFFSET,
+                take: itemsPerPage,
+            });
+            parsedForm = readUserWithoutPassSchema.array().safeParse(result);
+        }
+        else {
+            let pool = await sql.connect(sqlConfig);
+            const result = await pool.request()
+                            .input('schema', sql.VarChar, schema)
+                            .input('table', sql.VarChar, table)
+                            .input('offset', sql.Int, OFFSET)
+                            .input('limit', sql.Int, itemsPerPage)
+                            .query`SELECT user_uid, email, role 
+                                    FROM "@schema"."@table"
+                                    OFFSET @offset ROWS
+                                    FETCH NEXT @limit ROWS ONLY;
+                            `;
+            parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
+        }
+
+        if (!parsedForm.success) {
+            throw new Error(parsedForm.error.message)
+        };
+    } 
+    catch (err) {
+        throw new Error(getErrorMessage(err))
+    }
+
+    revalidatePath('/restricted/auth/user');
+    return parsedForm.data
+};
+
+export async function readUserByEmail(email: TEmailSchema) {
+    noStore();
+    const parsedForm = emailSchema.safeParse(email);
+
+    if (!parsedForm.success) {
+        throw new Error(parsedForm.error.message)
+    };
+
+    let parsedResult;
+    try {
+        if (parsedEnv.DB_TYPE === 'PRISMA') {
+            const result = await prisma.user.findFirst({
+                where: {
+                    email: parsedForm.data,
+                },
+                select: {
+                    user_uid: true,
+                    email: true,
+                    role: true,
+                },
+            })
+            parsedResult = readUserWithoutPassSchema.safeParse(result || {});
+        }
+
+        else {
+            let pool = await sql.connect(sqlConfig);
+            const result = await pool.request()
+                            .input('schema', sql.VarChar, schema)
+                            .input('table', sql.VarChar, table)
+                            .input('email', sql.VarChar, parsedForm.data)
+                            .query`SELECT user_uid, email, role
+                                    FROM "@schema"."@table"
+                                    WHERE email = @email;
+                            `;
+            parsedResult = readUserWithoutPassSchema.safeParse(result.recordset[0] || {});
+        }
+    
+        if (!parsedResult.success) {
+            throw new Error(parsedResult.error.message)
+        };
+    } 
+    catch (err) {
+        throw new Error(getErrorMessage(err))
+    }
+
+    return parsedResult.data
+};
 
 export async function signIn(email: TEmailSchema, password: TPasswordSchema) {
 
@@ -84,14 +223,14 @@ export async function signIn(email: TEmailSchema, password: TPasswordSchema) {
     } 
     catch (err) {
         return { 
-            error: {error: getErrorMessage(err)},
+            error: {error: [getErrorMessage(err)]},
             message: "Invalid user provided, failed to sign in!"
         };
     }
 
 };
 
-export async function signUp(email: TEmailSchema, password: TPasswordSchema) {
+export async function signUp(email: TEmailSchema, password: TPasswordSchema): StatePromise {
 
     const now = new Date();
 
@@ -137,7 +276,7 @@ export async function signUp(email: TEmailSchema, password: TPasswordSchema) {
     } 
     catch (err) {
         return { 
-            error: {error: getErrorMessage(err)},
+            error: {error: [getErrorMessage(err)]},
             message: "Invalid user provided, failed to sign up!"
         };
     }
@@ -145,7 +284,7 @@ export async function signUp(email: TEmailSchema, password: TPasswordSchema) {
     return { message: `Successfully created user ${parsedForm.data.user_uid}` }
 };
 
-export async function updateUser(formData: FormData) {
+export async function updateUser(formData: FormData): StatePromise {
 
     const now = new Date();
 
@@ -188,7 +327,7 @@ export async function updateUser(formData: FormData) {
     } 
     catch (err) {
         return { 
-            error: {error: getErrorMessage(err)},
+            error: {error: [getErrorMessage(err)]},
             message: "Invalid user provided, failed to sign up!"
         };
     }
@@ -196,12 +335,12 @@ export async function updateUser(formData: FormData) {
     return { message: `Successfully updated user ${parsedForm.data.user_uid}` }
 };
 
-export async function deleteUser(formData: FormData) {
+export async function deleteUser(user_uid: string): StatePromise {
 
     const now = new Date();
 
     const parsedForm = deleteUserSchema.safeParse({
-        user_uid: formData.get("user_uid"),
+        user_uid: user_uid,
     });
 
     if (!parsedForm.success) {
@@ -233,7 +372,7 @@ export async function deleteUser(formData: FormData) {
     } 
     catch (err) {
         return { 
-            error: {error: getErrorMessage(err)},
+            error: {error: [getErrorMessage(err)]},
             message: "Invalid user provided, failed to delete user!"
         };
     }
@@ -241,7 +380,43 @@ export async function deleteUser(formData: FormData) {
     return { message: `Successfully deleted user ${parsedForm.data.user_uid}` }
 };
 
-export async function updateRole(formData: FormData) {
+export async function readUserById(user_uid: string) {
+    noStore();
+    let parsedForm;
+    try {
+        if (parsedEnv.DB_TYPE === 'PRISMA') {
+            const result = await prisma.user.findUnique({
+                where: {
+                    user_uid: user_uid,
+                }
+            });
+            parsedForm = readUserWithoutPassSchema.safeParse(result || {});
+        }
+        else {
+            let pool = await sql.connect(sqlConfig);
+            const result = await pool.request()
+                            .input('schema', sql.VarChar, schema)
+                            .input('table', sql.VarChar, table)
+                            .query`SELECT user_uid, email, role, user_createdAt, user_updatedAt 
+                                    FROM "@schema"."@table"
+                                    WHERE user_uid = @user_uid;
+                            `;
+            parsedForm = readUserWithoutPassSchema.safeParse(result.recordset[0] || {});
+        }
+
+        if (!parsedForm.success) {
+            throw new Error(parsedForm.error.message)
+        };
+
+    } 
+    catch (err) {
+        throw new Error(getErrorMessage(err))
+    }
+
+    return parsedForm.data
+};
+
+export async function updateRole(formData: FormData): StatePromise {
 
     const now = new Date();
 
@@ -284,58 +459,10 @@ export async function updateRole(formData: FormData) {
     } 
     catch (err) {
         return { 
-            error: {error: getErrorMessage(err)},
+            error: {error: [getErrorMessage(err)]},
             message: "Invalid user provided, failed to update role!"
         };
     }
 
     return { message: `Successfully updated role for user ${parsedForm.data.user_uid}` }
-};
-
-export async function readUserByEmail(email: TEmailSchema) {
-    noStore();
-    const parsedForm = emailSchema.safeParse(email);
-
-    if (!parsedForm.success) {
-        throw new Error(parsedForm.error.message)
-    };
-
-    let parsedResult;
-    try {
-        if (parsedEnv.DB_TYPE === 'PRISMA') {
-            const result = await prisma.user.findFirst({
-                where: {
-                    email: parsedForm.data,
-                },
-                select: {
-                    user_uid: true,
-                    email: true,
-                    role: true,
-                },
-            })
-            parsedResult = readUserWithoutPassSchema.safeParse(result || {});
-        }
-
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('schema', sql.VarChar, schema)
-                            .input('table', sql.VarChar, table)
-                            .input('email', sql.VarChar, parsedForm.data)
-                            .query`SELECT user_uid, email, role
-                                    FROM "@schema"."@table"
-                                    WHERE email = @email;
-                            `;
-            parsedResult = readUserWithoutPassSchema.safeParse(result.recordset[0] || {});
-        }
-    
-        if (!parsedResult.success) {
-            throw new Error(parsedResult.error.message)
-        };
-    } 
-    catch (err) {
-        throw new Error(getErrorMessage(err))
-    }
-
-    return parsedResult.data
 };

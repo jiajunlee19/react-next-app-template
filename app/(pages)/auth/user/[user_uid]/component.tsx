@@ -53,8 +53,8 @@ export default function UserComponent({ params }: { params: {user_uid: string} }
                 <button type="button" className="btn-cancel w-40 mr-4 mt-4" onClick={() => formRef.current?.reset()}>Reset</button>
             </form>
 
-            <form action={ async (formData) => {
-                        const result = await deleteUser(formData);
+            <form action={ async () => {
+                        const result = await deleteUser(session.user.user_uid);
                         if (result?.error && result?.message) {
                             toast.error(result.message);
                         }
@@ -67,7 +67,6 @@ export default function UserComponent({ params }: { params: {user_uid: string} }
                         }
                     }
                 }>
-                <input name="user_uid" type="text" value={session.user.user_uid} hidden readOnly formNoValidate />
                 <SubmitButton buttonClass="btn-cancel w-80 mr-4 mt-8" buttonTitle={"Delete " + session.user.email} onButtonClick={handleSubmitClick} submitingButtonTitle="Deleting" />
             </form>
         </>

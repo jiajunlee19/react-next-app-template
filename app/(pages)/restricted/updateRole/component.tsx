@@ -98,8 +98,8 @@ export default function UpdateRoleComponent( {user}: TUpdateRoleComponentProps )
                 <button type="button" className="btn-cancel w-40 mr-4 mt-4" onClick={() => formRef.current?.reset()}>Reset</button>
             </form>
 
-            <form action={ async (formData) => {
-                        const result = await deleteUser(formData);
+            <form action={ async () => {
+                        const result = await deleteUser(searchParams.get("email")?.toString() || session.user.email);
                         if (result?.error && result?.message) {
                             toast.error(result.message);
                         }
@@ -112,7 +112,6 @@ export default function UpdateRoleComponent( {user}: TUpdateRoleComponentProps )
                         }
                     }
                 }>
-                <input name="user_uid" type="text" defaultValue={searchParams.get("email")?.toString() || session.user.email} hidden readOnly formNoValidate />
                 <SubmitButton buttonClass="btn-cancel w-80 mr-4 mt-8" buttonTitle={"Delete " + searchParams.get("email")?.toString() || session.user.email} onButtonClick={handleDeleteClick} submitingButtonTitle="Deleting" />
             </form>
         </>

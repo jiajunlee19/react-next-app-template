@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
+import { options } from "@/app/_libs/nextAuth_options";
 import { readUserByEmail } from "@/app/_actions/auth";
 import UpdateRoleComponent from '@/app/(pages)/restricted/updateRole/component';
-import { options } from "@/app/_libs/nextAuth_options";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -13,7 +13,6 @@ export const metadata: Metadata = {
 export default async function UpdateRolePage({searchParams}: {searchParams?: {email?: string}} ) {
 
     const session = await getServerSession(options);
-    console.log(session?.user)
 
     if (!session || session.user.role !== 'boss') {
         redirect("/denied");
