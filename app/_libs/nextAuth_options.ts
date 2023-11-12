@@ -2,7 +2,6 @@ import type {  NextAuthOptions, User } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { parsedEnv } from '@/app/_libs/zod_env';
 import { signIn } from '@/app/_actions/auth';
-import { toast } from 'react-hot-toast';
 
 export const options: NextAuthOptions = {
     providers: [
@@ -63,19 +62,17 @@ export const options: NextAuthOptions = {
 
     session: {
         strategy: 'jwt',
-        maxAge: 30 * 24 * 60 * 60,
+        maxAge: 2 * 24 * 60 * 60,
         updateAge: 24 * 60 * 60,
     },
 
     callbacks: {
         // Ref: https://authjs.dev/guides/basics/role-based-access-control#persisting-the-role
         async jwt({ token, user }) {
-            // if (user) token.role = user.role
             return {...token, ...user}
         },
         // If you want to use the role in client components
         async session({ session, token }) {
-            // if (session?.user) session.user.role = token.role
             session.user = token;
             return session
         },
