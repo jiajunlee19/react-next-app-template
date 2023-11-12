@@ -6,7 +6,7 @@ type TableSkeletonProps = {
 export default function TableSkeleton({ columnCount, rowCount }: TableSkeletonProps) {
 
     const rowSkeleton = <div className="h-6 w-24 rounded-xl bg-gray-100 dark:bg-gray-400/50" />;
-    const actionRowSkeleton = <div className="h-6 w-10 rounded-xl bg-gray-100 dark:bg-gray-400/50" />;
+    const actionRowSkeleton = <div className="h-6 w-12 rounded-xl bg-gray-100 dark:bg-gray-400/50" />;
 
     // rowData length based on columnCount
     const rowData: number[] = Array.from({length: Math.ceil(Number(columnCount))}, (_, i) => i+1);
@@ -21,7 +21,7 @@ export default function TableSkeleton({ columnCount, rowCount }: TableSkeletonPr
                 <th className="whitespace-nowrap p-1" key={key}>{rowSkeleton}</th>
             );
         })}
-        <th>action</th>
+        <th className="whitespace-nowrap p-1">{rowSkeleton}</th>
     </tr>;
 
     const tableBody = fetchedData.map((row, i) => {
@@ -32,7 +32,7 @@ export default function TableSkeleton({ columnCount, rowCount }: TableSkeletonPr
         return (
             <tr key={i}>
                 {tableData}
-                <td className="flex gap-1 justify-center align-middle p-1">
+                <td className="whitespace-nowrap p-1 flex gap-1 justify-center border-none">
                     {actionRowSkeleton}
                     {actionRowSkeleton}
                 </td>
