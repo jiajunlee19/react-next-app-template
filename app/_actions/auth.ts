@@ -377,6 +377,7 @@ export async function deleteUser(user_uid: string): StatePromise {
         };
     }
 
+    revalidatePath("/restricted/auth/user");
     return { message: `Successfully deleted user ${parsedForm.data.user_uid}` }
 };
 
