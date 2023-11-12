@@ -355,7 +355,10 @@
     export const config = { matcher: ["/protected/:path*", "/restricted/:path*"] }
     ```
 4. Authorization is also defined in [middleware.ts](middleware.ts) with `role`.
-    ```
+    - User with `role="user"` has access to all contents, except url start with `"/protected"` and `"/restricted"`.
+    - User with `role="admin"` has access to all contents,`"/restricted"`.
+    - User with `role="boxx"` has access to all contents.
+    ```ts
     if (request.nextUrl.pathname.startsWith("/protected")
         && request.nextauth.token?.role !== "admin"
         && request.nextauth.token?.role !== "boss")
@@ -364,12 +367,21 @@
             new URL("/denied", request.url)
         )
     }
+
+    if (request.nextUrl.pathname.startsWith("/restricted")
+            && request.nextauth.token?.role !== "boss") 
+        {
+            return NextResponse.rewrite(
+                new URL("/denied", request.url)
+            )
+        }
     ```
 5. Sign Up Page is defined in [/auth/signUp/page.tsx](/app/\(pages\)/auth/signUp/page.tsx).
 6. Sign In Page is defined in [/auth/signIn/page.tsx](/app/\(pages\)/auth/signIn/page.tsx).
 7. Sign Out Page is defined in [/auth/signOut/page.tsx](/app/\(pages\)/auth/signOut/page.tsx).
 8. New user are defaulted as `role="user"`.
-9. User's role can be updated in [restricted/updateRole/page.tsx](/app/\(pages\)/restricted/updateRole/page.tsx), which can only be accessed by `role="boss"` as defined in [middleware.ts](middleware.ts).
+9. User with `role="boss` can view all users in [restricted/auth/user/page.tsx](/app/\(pages\)/restricted/auth/user/page.tsx).
+10. User with `role="boss` can update any user's role in [restricted/auth/user/[user_uid]/updateRole/page.tsx](/app/\(pages\)/restricted/auth/user/[user_uid]/updateRole/page.tsx).
 
 <br>
 
