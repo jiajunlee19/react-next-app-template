@@ -1,8 +1,6 @@
 "use client"
 
 import { updateRole } from "@/app/_actions/auth";
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
 import { useRef } from "react";
 import { notFound } from 'next/navigation';
 import Breadcrumbs from "@/app/_components/basic/breadcrumbs";
@@ -13,19 +11,13 @@ type TUpdateRoleComponentProps = {
     user: TReadUserWithoutPassSchema | null,
 };
 
-export default async function UpdateRoleComponent({ user }: TUpdateRoleComponentProps) {
-    
-    const { data: session } = useSession();
+export default function UpdateRoleComponent({ user }: TUpdateRoleComponentProps) {
 
-    if (!session || session.user.role !== 'boss') {
-        redirect("/denied");
+    if (!user) {
+        notFound();
     }
 
     const formRef = useRef<HTMLFormElement>(null);
-
-    if (!user || Object.keys(user).length === 0 ) {
-        notFound();
-    }
 
     const handleUpdateClick = (e: React.MouseEvent<HTMLButtonElement>) => {
         

@@ -127,7 +127,7 @@ export async function readUserByEmail(email: TEmailSchema) {
                     role: true,
                 },
             })
-            parsedResult = readUserWithoutPassSchema.safeParse(result || {});
+            parsedResult = readUserWithoutPassSchema.safeParse(result);
         }
 
         else {
@@ -140,7 +140,7 @@ export async function readUserByEmail(email: TEmailSchema) {
                                     FROM "@schema"."@table"
                                     WHERE email = @email;
                             `;
-            parsedResult = readUserWithoutPassSchema.safeParse(result.recordset[0] || {});
+            parsedResult = readUserWithoutPassSchema.safeParse(result.recordset[0]);
         }
     
         if (!parsedResult.success) {
@@ -390,7 +390,7 @@ export async function readUserById(user_uid: string) {
                     user_uid: user_uid,
                 }
             });
-            parsedForm = readUserWithoutPassSchema.safeParse(result || {});
+            parsedForm = readUserWithoutPassSchema.safeParse(result);
         }
         else {
             let pool = await sql.connect(sqlConfig);
@@ -401,7 +401,7 @@ export async function readUserById(user_uid: string) {
                                     FROM "@schema"."@table"
                                     WHERE user_uid = @user_uid;
                             `;
-            parsedForm = readUserWithoutPassSchema.safeParse(result.recordset[0] || {});
+            parsedForm = readUserWithoutPassSchema.safeParse(result.recordset[0]);
         }
 
         if (!parsedForm.success) {
