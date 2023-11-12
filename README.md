@@ -39,6 +39,15 @@
 
 <br>
 
+# Security
+1. While using `target="_blank"` to launch a link in a new tab, it's important to add `rel="noopener noreferrer"` to prevent tabnabbing. 
+    ```ts
+    <a href="https://github.com/jiajunlee19" target="_blank" rel="noopener noreferrer">
+    ```
+2. Secrets can be safely stored in `.env` files or `server-side actions`. They will not be sent to client-side.
+
+<br>
+
 # Tailwind CSS Styling
 1. Tailwind configs are setup in [tailwind.config.ts](/tailwind.config.ts)
     - To let tailwind knows where to apply tailwind styling, App directory is defined in contents.
