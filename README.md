@@ -1,7 +1,9 @@
 # Intro
 - This is a template react-next-all built on top of [Next.js](https://nextjs.org/) by [jiajunlee](https://github.com/jiajunlee19). 
-- Feel free to clone the template repo and customize accordingly.
 - Most important concepts used in this project are described in below sections.
+- [Create a new repo with this template](https://github.com/new?template_name=react-next-app-template&template_owner=jiajunlee19)
+
+<br>
 
 # Getting Started
 1. Duplicate [.env.template](.env.template) into [.env](.env), and set environment variables there.
