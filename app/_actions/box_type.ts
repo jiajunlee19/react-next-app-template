@@ -298,7 +298,8 @@ export async function readBoxTypeById(box_type_uid: string) {
                     box_type_uid: box_type_uid,
                 }
             });
-            parsedForm = readBoxTypeSchema.safeParse(result);
+            const flattenResult = flattenNestedObject(result);
+            parsedForm = readBoxTypeSchema.safeParse(flattenResult);
         }
         else {
             let pool = await sql.connect(sqlConfig);
