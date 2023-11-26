@@ -35,7 +35,9 @@ export const createLotSchema = z.object({
 
 export type TReadLotSchema = z.infer<typeof readLotSchema>;
 
-export const readLotSchema = createLotSchema.partial();
+export const readLotSchema = createLotSchema.extend({
+    box_uid: z.string().min(1).uuid(),
+}).partial();
 
 export const updateLotSchema = createLotSchema.pick({
     lot_uid: true,
@@ -62,10 +64,15 @@ export type TReadBoxSchema = z.infer<typeof readBoxSchema>;
 
 export const readBoxSchema = createBoxSchema.extend({
     box_part_number: z.string().length(10, {message: "Please input a valid part number!"}).includes("-", {message: "Please input a valid part number!"}),
+    box_max_tray: z.coerce.number().int().min(1),
+    shipdoc_number: z.string().min(1),
+    shipdoc_contact: z.string().min(1),
 }).partial();
 
 export const updateBoxSchema = createBoxSchema.pick({
     box_uid: true,
+    box_type_uid: true,
+    shipdoc_uid: true,
     box_status: true,
     box_updatedAt: true,
 });
@@ -92,7 +99,10 @@ export const createTraySchema = z.object({
 
 export type TReadTraySchema = z.infer<typeof readTraySchema>;
 
-export const readTraySchema = createTraySchema.partial();
+export const readTraySchema = createTraySchema.extend({
+    tray_part_number: z.string().length(10, {message: "Please input a valid part number!"}).includes("-", {message: "Please input a valid part number!"}),
+    tray_max_drive: z.coerce.number().int().min(1),
+}).partial();
 
 export const updateTraySchema = createTraySchema.pick({
     tray_uid: true,
