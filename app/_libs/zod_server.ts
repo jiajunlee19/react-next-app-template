@@ -65,6 +65,7 @@ export type TReadBoxSchema = z.infer<typeof readBoxSchema>;
 export const readBoxSchema = createBoxSchema.extend({
     box_part_number: z.string().length(10, {message: "Please input a valid part number!"}).includes("-", {message: "Please input a valid part number!"}),
     box_max_tray: z.coerce.number().int().min(1),
+    box_current_tray: z.coerce.number().int().min(0),
     shipdoc_number: z.string().min(1),
     shipdoc_contact: z.string().min(1),
 }).partial();
@@ -81,10 +82,29 @@ export const deleteBoxSchema = createBoxSchema.pick({
     box_uid: true,
 });
 
+export const checkBoxShippableSchema = createBoxSchema.pick({
+    box_uid: true,
+}).extend({
+    box_current_tray: z.coerce.number().int().min(0),
+    box_current_drive: z.coerce.number().int().min(0),
+});
+
 export const shipBoxSchema = createBoxSchema.pick({
     box_uid: true,
     box_status: true,
     box_updatedAt: true,
+});
+
+export const shippedBoxHistorySchema = createBoxSchema.pick({
+    box_uid: true,
+    box_status: true,
+    box_updatedAt: true,
+}).extend({
+    shipdoc_number: z.string().min(1),
+    shipdoc_contact: z.string().min(1),
+    tray_uid: z.string().min(1).uuid(),
+    lot_id: z.string().min(1),
+    lot_qty: z.coerce.number().int().min(1),
 });
 
 
@@ -102,6 +122,7 @@ export type TReadTraySchema = z.infer<typeof readTraySchema>;
 export const readTraySchema = createTraySchema.extend({
     tray_part_number: z.string().length(10, {message: "Please input a valid part number!"}).includes("-", {message: "Please input a valid part number!"}),
     tray_max_drive: z.coerce.number().int().min(1),
+    tray_current_drive: z.coerce.number().int().min(0),
 }).partial();
 
 export const updateTraySchema = createTraySchema.pick({
