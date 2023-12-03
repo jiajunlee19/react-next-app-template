@@ -24,6 +24,7 @@
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.2.0",
+    "react-dropzone": "^14.2.3",
     "react-hot-toast": "^2.4.1",
     "tailwind-merge": "^1.14.0",
     "use-debounce": "^10.0.0",
