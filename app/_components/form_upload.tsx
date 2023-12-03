@@ -1,0 +1,45 @@
+"use client"
+
+import { uploadFile } from "@/app/_actions/file";
+import { MultiFileDropzone, type FileState } from "@/app/_components/basic/multifile_dropzone";
+import { useState } from 'react';
+
+export default function UploadForm() {
+
+    const [fileStates, setFileStates] = useState<FileState[]>([]);
+
+    function updateFileProgress(key: string, progress: FileState['progress']) {
+        setFileStates((fileStates) => {
+          const newFileStates = structuredClone(fileStates);
+          const fileState = newFileStates.find(
+            (fileState) => fileState.key === key,
+          );
+          if (fileState) {
+            fileState.progress = progress;
+          }
+          return newFileStates;
+        });
+    };
+
+    const handleFilesAdded = async (addedFiles: FileState[]) => {
+        setFileStates([...fileStates, ...addedFiles]);
+        addedFiles.map(async (addedFileState) => {
+            const formData = new FormData();
+            formData.append("file", addedFileState.file);
+            const result = await uploadFile(formData)
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            if (result) {
+                updateFileProgress(addedFileState.key, 'COMPLETE');
+            }
+            else {
+                updateFileProgress(addedFileState.key, 'ERROR');
+            }
+        });
+    };
+
+    return (
+        <>
+            <MultiFileDropzone value={fileStates} onChange={(files) => setFileStates(files)} onFilesAdded={handleFilesAdded} />
+        </>
+    );
+};
