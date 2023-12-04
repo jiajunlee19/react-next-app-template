@@ -23,7 +23,8 @@ export async function uploadFile(formData: FormData) {
             fs.mkdirSync(dirPath, {recursive: true});
         }
 
-        const filePath = path.join(dirPath, file.name)
+        const extension = file.name.substring( file.name.lastIndexOf(".") );
+        const filePath = path.join(dirPath, "tmp" + extension );
         await writeFile(filePath, buffer);
 
     } catch {

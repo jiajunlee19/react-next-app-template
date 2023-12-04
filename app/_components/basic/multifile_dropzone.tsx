@@ -27,7 +27,6 @@ export type FileState = {
 };
 
 type InputProps = {
-  multiFile?: boolean;
   className?: string;
   value?: FileState[];
   onChange?: (files: FileState[]) => void | Promise<void>;
@@ -53,7 +52,7 @@ const ERROR_MESSAGES = {
 
 const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
   (
-    { multiFile, dropzoneOptions, value, className, disabled, onFilesAdded, onChange },
+    { dropzoneOptions, value, className, disabled, onFilesAdded, onChange },
     ref,
   ) => {
     const [customError, setCustomError] = React.useState<string>();
@@ -69,8 +68,6 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
       isDragAccept,
       isDragReject,
     } = useDropzone({
-      // accept: { 'image/*': []},
-      multiple: multiFile === undefined ? true : multiFile,
       disabled,
       onDrop: (acceptedFiles: File[]) => {
         const files = acceptedFiles;

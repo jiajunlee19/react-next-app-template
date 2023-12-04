@@ -2,13 +2,14 @@
 
 import { uploadFile } from "@/app/_actions/file";
 import { MultiFileDropzone, type FileState } from "@/app/_components/basic/multifile_dropzone";
+import { type DropzoneOptions } from 'react-dropzone';
 import { useState } from 'react';
 
 type TUploadFileProps = {
-    multiFile?: boolean,
+    dropzoneOptions?: Omit<DropzoneOptions, 'disabled'>,
 };
 
-export default function UploadForm({ multiFile }: TUploadFileProps) {
+export default function UploadForm({ dropzoneOptions }: TUploadFileProps) {
 
     const [fileStates, setFileStates] = useState<FileState[]>([]);
 
@@ -43,7 +44,7 @@ export default function UploadForm({ multiFile }: TUploadFileProps) {
 
     return (
         <>
-            <MultiFileDropzone multiFile={multiFile} value={fileStates} onChange={(files) => setFileStates(files)} onFilesAdded={handleFilesAdded} />
+            <MultiFileDropzone dropzoneOptions={dropzoneOptions} value={fileStates} onChange={(files) => setFileStates(files)} onFilesAdded={handleFilesAdded} />
         </>
     );
 };
