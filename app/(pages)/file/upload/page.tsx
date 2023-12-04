@@ -16,7 +16,7 @@ export default async function FileUploadPage() {
             'text/plain': ['.txt'], 
             'text/csv': ['.csv'],
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx', '.xlsm'], 
-            'application/xml': ['.pp', '.pp7']
+            'application/xml': ['.pp', '.pp7'],
         },
         multiple: false,
         maxFiles: 1,
