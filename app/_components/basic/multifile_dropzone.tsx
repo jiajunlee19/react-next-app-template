@@ -174,16 +174,7 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
                 <div className="grow" />
                 <div className="flex w-12 justify-end text-xs gap-2">
                   {progress === 'PENDING' ? (
-                    <button
-                      className="rounded-md p-1 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      onClick={() => {
-                        void onChange?.(
-                          value.filter((_, index) => index !== i),
-                        );
-                      }}
-                    >
-                      <TrashIcon className="h-5 shrink-0" />
-                    </button>
+                    <></>
                   ) : progress === 'ERROR' ? (
                     <ExclamationCircleIcon className="h-5 shrink-0 text-red-600 dark:text-red-400" />
                   ) : progress !== 'COMPLETE' ? (
@@ -191,6 +182,16 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
                   ) : (
                     <CheckCircleIcon className="h-8 shrink-0 text-green-600 dark:text-green-400" />
                   )}
+                  <button
+                    className="rounded-md p-1 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    onClick={() => {
+                      void onChange?.(
+                        value.filter((_, index) => index !== i),
+                      );
+                    }}
+                  >
+                    <TrashIcon className="h-5 shrink-0" />
+                  </button>
                 </div>
               </div>
               {/* Progress Bar */}

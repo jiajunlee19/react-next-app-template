@@ -10,8 +10,15 @@ export const metadata: Metadata = {
 export default async function FileUploadPage() {
     
     const dropzoneOptions: Omit<DropzoneOptions, 'disabled'> = {
-        // accept: { 'image/*': [] },
-        multiple: true,
+        // Refer here for accepted Mime types
+        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+        accept: {
+            'text/plain': ['.txt'], 
+            'text/csv': ['.csv'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx', '.xlsm'], 
+            'application/xml': ['.pp', '.pp7']
+        },
+        multiple: false,
         maxFiles: 1,
         maxSize: 1024 * 1,
     };
