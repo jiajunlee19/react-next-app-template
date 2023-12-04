@@ -11,7 +11,7 @@ export default async function FileUploadPage() {
     return (
         <>
             <h1>Upload File</h1>
-            <UploadForm />
+            <UploadForm multiFile={true} />
         </>
     );
 };
