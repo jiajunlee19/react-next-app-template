@@ -1,2 +1,0 @@
-Experience with all phases of Software Development Life Cycle (SDLC) which includes gathering and analyzing business requirements, 
-functional/technical specifications, designing, developing, testing, deploying the applications and providing production support
