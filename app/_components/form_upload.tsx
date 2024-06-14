@@ -1,16 +1,19 @@
 "use client"
 
+// https://edgestore.dev/docs/components/multi-file
+
 import { uploadFile } from "@/app/_actions/file";
 import { MultiFileDropzone, type FileState } from "@/app/_components/basic/multifile_dropzone";
 import { type DropzoneOptions } from 'react-dropzone';
 import { useState } from 'react';
 
 type TUploadFileProps = {
+    dirName: string,
     dropzoneOptions?: Omit<DropzoneOptions, 'disabled'>,
 };
 
-export default function UploadForm({ dropzoneOptions }: TUploadFileProps) {
-
+export default function UploadForm({ dirName, dropzoneOptions }: TUploadFileProps) {
+    
     const [fileStates, setFileStates] = useState<FileState[]>([]);
 
     function updateFileProgress(key: string, progress: FileState['progress']) {
@@ -31,8 +34,9 @@ export default function UploadForm({ dropzoneOptions }: TUploadFileProps) {
         addedFiles.map(async (addedFileState) => {
             const formData = new FormData();
             formData.append("file", addedFileState.file);
-            const result = await uploadFile(formData)
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+
+            const result = await uploadFile(formData, dirName)
+            // await new Promise((resolve) => setTimeout(resolve, 1000));
             if (result) {
                 updateFileProgress(addedFileState.key, 'COMPLETE');
             }

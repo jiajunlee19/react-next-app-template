@@ -82,7 +82,8 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
         if (files) {
           const addedFiles = files.map<FileState>((file) => ({
             file,
-            key: Math.random().toString(36).slice(2),
+            // key: Math.random().toString(36).slice(2),
+            key: Date.now().toString() + Math.random().toString(36).slice(2),
             progress: 'PENDING',
           }));
           void onFilesAdded?.(addedFiles);
@@ -142,7 +143,7 @@ const MultiFileDropzone = React.forwardRef<HTMLInputElement, InputProps>(
             >
               <input ref={ref} {...getInputProps()} />
               <div className="flex flex-col items-center justify-center text-xs text-gray-400">
-                <CloudArrowUpIcon className="mb-1 h-7 w-7" />
+                {/* <CloudArrowUpIcon className="mb-1 h-7 w-7" /> */}
                 <div className="text-gray-400">
                   drag & drop or click to upload
                 </div>
