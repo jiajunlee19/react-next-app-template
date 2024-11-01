@@ -3,14 +3,14 @@ import { z } from 'zod';
 
 export const envSchema = z.object({
 
-    // Mode (DEV will use dummy database, PROD will use prod database)
-    MODE: z.enum(['DEV', 'PROD']),
-
-    // DB_TYPE (PRISMA / RAW)
-    DB_TYPE: z.enum(['PRISMA', 'RAW']),
+    // PORT
+    PORT: z.coerce.number().int().gte(1000).lte(9999),
 
     // Base url
     BASE_URL: z.string().min(1).url(),
+
+    // DB_TYPE (PRISMA / RAW)
+    DB_TYPE: z.enum(['PRISMA', 'RAW']),
 
     // POSTGRESS connections
     POSTGRES_URL: z.string().min(1).startsWith('postgres://'),
