@@ -428,6 +428,13 @@ Check out the [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 <br>
 
+# CI/CD with Jenkins
+Jenkins is a DevOps tool. Jenkins pipeline can be designed to automate the install/build/deploy process, triggered by dedicated events. 
+
+Check out the [jenkins-template](https://github.com/jiajunlee19/jenkins-template).
+
+<br>
+
 # Others
 1. [https://erd.dbdesigner.net/](https://erd.dbdesigner.net/) is a useful database schema diagram creating tool.
 2. [https://draw.io/](https://draw.io/) is a useful flowchart creating tool.
