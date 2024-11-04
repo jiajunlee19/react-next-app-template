@@ -1,4 +1,4 @@
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { v5 as uuidv5 } from 'uuid';
 import sql from 'mssql';
 import { sqlConfig } from "@/app/_libs/sql_config";
