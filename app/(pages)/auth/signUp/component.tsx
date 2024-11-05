@@ -41,7 +41,7 @@ export default function SignUpComponent() {
                         const result = await signUp(emailRef.current, passwordRef.current);
                         formRef.current?.reset();
                         if (result?.error && result?.message) {
-                            toast.error(result.message);
+                            toast.error(JSON.stringify(result.error));
                         }
                         else if (result?.message) {
                             toast.success(result.message);

@@ -31,7 +31,7 @@ export default function TableActionButton({ id, action, icon, confirmMsg }: Tabl
         <form action={ async () => {
             const result = await action(id);
             if (result?.error && result?.message) {
-                toast.error(result.message);
+                toast.error(JSON.stringify(result.error));
             }
             else if (result?.message) {
                 toast.success(result.message);

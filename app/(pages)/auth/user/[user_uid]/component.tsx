@@ -37,7 +37,7 @@ export default function UserComponent({ params }: { params: {user_uid: string} }
             <form ref={formRef} action={ async (formData) => {
                         const result = await updateUser(formData);
                         if (result?.error && result?.message) {
-                            toast.error(result.message);
+                            toast.error(JSON.stringify(result.error));
                         }
                         else if (result?.message) {
                             toast.success(result.message);
@@ -59,7 +59,7 @@ export default function UserComponent({ params }: { params: {user_uid: string} }
             <form action={ async () => {
                         const result = await deleteUser(session.user.user_uid);
                         if (result?.error && result?.message) {
-                            toast.error(result.message);
+                            toast.error(JSON.stringify(result.error));
                         }
                         else if (result?.message) {
                             toast.success(result.message);

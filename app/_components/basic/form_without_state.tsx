@@ -126,7 +126,7 @@ export default function FormWithoutState( {formTitle, inputType, rowData, select
         <form ref={formRef} className="my-[2%] mx-[2%]" action={ async (formData) => {
             const result = await formAction(formData);
             if (result?.error && result?.message) {
-                toast.error(result.message);
+                toast.error(JSON.stringify(result.error));
             }
             else if (result?.message) {
                 toast.success(result.message);
