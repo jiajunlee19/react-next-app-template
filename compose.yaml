@@ -1,0 +1,16 @@
+services:
+  server:
+    image: react-next-app-template:0.1.0
+    container_name: react-next-app-template
+    networks:
+      - react-next-app-template
+    restart: on-failure
+    build: .
+    env_file:
+      - .env
+    ports:
+      - '${PORT}:${PORT}'
+
+networks:
+  react-next-app-template:
+    name: react-next-app-template
