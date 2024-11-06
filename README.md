@@ -428,6 +428,24 @@ Check out the [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 <br>
 
+# Containerize with Docker
+1. Configure `standalone` output in [next.config.js](/next.config.js)
+    ```js
+    const nextConfig = {
+        output: 'standalone',
+    }
+    ```
+2. [Dockerfile](/Dockerfile) is created to build docker image. 
+    - It uses multi-stage concept (base -> deps -> builder -> runner) and pass only relevant files between stages.
+    - Production image generated from runner stage, contains only the necessary files needed to run the app.
+    - Instead of the `root` user, the production image will be run as a normal privileged `nextjs` user.
+
+3. [compose.yaml](/compose.yaml) is created to easily manage docker run process (including network creation, container creation etc.)
+    - Use `docker compose --env-file .env up -d` to startup the docker container.
+    - Use `docker compose down` to shutdown the docker container.
+
+<br>
+
 # CI/CD with Jenkins
 Jenkins is a DevOps tool. Jenkins pipeline can be designed to automate the install/build/deploy process, triggered by dedicated events. 
 
