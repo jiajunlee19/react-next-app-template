@@ -1,6 +1,6 @@
 services:
   server:
-    image: react-next-app-template:0.1.0
+    image: react-next-app-template:latest
     container_name: react-next-app-template
     networks:
       - react-next-app-template
