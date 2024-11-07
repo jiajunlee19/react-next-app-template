@@ -4,8 +4,8 @@ set -e
 
 echo '[info] Dockerizing ...'
 
-echo '[info] docker build -t docker-template:latest .'
-docker build -t docker-template:latest .
+echo '[info] docker build -t react-next-app-template:latest .'
+docker build -t react-next-app-template:latest .
 
 # echo '[info] docker compose down'
 # docker compose down
