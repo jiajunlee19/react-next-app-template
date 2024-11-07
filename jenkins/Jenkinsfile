@@ -1,10 +1,10 @@
 pipeline {
-    agent any
-    // agent {
-    //     node {
-    //         label 'your-agent-label'
-    //     }
-    // }
+    // agent any
+    agent {
+        node {
+            label 'agent-win-jiajunlee'
+        }
+    }
 
     stages {
         stage('Init') {
