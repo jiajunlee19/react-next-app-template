@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Init') {
             steps {
-                withCredentials([file(credentialsId: 'youCredId', variable: 'envFile')]) {
+                withCredentials([file(credentialsId: 'pipeline-test1-envFile', variable: 'envFile')]) {
                     sh 'cp $envFile $WORKSPACE'
                     echo 'Copied envFile into $WORKSPACE !'
                 }
