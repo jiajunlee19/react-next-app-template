@@ -1,0 +1,54 @@
+pipeline {
+    agent any
+    // agent {
+    //     node {
+    //         label 'your-agent-label'
+    //     }
+    // }
+
+    stages {
+        stage('Init') {
+            steps {
+                withCredentials([file(credentialsId: 'youCredId', variable: 'envFile')]) {
+                    sh 'cp $envFile $WORKSPACE'
+                    echo 'Copied envFile into $WORKSPACE !'
+                }
+            }
+        }
+
+        stage('Dockerize') {
+            steps {
+                sh 'chmod +x ./jenkins/scripts/dockerize.sh'
+                sh './jenkins/scripts/dockerize.sh'
+            }
+        }
+
+        // stage('Install') {
+        //     steps {
+        //         sh 'chmod +x ./jenkins/scripts/install.sh'
+        //         sh './jenkins/scripts/install.sh'
+        //     }
+        // }
+
+        // stage('Kill') {
+        //     steps {
+        //         sh 'chmod +x ./jenkins/scripts/kill.sh'
+        //         sh './jenkins/scripts/kill.sh'
+        //     }
+        // }
+
+        // stage('Build') {
+        //     steps {
+        //         sh 'chmod +x ./jenkins/scripts/build.sh'
+        //         sh './jenkins/scripts/build.sh'
+        //     }
+        // }
+
+        // stage('Deploy') {
+        //     steps {
+        //         sh 'chmod +x ./jenkins/scripts/deploy.sh'
+        //         sh 'JENKINS_NODE_COOKIE=dontKillMe ./jenkins/scripts/deploy.sh'
+        //     }
+        // }
+    }
+}
