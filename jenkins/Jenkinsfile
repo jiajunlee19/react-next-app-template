@@ -16,7 +16,7 @@ pipeline {
         stage('Init') {
             steps {
                 withCredentials([file(credentialsId: 'pipeline-test1-envFile', variable: 'envFile')]) {
-                    sh 'cp $envFile "$WORKSPACE"'
+                    sh 'cp "$envFile" "$WORKSPACE"'
                     echo "Copied envFile into $WORKSPACE !"
                 }
             }
