@@ -4,7 +4,7 @@ services:
     container_name: react-next-app-template
     networks:
       - react-next-app-template
-    restart: on-failure
+    restart: no
     build: .
     env_file:
       - .env
