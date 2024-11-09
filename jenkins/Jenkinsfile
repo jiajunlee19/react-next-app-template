@@ -68,7 +68,7 @@ pipeline {
 
         failure {  
             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                "[Failed]: Jenkins Job -> ${env.JOB_NAME}"
+                echo "[Failed]: Jenkins Job -> ${env.JOB_NAME}"
                 mail subject: "[Failed]: Jenkins Job -> ${env.JOB_NAME}", body: "Hi,<br><br>Project: ${env.JOB_NAME} has failed! Refer to below details: <br><br>Build Number: ${env.BUILD_NUMBER} <br> Build URL: ${env.BUILD_URL} <br> Node Name: ${env.NODE_NAME} <br><br><br>Best Regards,<br>Jenkins Robot", charset: 'UTF-8', mimeType: 'text/html', from: 'no-reply@jenkins.com', to: "${params.email_to}", bcc: "${params.email_bcc}", cc: "${params.email_cc}", replyTo: "${params.email_to}";  
             }
         } 
