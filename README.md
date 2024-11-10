@@ -47,6 +47,14 @@
     <a href="https://github.com/jiajunlee19" target="_blank" rel="noopener noreferrer">
     ```
 2. Secrets can be safely stored in `.env` files or `server-side actions`. They will not be sent to client-side.
+3. Its important to mark a `server component` to be `Server-only` to prevent the component being accidentally used and exposed to client side.
+    ```ts
+    import "server-only";
+
+    // your server-only component will throw an error if called in client side
+    ```
+4. If there's a need of checking authorization, perform the check as close as possible to the source-action (eg: Right Before calling server delete action). 
+5. Rate limiting
 
 <br>
 

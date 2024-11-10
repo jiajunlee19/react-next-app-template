@@ -1,3 +1,5 @@
+import "server-only";
+
 import { z } from 'zod';
 
 export const uuidSchema = z.string().toLowerCase().min(1).uuid();
