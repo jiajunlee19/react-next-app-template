@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+export const uuidSchema = z.string().toLowerCase().min(1).uuid();
+
+export const itemsPerPageSchema = z.coerce.number().int().min(1).catch(10);
+export const currentPageSchema = z.coerce.number().int().min(1).catch(1);
+export const querySchema = z.string().min(1).optional().catch(undefined);
+
 export const createShipdocSchema = z.object({
     shipdoc_uid: z.string().toLowerCase().min(1).uuid(),
     shipdoc_number: z.string().toUpperCase().min(1),
@@ -168,6 +174,10 @@ export const updateBoxTypeSchema = createBoxTypeSchema.pick({
 
 export const deleteBoxTypeSchema = createBoxTypeSchema.pick({
     box_type_uid: true,
+});
+
+export const boxPartNumberSchema = createBoxTypeSchema.pick({
+    box_part_number: true,
 });
 
 

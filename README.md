@@ -193,6 +193,30 @@
         ...
     }
     ```
+4. As Server Actions are directly communicating to database, they need to be carefully designed to prevent data leakage and avoid malicious attack.
+    - Always treat the input arguments as `unknown` type, they must be sanitized to ensure only those with expected formats are used downstream.
+        ```ts
+            export async function updateUser(formData: FormData | unknown): StatePromise {
+
+                if (!(formData instanceof FormData)) {
+                    throw new Error('Invalid input provided !');
+                };
+
+                const parsedForm = updateUserSchema.safeParse({
+                    user_uid: formData.get("user_uid"),
+                    password: formData.get("password"),
+                });
+
+                if (!parsedForm.success) {
+                    return { 
+                        error: parsedForm.error.flatten().fieldErrors,
+                        message: "Invalid input provided, failed to update user!"
+                    };
+                };
+
+                // Its safe to use parsed variables downstream after the checks
+            };
+        ```
 
 <br>
 
@@ -206,12 +230,12 @@
         message: "Invalid input provided, failed to create box_type!"
     };
     ```
-2. In [form.tsx](/app/_components//basic//form.tsx), each form field is handled with `state.error` with the help of `useFormState`.
+2. In [form.tsx](/app/_components/basic/form.tsx), each form field is handled with `state.error` with the help of `useActionState`.
     ```ts
-    import { useFormState } from "react-dom";
+    import { useActionState } from "react-dom";
 
     const initialState  = { message: null, errors: {} };
-    const [state, dispatch] = useFormState(formAction, initialState);
+    const [state, dispatch] = useActionState(formAction, initialState);
 
     ...
     <form>
@@ -325,9 +349,16 @@
 2. Page nav component is generated in [pagination.tsx](/app/_components/basic/pagination.tsx).
 3. Pagination is achieved by getting `currentPage` from searchParams and `totalPage` from server action.
     ```ts
-    export default async function BoxType({ searchParams }: { searchParams?: { currentPage?: string } ... }) {
-        const currentPage = Number(searchParams?.currentPage) || 1;
-        const totalPage = await readBoxTypeTotalPage();
+        export default async function BoxType(
+            props: { searchParams?: Promise<{ itemsPerPage?: string, currentPage?: string, query?: string }> }
+        ) {
+            const searchParams = await props.searchParams;
+
+            const itemsPerPage = Number(searchParams?.itemsPerPage) || 10;
+            const currentPage = Number(searchParams?.currentPage) || 1;
+            const query = searchParams?.query || undefined;
+
+            const totalPage = await readBoxTypeTotalPage(itemsPerPage, query);
 
         ...
 
@@ -345,8 +376,10 @@
 # Search Query
 1. Search query is achieved by getting `query` from searchParams.
     ```ts
-    export default async function BoxType({ searchParams }: { searchParams?: { ... query?: string } }) {
-
+    export default async function BoxType(
+        props: { searchParams?: Promise<{ ... query?: string }> }
+    ) {
+    const searchParams = await props.searchParams;
     const query = searchParams?.query || undefined;
 
     ...
