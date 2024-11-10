@@ -6,6 +6,7 @@ import { getErrorMessage } from '@/app/_libs/error_handler';
 import { signJwtToken } from '@/app/_libs/jwt';
 import { parsedEnv } from '@/app/_libs/zod_env';
 import prisma from '@/prisma/prisma';
+import { revalidatePath } from 'next/cache';
 
 const schema = 'packing';
 const table = 'user';

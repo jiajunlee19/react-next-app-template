@@ -2,7 +2,7 @@
 
 import * as path from "path";
 import * as fs from "fs";
-import { writeFile, rmdir } from "fs/promises";
+import { writeFile, rm } from "fs/promises";
 
 export async function uploadFile(formData: FormData, dirName: string) {
         
@@ -42,7 +42,7 @@ export async function deleteDir(dirName: string) {
 
     try {
         const dirPath = path.resolve("./public", dirName);
-        await rmdir(dirPath, { recursive: true });
+        await rm(dirPath, { recursive: true });
 
     } catch {
         return false

@@ -6,6 +6,7 @@ import { type TInputType, type TRowData, type State, type StatePromise, type TFo
 import { toast } from "react-hot-toast";
 import { getString } from "@/app/_libs/toString_handler";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 type FormWithoutStateProps = {
     formTitle: string,
@@ -130,6 +131,7 @@ export default function FormWithoutState( {formTitle, inputType, rowData, select
             }
             else if (result?.message) {
                 toast.success(result.message);
+                redirect(redirectLink);
             }
             formRef.current?.reset();
         }

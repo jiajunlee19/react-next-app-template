@@ -12,7 +12,10 @@ export const metadata: Metadata = {
     description: 'Developed by jiajunlee',
 };
 
-export default async function AdminListPage({ searchParams }: { searchParams?: { itemsPerPage?: string, currentPage?: string, query?: string } }) {
+export default async function AdminListPage(
+    props: { searchParams?: Promise<{ itemsPerPage?: string, currentPage?: string, query?: string }> }
+) {
+    const searchParams = await props.searchParams;
 
     const itemsPerPage = Number(searchParams?.itemsPerPage) || 10;
     const currentPage = Number(searchParams?.currentPage) || 1;

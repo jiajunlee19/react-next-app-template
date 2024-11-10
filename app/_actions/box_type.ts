@@ -60,7 +60,7 @@ export async function readBoxTypeTotalPage(itemsPerPage: number, query?: string)
         throw new Error(getErrorMessage(err))
     }
     const totalPage = Math.ceil(parsedForm.data.length / itemsPerPage);
-    revalidatePath('/protected/box_type');
+    // revalidatePath('/protected/box_type');
     return totalPage
 };
 
@@ -126,7 +126,7 @@ export async function readBoxTypeByPage(itemsPerPage: number, currentPage: numbe
         throw new Error(getErrorMessage(err))
     }
 
-    revalidatePath('/protected/box_type');
+    // revalidatePath('/protected/box_type');
     return parsedForm.data
 };
 
@@ -264,7 +264,7 @@ export async function createBoxType(prevState: State, formData: FormData): State
         }
     }
 
-    revalidatePath('/protected/box_type');
+    // revalidatePath('/protected/box_type');
     return { 
         message: `Successfully created box_type ${parsedForm.data.box_type_uid}` 
     }
@@ -317,7 +317,7 @@ export async function updateBoxType(prevState: State, formData: FormData): State
         }
     }
 
-    revalidatePath('/protected/box_type');
+    // revalidatePath('/protected/box_type');
     return { message: `Successfully updated box_type ${parsedForm.data.box_type_uid}` }
 };
 
@@ -360,7 +360,7 @@ export async function deleteBoxType(box_type_uid: string): StatePromise {
         }
     }
 
-    revalidatePath('/protected/box_type');
+    // revalidatePath('/protected/box_type');
     return { message: `Successfully deleted box_type ${parsedForm.data.box_type_uid}` }
 };
 
