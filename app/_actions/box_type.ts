@@ -1,5 +1,8 @@
 'use server'
 
+import { getServerSession } from "next-auth/next";
+import { options } from "@/app/_libs/nextAuth_options";
+import { redirect } from "next/navigation";
 import { v5 as uuidv5 } from 'uuid';
 import sql from 'mssql';
 import { sqlConfig } from "@/app/_libs/sql_config";
@@ -20,6 +23,12 @@ export async function readBoxTypeTotalPage(itemsPerPage: number | unknown, query
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedQuery = querySchema.parse(query);
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
 
     const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
     let parsedForm;
@@ -83,6 +92,12 @@ export async function readBoxTypeByPage(itemsPerPage: number | unknown, currentP
     const parsedCurrentPage = currentPageSchema.parse(currentPage);
     const parsedQuery = querySchema.parse(query);
 
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
+    
     const OFFSET = (parsedCurrentPage - 1) * parsedItemsPerPage;
     const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
     let parsedForm;
@@ -149,6 +164,12 @@ export async function readBoxType() {
     // console.log("ok")
     // <dev only>
 
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
+
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
@@ -198,6 +219,12 @@ export async function readBoxTypeUid(box_part_number: string | unknown) {
     if (!parsedInput.success) {
         throw new Error(parsedInput.error.message)
     };
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
 
     let parsedForm;
     try {
@@ -258,6 +285,12 @@ export async function createBoxType(prevState: State | unknown, formData: FormDa
         };
     };
 
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
+
     try {
 
         if (parsedEnv.DB_TYPE === 'PRISMA') {
@@ -314,6 +347,12 @@ export async function updateBoxType(prevState: State | unknown, formData: FormDa
         };
     };
 
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
+
     try {
 
         if (parsedEnv.DB_TYPE === "PRISMA") {
@@ -361,6 +400,12 @@ export async function deleteBoxType(box_type_uid: string): StatePromise {
         };
     };
 
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
+
     try {
 
         if (parsedEnv.DB_TYPE === "PRISMA") {
@@ -398,6 +443,12 @@ export async function readBoxTypeById(box_type_uid: string) {
     if (!parsed_uid.success) {
         throw new Error(parsed_uid.error.message)
     };
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
 
     let parsedForm;
     try {

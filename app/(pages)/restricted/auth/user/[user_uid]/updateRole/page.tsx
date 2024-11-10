@@ -1,4 +1,4 @@
-import { readUserById, updateRole } from "@/app/_actions/auth";
+import { readUserById } from "@/app/_actions/auth";
 import type { Metadata } from 'next'
 import UpdateRoleComponent from "@/app/(pages)/restricted/auth/user/[user_uid]/updateRole/component";
 

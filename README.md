@@ -53,8 +53,8 @@
 
     // your server-only component will throw an error if called in client side
     ```
-4. If there's a need of checking authorization, perform the check as close as possible to the source-action (eg: Right Before calling server delete action). 
-5. Rate limiting
+4. Keep authorization logic check as close as possible to the source-action (eg: Right Before calling server CRUD actions), filtering data based on need-to-principle, before sending over to the client side. 
+5. Use `Rate lLimiting` techniques to limit the number of requests that can be sent over to the server.
 
 <br>
 
@@ -206,10 +206,12 @@
         ```ts
             export async function updateUser(formData: FormData | unknown): StatePromise {
 
+                // Verify input format
                 if (!(formData instanceof FormData)) {
                     throw new Error('Invalid input provided !');
                 };
 
+                // Verify input data
                 const parsedForm = updateUserSchema.safeParse({
                     user_uid: formData.get("user_uid"),
                     password: formData.get("password"),
@@ -222,7 +224,14 @@
                     };
                 };
 
-                // Its safe to use parsed variables downstream after the checks
+                // Verify authorization if required
+                const session = await getServerSession(options);
+
+                if (!session || (session.user.role !== 'boss' && session.user.user_uid != parsedForm.data.user_uid )) {
+                    redirect("/denied");
+                }
+
+                // Good to go ! Now, its safe to execute database actions after all the checks !
             };
         ```
 
@@ -418,7 +427,7 @@
         
         ...
     ```
-3. Each specified page/routes are protected by [middleware.ts](middleware.ts).
+3. Each specified page/routes are protected by [middleware.ts](middleware.ts). Keep in mind that middleware are typically used for protecting routes. For public endpoint protection, you should also perform authorization check before calling the server actions.
     ```ts
     export const config = { matcher: ["/protected/:path*", "/restricted/:path*"] }
     ```

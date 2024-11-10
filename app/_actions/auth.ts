@@ -1,5 +1,8 @@
 'use server'
 
+import { getServerSession } from "next-auth/next";
+import { options } from "@/app/_libs/nextAuth_options";
+import { redirect } from "next/navigation";
 import { v5 as uuidv5 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import sql from 'mssql';
@@ -19,6 +22,13 @@ const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
 export async function readUserByEmail(email: TEmailSchema | unknown) {
     noStore();
+
+    const session = await getServerSession(options);
+
+    if (!session || session.user.role !== 'boss') {
+        redirect("/denied");
+    }
+
     const parsedForm = emailSchema.safeParse(email);
 
     if (!parsedForm.success) {
@@ -72,6 +82,12 @@ export async function readUserByEmailAdmin(email: TEmailSchema | unknown) {
         throw new Error(parsedForm.error.message)
     };
 
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
+
     let parsedResult;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
@@ -116,6 +132,12 @@ export async function readUserByEmailAdmin(email: TEmailSchema | unknown) {
 
 export async function readUserTotalPage(itemsPerPage: number | unknown, query?: string | unknown | undefined) {
     noStore();
+
+    const session = await getServerSession(options);
+
+    if (!session || session.user.role !== 'boss') {
+        redirect("/denied");
+    }
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedQuery = querySchema.parse(query);
@@ -183,6 +205,12 @@ export async function readUserByPage(itemsPerPage: number | unknown, currentPage
     // await new Promise((resolve) => setTimeout(resolve, 3000));
     // console.log("ok")
     // <dev only>
+
+    const session = await getServerSession(options);
+
+    if (!session || session.user.role !== 'boss') {
+        redirect("/denied");
+    }
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedCurrentPage = currentPageSchema.parse(currentPage);
@@ -270,7 +298,7 @@ export async function readAdminTotalPage(itemsPerPage: number | unknown, query?:
                     ...(parsedQuery &&
                     {
                         OR: [
-                            ...(['user_uid', 'email'].map((e) => {
+                            ...(['email'].map((e) => {
                                 return {
                                     [e]: {
                                         search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
@@ -341,7 +369,7 @@ export async function readAdminByPage(itemsPerPage: number | unknown, currentPag
                     ...(parsedQuery &&
                     {
                         OR: [
-                            ...(['user_uid', 'email'].map((e) => {
+                            ...(['email'].map((e) => {
                                 return {
                                     [e]: {
                                         search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
@@ -537,6 +565,12 @@ export async function updateUser(formData: FormData | unknown): StatePromise {
         };
     };
 
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.user_uid != parsedForm.data.user_uid )) {
+        redirect("/denied");
+    }
+
     try {
         
         if (parsedEnv.DB_TYPE === "PRISMA") {
@@ -584,6 +618,12 @@ export async function deleteUser(user_uid: string | unknown): StatePromise {
         };    
     };
 
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.user_uid != parsedForm.data.user_uid )) {
+        redirect("/denied");
+    }
+
     try {
         
         if (parsedEnv.DB_TYPE === "PRISMA") {
@@ -622,10 +662,23 @@ export async function readUserById(user_uid: string | unknown) {
         throw new Error(parsed_uid.error.message)
     };
 
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.user_uid != parsed_uid.data )) {
+        redirect("/denied");
+    }
+
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
             const result = await prisma.user.findUnique({
+                select: {
+                    user_uid: true,
+                    email: true,
+                    role: true,
+                    user_created_dt: true,
+                    user_updated_dt: true,
+                },
                 where: {
                     user_uid: parsed_uid.data,
                 },
@@ -676,6 +729,12 @@ export async function updateRole(formData: FormData | unknown): StatePromise {
             message: "Invalid input provided, failed to update role!"
         };  
     };
+
+    const session = await getServerSession(options);
+
+    if (!session || session.user.role !== 'boss') {
+        redirect("/denied");
+    }
 
     try {
         
@@ -730,12 +789,21 @@ export async function updateRoleAdmin(formData: FormData | unknown): StatePromis
         };  
     };
 
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
+        redirect("/denied");
+    }
+
     try {
         
         if (parsedEnv.DB_TYPE === "PRISMA") {
             const result = await prisma.user.update({
                 where: {
                     user_uid: parsedForm.data.user_uid,
+                    NOT: {
+                        role: 'boss',
+                    },
                 },
                 data: parsedForm.data,
             });
@@ -748,7 +816,7 @@ export async function updateRoleAdmin(formData: FormData | unknown): StatePromis
                             .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
                             .query`UPDATE "packing"."user" 
                                     SET role = @role, user_updated_dt = @user_updated_dt
-                                    WHERE user_uid = @user_uid;
+                                    WHERE user_uid = @user_uid and role != 'boss';
                             `;
         }
     } 
