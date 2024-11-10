@@ -10,7 +10,8 @@ export const metadata: Metadata = {
     description: 'Developed by jiajunlee',
 };
 
-export default async function UpdateRolePage({searchParams}: {searchParams?: {email?: string}} ) {
+export default async function UpdateRolePage(props: {searchParams?: Promise<{email?: string}>}) {
+    const searchParams = await props.searchParams;
 
     const session = await getServerSession(options);
 
@@ -18,7 +19,7 @@ export default async function UpdateRolePage({searchParams}: {searchParams?: {em
         redirect("/denied");
     }
 
-    const email = searchParams?.email?.toString() || session.user.email; 
+    const email = searchParams?.email?.toString() || session.user.email;
     let user;
 
     try {

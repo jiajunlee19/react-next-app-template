@@ -165,7 +165,7 @@ export async function readUserTotalPage(itemsPerPage: number, query?: string) {
         throw new Error(getErrorMessage(err))
     }
     const totalPage = Math.ceil(parsedForm.data.length / itemsPerPage);
-    revalidatePath('/restricted/auth/user');
+    // revalidatePath('/restricted/auth/user');
     return totalPage
 };
 
@@ -236,7 +236,7 @@ export async function readUserByPage(itemsPerPage: number, currentPage: number, 
         throw new Error(getErrorMessage(err))
     }
 
-    revalidatePath('/restricted/auth/user');
+    // revalidatePath('/restricted/auth/user');
     return parsedForm.data
 };
 
@@ -294,7 +294,7 @@ export async function readAdminTotalPage(itemsPerPage: number, query?: string) {
         throw new Error(getErrorMessage(err))
     }
     const totalPage = Math.ceil(parsedForm.data.length / itemsPerPage);
-    revalidatePath('/adminList');
+    // revalidatePath('/adminList');
     return totalPage
 };
 
@@ -368,7 +368,7 @@ export async function readAdminByPage(itemsPerPage: number, currentPage: number,
         throw new Error(getErrorMessage(err))
     }
 
-    revalidatePath('/adminList');
+    // revalidatePath('/adminList');
     return parsedForm.data
 };
 
@@ -588,7 +588,7 @@ export async function deleteUser(user_uid: string): StatePromise {
         };
     }
 
-    revalidatePath("/restricted/auth/user");
+    // revalidatePath("/restricted/auth/user");
     return { message: `Successfully deleted user ${parsedForm.data.user_uid}` }
 };
 
