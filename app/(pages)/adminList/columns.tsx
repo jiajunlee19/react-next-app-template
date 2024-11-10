@@ -7,14 +7,14 @@ import { createColumnHelper } from "@tanstack/react-table";
 const columnHelper = createColumnHelper<TRowData | TReadUserWithoutPassSchema>();
 
 export const columns = [
-    columnHelper.accessor("user_uid", {
-        id: "user_uid",
-        header: "user_uid",
-        footer: "user_uid",
-        meta: {
-            type: "text",
-        },
-    }),
+    // columnHelper.accessor("user_uid", {
+    //     id: "user_uid",
+    //     header: "user_uid",
+    //     footer: "user_uid",
+    //     meta: {
+    //         type: "text",
+    //     },
+    // }),
     columnHelper.accessor("email", {
         id: "email",
         header: "email",

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { z } from 'zod';
 
 export type TEmailSchema = z.infer<typeof emailSchema>;

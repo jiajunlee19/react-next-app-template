@@ -1,10 +1,14 @@
 'use server'
 
+import { getServerSession } from "next-auth/next";
+import { options } from "@/app/_libs/nextAuth_options";
+import { redirect } from "next/navigation";
 import { v5 as uuidv5 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import sql from 'mssql';
 import { sqlConfig } from "@/app/_libs/sql_config";
 import { type TEmailSchema, type TPasswordSchema, emailSchema, signInSchema, signUpSchema, readUserSchema, readUserWithoutPassSchema, updateUserSchema, deleteUserSchema, updateRoleSchema, updateRoleAdminSchema, readUserWithoutPassAdminSchema } from "@/app/_libs/zod_auth";
+import { uuidSchema, itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/zod_server';
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import { revalidatePath } from 'next/cache';
 import { signJwtToken } from '@/app/_libs/jwt';
@@ -14,11 +18,17 @@ import { unstable_noStore as noStore } from 'next/cache';
 import { type StatePromise } from '@/app/_libs/types';
 import { flattenNestedObject } from '@/app/_libs/nested_object';
 
-
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
-export async function readUserByEmail(email: TEmailSchema) {
+export async function readUserByEmail(email: TEmailSchema | unknown) {
     noStore();
+
+    const session = await getServerSession(options);
+
+    if (!session || session.user.role !== 'boss') {
+        redirect("/denied");
+    }
+
     const parsedForm = emailSchema.safeParse(email);
 
     if (!parsedForm.success) {
@@ -64,13 +74,19 @@ export async function readUserByEmail(email: TEmailSchema) {
     return parsedResult.data
 };
 
-export async function readUserByEmailAdmin(email: TEmailSchema) {
+export async function readUserByEmailAdmin(email: TEmailSchema | unknown) {
     noStore();
     const parsedForm = emailSchema.safeParse(email);
 
     if (!parsedForm.success) {
         throw new Error(parsedForm.error.message)
     };
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
 
     let parsedResult;
     try {
@@ -114,9 +130,20 @@ export async function readUserByEmailAdmin(email: TEmailSchema) {
     return parsedResult.data
 };
 
-export async function readUserTotalPage(itemsPerPage: number, query?: string) {
+export async function readUserTotalPage(itemsPerPage: number | unknown, query?: string | unknown | undefined) {
     noStore();
-    const QUERY = query ? `${query || ''}%` : '%';
+
+    const session = await getServerSession(options);
+
+    if (!session || session.user.role !== 'boss') {
+        redirect("/denied");
+    }
+
+    const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
+    const parsedQuery = querySchema.parse(query);
+
+    const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
+
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
@@ -127,13 +154,13 @@ export async function readUserTotalPage(itemsPerPage: number, query?: string) {
                     role: true,
                 },
                 where: {
-                    ...(query &&
+                    ...(parsedQuery &&
                         {
                             OR: [
                                 ...(['user_uid', 'email'].map((e) => {
                                     return {
                                         [e]: {
-                                            search: `${query}:*`,
+                                            search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
                                         },
                                     };
                                 })),
@@ -164,12 +191,12 @@ export async function readUserTotalPage(itemsPerPage: number, query?: string) {
     catch (err) {
         throw new Error(getErrorMessage(err))
     }
-    const totalPage = Math.ceil(parsedForm.data.length / itemsPerPage);
+    const totalPage = Math.ceil(parsedForm.data.length / parsedItemsPerPage);
     // revalidatePath('/restricted/auth/user');
     return totalPage
 };
 
-export async function readUserByPage(itemsPerPage: number, currentPage: number, query?: string) {
+export async function readUserByPage(itemsPerPage: number | unknown, currentPage: number | unknown, query?: string | unknown | undefined) {
     noStore();
 
     // <dev only> 
@@ -179,8 +206,18 @@ export async function readUserByPage(itemsPerPage: number, currentPage: number, 
     // console.log("ok")
     // <dev only>
 
-    const OFFSET = (currentPage - 1) * itemsPerPage;
-    const QUERY = query ? `${query || ''}%` : '%';
+    const session = await getServerSession(options);
+
+    if (!session || session.user.role !== 'boss') {
+        redirect("/denied");
+    }
+
+    const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
+    const parsedCurrentPage = currentPageSchema.parse(currentPage);
+    const parsedQuery = querySchema.parse(query);
+
+    const OFFSET = (parsedCurrentPage - 1) * parsedItemsPerPage;
+    const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
@@ -191,13 +228,13 @@ export async function readUserByPage(itemsPerPage: number, currentPage: number, 
                     role: true,
                 },
                 where: {
-                    ...(query &&
+                    ...(parsedQuery &&
                         {
                             OR: [
                                 ...(['user_uid', 'email'].map((e) => {
                                     return {
                                         [e]: {
-                                            search: `${query}:*`,
+                                            search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
                                         },
                                     };
                                 })),
@@ -205,7 +242,7 @@ export async function readUserByPage(itemsPerPage: number, currentPage: number, 
                         }),
                 },
                 skip: OFFSET,
-                take: itemsPerPage,
+                take: parsedItemsPerPage,
             });
             const flattenResult = result.map((row) => {
                 return flattenNestedObject(row)
@@ -216,7 +253,7 @@ export async function readUserByPage(itemsPerPage: number, currentPage: number, 
             let pool = await sql.connect(sqlConfig);
             const result = await pool.request()
                             .input('offset', sql.Int, OFFSET)
-                            .input('limit', sql.Int, itemsPerPage)
+                            .input('limit', sql.Int, parsedItemsPerPage)
                             .input('query', sql.VarChar, QUERY)
                             .query`SELECT user_uid, email, role 
                                     FROM "packing"."user"
@@ -240,9 +277,13 @@ export async function readUserByPage(itemsPerPage: number, currentPage: number, 
     return parsedForm.data
 };
 
-export async function readAdminTotalPage(itemsPerPage: number, query?: string) {
+export async function readAdminTotalPage(itemsPerPage: number | unknown, query?: string | unknown | undefined) {
     noStore();
-    const QUERY = query ? `${query || ''}%` : '%';
+
+    const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
+    const parsedQuery = querySchema.parse(query);
+
+    const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
@@ -254,13 +295,13 @@ export async function readAdminTotalPage(itemsPerPage: number, query?: string) {
                 },
                 where: {
                     role: "admin",
-                    ...(query &&
+                    ...(parsedQuery &&
                     {
                         OR: [
-                            ...(['user_uid', 'email'].map((e) => {
+                            ...(['email'].map((e) => {
                                 return {
                                     [e]: {
-                                        search: `${query}:*`,
+                                        search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
                                     },
                                 };
                             })),
@@ -293,12 +334,12 @@ export async function readAdminTotalPage(itemsPerPage: number, query?: string) {
     catch (err) {
         throw new Error(getErrorMessage(err))
     }
-    const totalPage = Math.ceil(parsedForm.data.length / itemsPerPage);
+    const totalPage = Math.ceil(parsedForm.data.length / parsedItemsPerPage);
     // revalidatePath('/adminList');
     return totalPage
 };
 
-export async function readAdminByPage(itemsPerPage: number, currentPage: number, query?: string) {
+export async function readAdminByPage(itemsPerPage: number | unknown, currentPage: number | unknown, query?: string | unknown | undefined) {
     noStore();
 
     // <dev only> 
@@ -308,8 +349,12 @@ export async function readAdminByPage(itemsPerPage: number, currentPage: number,
     // console.log("ok")
     // <dev only>
 
-    const QUERY = query ? `${query || ''}%` : '%';
-    const OFFSET = (currentPage - 1) * itemsPerPage;
+    const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
+    const parsedCurrentPage = currentPageSchema.parse(currentPage);
+    const parsedQuery = querySchema.parse(query);
+
+    const OFFSET = (parsedCurrentPage - 1) * parsedItemsPerPage;
+    const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
@@ -321,13 +366,13 @@ export async function readAdminByPage(itemsPerPage: number, currentPage: number,
                 },
                 where: {
                     role: "admin",
-                    ...(query &&
+                    ...(parsedQuery &&
                     {
                         OR: [
-                            ...(['user_uid', 'email'].map((e) => {
+                            ...(['email'].map((e) => {
                                 return {
                                     [e]: {
-                                        search: `${query}:*`,
+                                        search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
                                     },
                                 };
                             })),
@@ -335,7 +380,7 @@ export async function readAdminByPage(itemsPerPage: number, currentPage: number,
                     })
                 },
                 skip: OFFSET,
-                take: itemsPerPage,
+                take: parsedItemsPerPage,
             });
             const flattenResult = result.map((row) => {
                 return flattenNestedObject(row)
@@ -347,7 +392,7 @@ export async function readAdminByPage(itemsPerPage: number, currentPage: number,
             const result = await pool.request()
                             .input('role', sql.VarChar, 'admin')
                             .input('offset', sql.Int, OFFSET)
-                            .input('limit', sql.Int, itemsPerPage)
+                            .input('limit', sql.Int, parsedItemsPerPage)
                             .input('query', sql.VarChar, QUERY)
                             .query`SELECT user_uid, email, role 
                                     FROM "packing"."user"
@@ -372,7 +417,7 @@ export async function readAdminByPage(itemsPerPage: number, currentPage: number,
     return parsedForm.data
 };
 
-export async function signIn(email: TEmailSchema, password: TPasswordSchema) {
+export async function signIn(email: TEmailSchema | unknown, password: TPasswordSchema | unknown) {
 
     const parsedForm = signInSchema.safeParse({
         email: email,
@@ -447,12 +492,12 @@ export async function signIn(email: TEmailSchema, password: TPasswordSchema) {
 
 };
 
-export async function signUp(email: TEmailSchema, password: TPasswordSchema): StatePromise {
+export async function signUp(email: TEmailSchema | unknown, password: TPasswordSchema | unknown): StatePromise {
 
     const now = new Date();
 
     const parsedForm = signUpSchema.safeParse({
-        user_uid: uuidv5(email, UUID5_SECRET),
+        user_uid: (typeof email == 'string') ? uuidv5(email, UUID5_SECRET) : undefined,
         email: email,
         password: password,
         role: 'user',
@@ -499,7 +544,11 @@ export async function signUp(email: TEmailSchema, password: TPasswordSchema): St
     return { message: `Successfully created user ${parsedForm.data.user_uid}` }
 };
 
-export async function updateUser(formData: FormData): StatePromise {
+export async function updateUser(formData: FormData | unknown): StatePromise {
+
+    if (!(formData instanceof FormData)) {
+        throw new Error('Invalid input provided !');
+    };
 
     const now = new Date();
 
@@ -515,6 +564,12 @@ export async function updateUser(formData: FormData): StatePromise {
             message: "Invalid input provided, failed to update user!"
         };
     };
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.user_uid != parsedForm.data.user_uid )) {
+        redirect("/denied");
+    }
 
     try {
         
@@ -548,7 +603,7 @@ export async function updateUser(formData: FormData): StatePromise {
     return { message: `Successfully updated user ${parsedForm.data.user_uid}` }
 };
 
-export async function deleteUser(user_uid: string): StatePromise {
+export async function deleteUser(user_uid: string | unknown): StatePromise {
 
     const now = new Date();
 
@@ -562,6 +617,12 @@ export async function deleteUser(user_uid: string): StatePromise {
             message: "Invalid input provided, failed to delete user!"
         };    
     };
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.user_uid != parsedForm.data.user_uid )) {
+        redirect("/denied");
+    }
 
     try {
         
@@ -592,14 +653,34 @@ export async function deleteUser(user_uid: string): StatePromise {
     return { message: `Successfully deleted user ${parsedForm.data.user_uid}` }
 };
 
-export async function readUserById(user_uid: string) {
+export async function readUserById(user_uid: string | unknown) {
     noStore();
+    
+    const parsed_uid = uuidSchema.safeParse(user_uid);
+
+    if (!parsed_uid.success) {
+        throw new Error(parsed_uid.error.message)
+    };
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.user_uid != parsed_uid.data )) {
+        redirect("/denied");
+    }
+
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
             const result = await prisma.user.findUnique({
+                select: {
+                    user_uid: true,
+                    email: true,
+                    role: true,
+                    user_created_dt: true,
+                    user_updated_dt: true,
+                },
                 where: {
-                    user_uid: user_uid,
+                    user_uid: parsed_uid.data,
                 },
             });
             const flattenResult = flattenNestedObject(result);
@@ -608,7 +689,7 @@ export async function readUserById(user_uid: string) {
         else {
             let pool = await sql.connect(sqlConfig);
             const result = await pool.request()
-                            .input('user_uid', sql.VarChar, user_uid)
+                            .input('user_uid', sql.VarChar, parsed_uid)
                             .query`SELECT user_uid, email, role, user_created_dt, user_updated_dt 
                                     FROM "packing"."user"
                                     WHERE user_uid = @user_uid;
@@ -628,7 +709,11 @@ export async function readUserById(user_uid: string) {
     return parsedForm.data
 };
 
-export async function updateRole(formData: FormData): StatePromise {
+export async function updateRole(formData: FormData | unknown): StatePromise {
+
+    if (!(formData instanceof FormData)) {
+        throw new Error('Invalid input provided !');
+    };
 
     const now = new Date();
 
@@ -644,6 +729,12 @@ export async function updateRole(formData: FormData): StatePromise {
             message: "Invalid input provided, failed to update role!"
         };  
     };
+
+    const session = await getServerSession(options);
+
+    if (!session || session.user.role !== 'boss') {
+        redirect("/denied");
+    }
 
     try {
         
@@ -677,7 +768,11 @@ export async function updateRole(formData: FormData): StatePromise {
     return { message: `Successfully updated role for user ${parsedForm.data.user_uid}` }
 };
 
-export async function updateRoleAdmin(formData: FormData): StatePromise {
+export async function updateRoleAdmin(formData: FormData | unknown): StatePromise {
+
+    if (!(formData instanceof FormData)) {
+        throw new Error('Invalid input provided !');
+    };
 
     const now = new Date();
 
@@ -694,12 +789,21 @@ export async function updateRoleAdmin(formData: FormData): StatePromise {
         };  
     };
 
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
+        redirect("/denied");
+    }
+
     try {
         
         if (parsedEnv.DB_TYPE === "PRISMA") {
             const result = await prisma.user.update({
                 where: {
                     user_uid: parsedForm.data.user_uid,
+                    NOT: {
+                        role: 'boss',
+                    },
                 },
                 data: parsedForm.data,
             });
@@ -712,7 +816,7 @@ export async function updateRoleAdmin(formData: FormData): StatePromise {
                             .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
                             .query`UPDATE "packing"."user" 
                                     SET role = @role, user_updated_dt = @user_updated_dt
-                                    WHERE user_uid = @user_uid;
+                                    WHERE user_uid = @user_uid and role != 'boss';
                             `;
         }
     } 

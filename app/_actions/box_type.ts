@@ -1,9 +1,13 @@
 'use server'
 
+import { getServerSession } from "next-auth/next";
+import { options } from "@/app/_libs/nextAuth_options";
+import { redirect } from "next/navigation";
 import { v5 as uuidv5 } from 'uuid';
 import sql from 'mssql';
 import { sqlConfig } from "@/app/_libs/sql_config";
-import { readBoxTypeSchema, createBoxTypeSchema, updateBoxTypeSchema, deleteBoxTypeSchema, TReadBoxTypeSchema } from "@/app/_libs/zod_server";
+import { readBoxTypeSchema, createBoxTypeSchema, updateBoxTypeSchema, deleteBoxTypeSchema, boxPartNumberSchema } from "@/app/_libs/zod_server";
+import { uuidSchema, itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/zod_server';
 import { parsedEnv } from '@/app/_libs/zod_env';
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import { revalidatePath } from 'next/cache';
@@ -14,21 +18,31 @@ import { flattenNestedObject } from '@/app/_libs/nested_object';
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
-export async function readBoxTypeTotalPage(itemsPerPage: number, query?: string) {
+export async function readBoxTypeTotalPage(itemsPerPage: number | unknown, query?: string | unknown | undefined) {
     noStore();
-    const QUERY = query ? `${query || ''}%` : '%';
+
+    const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
+    const parsedQuery = querySchema.parse(query);
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
+
+    const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
             const result = await prisma.boxType.findMany({
                 where: {
-                    ...(query &&
+                    ...(parsedQuery &&
                         {
                             OR: [
                                 ...(['box_type_uid', 'box_part_number'].map((e) => {
                                     return {
                                         [e]: {
-                                            search: `${query}:*`,
+                                            search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
                                         },
                                     };
                                 })),
@@ -59,12 +73,12 @@ export async function readBoxTypeTotalPage(itemsPerPage: number, query?: string)
     catch (err) {
         throw new Error(getErrorMessage(err))
     }
-    const totalPage = Math.ceil(parsedForm.data.length / itemsPerPage);
+    const totalPage = Math.ceil(parsedForm.data.length / parsedItemsPerPage);
     // revalidatePath('/protected/box_type');
     return totalPage
 };
 
-export async function readBoxTypeByPage(itemsPerPage: number, currentPage: number, query?: string) {
+export async function readBoxTypeByPage(itemsPerPage: number | unknown, currentPage: number | unknown, query?: string | unknown | undefined) {
     noStore();
 
     // <dev only> 
@@ -74,20 +88,30 @@ export async function readBoxTypeByPage(itemsPerPage: number, currentPage: numbe
     // console.log("ok")
     // <dev only>
 
-    const OFFSET = (currentPage - 1) * itemsPerPage;
-    const QUERY = query ? `${query || ''}%` : '%';
+    const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
+    const parsedCurrentPage = currentPageSchema.parse(currentPage);
+    const parsedQuery = querySchema.parse(query);
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
+    
+    const OFFSET = (parsedCurrentPage - 1) * parsedItemsPerPage;
+    const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
             const result = await prisma.boxType.findMany({
                 where: {
-                    ...(query &&
+                    ...(parsedQuery &&
                         {
                             OR: [
                                 ...(['box_type_uid', 'box_part_number'].map((e) => {
                                     return {
                                         [e]: {
-                                            search: `${query}:*`,
+                                            search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
                                         },
                                     };
                                 })),
@@ -95,7 +119,7 @@ export async function readBoxTypeByPage(itemsPerPage: number, currentPage: numbe
                         }),
                 },
                 skip: OFFSET,
-                take: itemsPerPage,
+                take: parsedItemsPerPage,
             });
             const flattenResult = result.map((row) => {
                 return flattenNestedObject(row)
@@ -106,7 +130,7 @@ export async function readBoxTypeByPage(itemsPerPage: number, currentPage: numbe
             let pool = await sql.connect(sqlConfig);
             const result = await pool.request()
                             .input('offset', sql.Int, OFFSET)
-                            .input('limit', sql.Int, itemsPerPage)
+                            .input('limit', sql.Int, parsedItemsPerPage)
                             .input('query', sql.VarChar, QUERY)
                             .query`SELECT box_type_uid, box_part_number, box_max_tray, box_type_created_dt, box_type_updated_dt 
                                     FROM "packing"."box_type"
@@ -140,6 +164,12 @@ export async function readBoxType() {
     // console.log("ok")
     // <dev only>
 
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
+
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
@@ -172,7 +202,7 @@ export async function readBoxType() {
     return parsedForm.data
 };
 
-export async function readBoxTypeUid(box_part_number: string) {
+export async function readBoxTypeUid(box_part_number: string | unknown) {
     noStore();
 
     // <dev only> 
@@ -182,12 +212,26 @@ export async function readBoxTypeUid(box_part_number: string) {
     // console.log("ok")
     // <dev only>
 
+    const parsedInput = boxPartNumberSchema.safeParse({
+        box_part_number: box_part_number,
+    });
+
+    if (!parsedInput.success) {
+        throw new Error(parsedInput.error.message)
+    };
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
+
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
             const result = await prisma.boxType.findFirst({
                 where: {
-                    box_part_number: box_part_number,
+                    box_part_number: parsedInput.data.box_part_number,
                 },
             });
             const flattenResult = flattenNestedObject(result);
@@ -196,7 +240,7 @@ export async function readBoxTypeUid(box_part_number: string) {
         else {
             let pool = await sql.connect(sqlConfig);
             const result = await pool.request()
-                            .input('box_part_number', sql.VarChar, box_part_number)
+                            .input('box_part_number', sql.VarChar, parsedInput.data.box_part_number)
                             .query`SELECT box_type_uid, box_part_number, box_max_tray, box_type_created_dt, box_type_updated_dt 
                                     FROM "packing"."box_type"
                                     WHERE box_part_number = @box_part_number;
@@ -217,12 +261,17 @@ export async function readBoxTypeUid(box_part_number: string) {
     return parsedForm.data
 };
 
-export async function createBoxType(prevState: State, formData: FormData): StatePromise {
+export async function createBoxType(prevState: State | unknown, formData: FormData | unknown): StatePromise {
+
+    if (!(formData instanceof FormData)) {
+        throw new Error('Invalid input provided !');
+    };
 
     const now = new Date();
 
+    const box_part_number = formData.get('box_part_number');
     const parsedForm = createBoxTypeSchema.safeParse({
-        box_type_uid: uuidv5(formData.get('box_part_number') as string, UUID5_SECRET),
+        box_type_uid: (typeof box_part_number == 'string') ? uuidv5(box_part_number, UUID5_SECRET) : undefined,
         box_part_number: formData.get('box_part_number'),
         box_max_tray: formData.get('box_max_tray'),
         box_type_created_dt: now,
@@ -235,6 +284,12 @@ export async function createBoxType(prevState: State, formData: FormData): State
             message: "Invalid input provided, failed to create box_type!"
         };
     };
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
 
     try {
 
@@ -271,7 +326,11 @@ export async function createBoxType(prevState: State, formData: FormData): State
 };
 
 
-export async function updateBoxType(prevState: State, formData: FormData): StatePromise {
+export async function updateBoxType(prevState: State | unknown, formData: FormData | unknown): StatePromise {
+
+    if (!(formData instanceof FormData)) {
+        throw new Error('Invalid input provided !');
+    };
 
     const now = new Date();
 
@@ -287,6 +346,12 @@ export async function updateBoxType(prevState: State, formData: FormData): State
             message: "Invalid input provided, failed to update box_type!"
         };
     };
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
 
     try {
 
@@ -335,6 +400,12 @@ export async function deleteBoxType(box_type_uid: string): StatePromise {
         };
     };
 
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
+
     try {
 
         if (parsedEnv.DB_TYPE === "PRISMA") {
@@ -366,12 +437,25 @@ export async function deleteBoxType(box_type_uid: string): StatePromise {
 
 export async function readBoxTypeById(box_type_uid: string) {
     noStore();
+
+    const parsed_uid = uuidSchema.safeParse(box_type_uid);
+
+    if (!parsed_uid.success) {
+        throw new Error(parsed_uid.error.message)
+    };
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+        redirect("/denied");
+    }
+
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
             const result = await prisma.boxType.findUnique({
                 where: {
-                    box_type_uid: box_type_uid,
+                    box_type_uid: parsed_uid.data,
                 },
             });
             const flattenResult = flattenNestedObject(result);
@@ -380,6 +464,7 @@ export async function readBoxTypeById(box_type_uid: string) {
         else {
             let pool = await sql.connect(sqlConfig);
             const result = await pool.request()
+                            .input('box_type_uid', sql.VarChar, parsed_uid)
                             .query`SELECT box_type_uid, box_part_number, box_max_tray, box_type_created_dt, box_type_updated_dt 
                                     FROM "packing"."box_type"
                                     WHERE box_type_uid = @box_type_uid;

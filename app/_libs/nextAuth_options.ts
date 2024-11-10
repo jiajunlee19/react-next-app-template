@@ -1,3 +1,5 @@
+import "server-only";
+
 import type {  NextAuthOptions, User } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { parsedEnv } from '@/app/_libs/zod_env';

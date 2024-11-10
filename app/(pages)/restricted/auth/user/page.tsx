@@ -1,3 +1,7 @@
+
+import { getServerSession } from "next-auth/next";
+import { options } from "@/app/_libs/nextAuth_options";
+import { redirect } from "next/navigation";
 import { readUserTotalPage, readUserByPage, deleteUser } from "@/app/_actions/auth";
 import Pagination from "@/app/_components/basic/pagination";
 import TableSkeleton from "@/app/_components/basic/skeletons";
@@ -15,6 +19,13 @@ export const metadata: Metadata = {
 export default async function User(
     props: { searchParams?: Promise<{ itemsPerPage?: string, currentPage?: string, query?: string }> }
 ) {
+
+    const session = await getServerSession(options);
+
+    if (!session || session.user.role !== 'boss') {
+        redirect("/denied");
+    }
+
     const searchParams = await props.searchParams;
 
     const itemsPerPage = Number(searchParams?.itemsPerPage) || 10;

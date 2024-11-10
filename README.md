@@ -47,6 +47,14 @@
     <a href="https://github.com/jiajunlee19" target="_blank" rel="noopener noreferrer">
     ```
 2. Secrets can be safely stored in `.env` files or `server-side actions`. They will not be sent to client-side.
+3. Its important to mark a `server component` to be `Server-only` to prevent the component being accidentally used and exposed to client side.
+    ```ts
+    import "server-only";
+
+    // your server-only component will throw an error if called in client side
+    ```
+4. Keep authorization logic check as close as possible to the source-action (eg: Right Before calling server CRUD actions), filtering data based on need-to-principle, before sending over to the client side. 
+5. Use `Rate lLimiting` techniques to limit the number of requests that can be sent over to the server.
 
 <br>
 
@@ -193,6 +201,39 @@
         ...
     }
     ```
+4. As Server Actions are directly communicating to database, they need to be carefully designed to prevent data leakage and avoid malicious attack.
+    - Always treat the input arguments as `unknown` type, they must be sanitized to ensure only those with expected formats are used downstream.
+        ```ts
+            export async function updateUser(formData: FormData | unknown): StatePromise {
+
+                // Verify input format
+                if (!(formData instanceof FormData)) {
+                    throw new Error('Invalid input provided !');
+                };
+
+                // Verify input data
+                const parsedForm = updateUserSchema.safeParse({
+                    user_uid: formData.get("user_uid"),
+                    password: formData.get("password"),
+                });
+
+                if (!parsedForm.success) {
+                    return { 
+                        error: parsedForm.error.flatten().fieldErrors,
+                        message: "Invalid input provided, failed to update user!"
+                    };
+                };
+
+                // Verify authorization if required
+                const session = await getServerSession(options);
+
+                if (!session || (session.user.role !== 'boss' && session.user.user_uid != parsedForm.data.user_uid )) {
+                    redirect("/denied");
+                }
+
+                // Good to go ! Now, its safe to execute database actions after all the checks !
+            };
+        ```
 
 <br>
 
@@ -206,12 +247,12 @@
         message: "Invalid input provided, failed to create box_type!"
     };
     ```
-2. In [form.tsx](/app/_components//basic//form.tsx), each form field is handled with `state.error` with the help of `useFormState`.
+2. In [form.tsx](/app/_components/basic/form.tsx), each form field is handled with `state.error` with the help of `useActionState`.
     ```ts
-    import { useFormState } from "react-dom";
+    import { useActionState } from "react-dom";
 
     const initialState  = { message: null, errors: {} };
-    const [state, dispatch] = useFormState(formAction, initialState);
+    const [state, dispatch] = useActionState(formAction, initialState);
 
     ...
     <form>
@@ -325,9 +366,16 @@
 2. Page nav component is generated in [pagination.tsx](/app/_components/basic/pagination.tsx).
 3. Pagination is achieved by getting `currentPage` from searchParams and `totalPage` from server action.
     ```ts
-    export default async function BoxType({ searchParams }: { searchParams?: { currentPage?: string } ... }) {
-        const currentPage = Number(searchParams?.currentPage) || 1;
-        const totalPage = await readBoxTypeTotalPage();
+        export default async function BoxType(
+            props: { searchParams?: Promise<{ itemsPerPage?: string, currentPage?: string, query?: string }> }
+        ) {
+            const searchParams = await props.searchParams;
+
+            const itemsPerPage = Number(searchParams?.itemsPerPage) || 10;
+            const currentPage = Number(searchParams?.currentPage) || 1;
+            const query = searchParams?.query || undefined;
+
+            const totalPage = await readBoxTypeTotalPage(itemsPerPage, query);
 
         ...
 
@@ -345,8 +393,10 @@
 # Search Query
 1. Search query is achieved by getting `query` from searchParams.
     ```ts
-    export default async function BoxType({ searchParams }: { searchParams?: { ... query?: string } }) {
-
+    export default async function BoxType(
+        props: { searchParams?: Promise<{ ... query?: string }> }
+    ) {
+    const searchParams = await props.searchParams;
     const query = searchParams?.query || undefined;
 
     ...
@@ -377,7 +427,7 @@
         
         ...
     ```
-3. Each specified page/routes are protected by [middleware.ts](middleware.ts).
+3. Each specified page/routes are protected by [middleware.ts](middleware.ts). Keep in mind that middleware are typically used for protecting routes. For public endpoint protection, you should also perform authorization check before calling the server actions.
     ```ts
     export const config = { matcher: ["/protected/:path*", "/restricted/:path*"] }
     ```
