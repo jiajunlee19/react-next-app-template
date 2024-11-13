@@ -54,7 +54,22 @@
     // your server-only component will throw an error if called in client side
     ```
 4. Keep authorization logic check as close as possible to the source-action (eg: Right Before calling server CRUD actions), filtering data based on need-to-principle, before sending over to the client side. 
-5. Use `Rate lLimiting` techniques to limit the number of requests that can be sent over to the server.
+5. To prevent request overhead and brute-force attacks, use [Rate lLimiting](/app/_libs/rate_limit.ts) techniques to limit the number of requests that can be sent over to the server.
+    ```ts
+    import { rateLimitByUid, rateLimitByIP } from "@/app/_libs/rate_limit";
+
+    export async function updateUser(formData: FormData | unknown): StatePromise {
+
+        ...
+
+        // Throw error if the user submitted more than 20 requests in 60 seconds
+        if (await rateLimitByUid(parsedForm.data.user_uid, 20, 1000*60)) {
+            throw new Error('You submitted too many requests ! Try again later !');
+        };
+
+        ...
+    };
+    ```
 
 <br>
 
