@@ -48,13 +48,13 @@ export default async function FileUploadPage() {
 
     // Define file uploader
     const fileUploaders = [
-        { id: 1, name: "PNP PROGRAM SIDE 1 MACHINE 1", dirName: "files/pp_11", dropZoneOptions: dropzoneOptions_pp},
-        { id: 2, name: "PNP PROGRAM SIDE 1 MACHINE 2", dirName: "files/pp_12", dropZoneOptions: dropzoneOptions_pp},
-        { id: 3, name: "PNP PROGRAM SIDE 1 MACHINE 3", dirName: "files/pp_13", dropZoneOptions: dropzoneOptions_pp7},
+        { id: 1, name: "FILE 11", dirName: "files/pp_11", dropZoneOptions: dropzoneOptions_pp},
+        { id: 2, name: "FILE 12", dirName: "files/pp_12", dropZoneOptions: dropzoneOptions_pp},
+        { id: 3, name: "FILE 13", dirName: "files/pp_13", dropZoneOptions: dropzoneOptions_pp7},
 
-        { id: 4, name: "PNP PROGRAM SIDE 2 MACHINE 1", dirName: "files/pp_21", dropZoneOptions: dropzoneOptions_pp},
-        { id: 5, name: "PNP PROGRAM SIDE 2 MACHINE 2", dirName: "files/pp_22", dropZoneOptions: dropzoneOptions_pp},
-        { id: 6, name: "PNP PROGRAM SIDE 2 MACHINE 3", dirName: "files/pp_23", dropZoneOptions: dropzoneOptions_pp7},
+        { id: 4, name: "FILE 21", dirName: "files/pp_21", dropZoneOptions: dropzoneOptions_pp},
+        { id: 5, name: "FILE 22", dirName: "files/pp_22", dropZoneOptions: dropzoneOptions_pp},
+        { id: 6, name: "FILE 23", dirName: "files/pp_23", dropZoneOptions: dropzoneOptions_pp7},
     ]
     
     // Clear files when the page reloads, to avoid storage issues

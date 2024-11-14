@@ -3,7 +3,7 @@ import { type TReadUserWithoutPassSchema } from "@/app/_libs/zod_auth";
 import Pagination from "@/app/_components/basic/pagination";
 import TableSkeleton from "@/app/_components/basic/skeletons";
 import DataTable from "@/app/_components/data_table";
-import { columns } from "@/app/(pages)/adminList/columns";
+import { columns } from "@/app/(pages)/authenticated/adminList/columns";
 import { Suspense } from "react";
 import type { Metadata } from 'next';
 

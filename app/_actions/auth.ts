@@ -335,7 +335,7 @@ export async function readAdminTotalPage(itemsPerPage: number | unknown, query?:
         throw new Error(getErrorMessage(err))
     }
     const totalPage = Math.ceil(parsedForm.data.length / parsedItemsPerPage);
-    // revalidatePath('/adminList');
+    // revalidatePath('/authenticated/adminList');
     return totalPage
 };
 
@@ -413,7 +413,7 @@ export async function readAdminByPage(itemsPerPage: number | unknown, currentPag
         throw new Error(getErrorMessage(err))
     }
 
-    // revalidatePath('/adminList');
+    // revalidatePath('/authenticated/adminList');
     return parsedForm.data
 };
 

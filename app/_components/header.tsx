@@ -17,8 +17,8 @@ export default function Header() {
     ];
 
     const midNavLinks = [
-        { name: "History", href: "/history", icon: "" },
-        { name: "AdminList", href: "/adminList", icon: "" },
+        { name: "History", href: "/authenticated/history", icon: "" },
+        { name: "AdminList", href: "/authenticated/adminList", icon: "" },
     ];
 
     const rightNavLinksA = [
@@ -32,13 +32,12 @@ export default function Header() {
     ];
 
     const actionNavLinks = [
-        { name: "Manage Box", href: "/box", icon: "" },
+        { name: "Manage Home", href: "/", icon: "" },
     ];
 
     const actionNavLinksProtected = [
+        { name: "Upload File", href: "/protected/file/upload", icon: "" },
         { name: "Manage Box Type", href: "/protected/box_type", icon: "" },
-        { name: "Manage Tray Type", href: "/protected/tray_type", icon: "" },
-        { name: "Manage Shipdoc", href: "/protected/shipdoc", icon: "" },
         { name: "Update User Role", href: "/protected/auth/updateRoleByEmail", icon: "" },
     ];
 
