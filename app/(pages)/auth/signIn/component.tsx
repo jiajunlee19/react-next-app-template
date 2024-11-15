@@ -40,14 +40,15 @@ export default function SignInComponent() {
                         const result = await signIn("credentials", {
                             email: emailRef.current,
                             password: passwordRef.current,
-                            redirect: true,
+                            redirect: false,
                             callbackUrl: callBackUrl,
                         });
-                        formRef.current?.reset();
                         
                         if (result?.error) {
-                            toast.error("Invalid credentials provided !");
+                            toast.error(result.error);
                         }
+                        
+                        formRef.current?.reset();
                     }
                 }>
                 <label htmlFor="email">Email: </label>

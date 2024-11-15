@@ -1,5 +1,6 @@
 'use server'
 
+import { rateLimitByIP, rateLimitByUid } from "@/app/_libs/rate_limit";
 import { getServerSession } from "next-auth/next";
 import { options } from "@/app/_libs/nextAuth_options";
 import { redirect } from "next/navigation";
@@ -23,17 +24,21 @@ const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 export async function readUserByEmail(email: TEmailSchema | unknown) {
     noStore();
 
+    const parsedForm = emailSchema.safeParse(email);
+
+    if (!parsedForm.success) {
+        throw new Error(parsedForm.error.message)
+    };
+
     const session = await getServerSession(options);
 
     if (!session || session.user.role !== 'boss') {
         redirect("/denied");
     }
 
-    const parsedForm = emailSchema.safeParse(email);
-
-    if (!parsedForm.success) {
-        throw new Error(parsedForm.error.message)
-    };
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        redirect("/tooManyRequests");
+    }
 
     let parsedResult;
     try {
@@ -84,8 +89,12 @@ export async function readUserByEmailAdmin(email: TEmailSchema | unknown) {
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
         redirect("/denied");
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        redirect("/tooManyRequests");
     }
 
     let parsedResult;
@@ -114,7 +123,7 @@ export async function readUserByEmailAdmin(email: TEmailSchema | unknown) {
                             .input('email', sql.VarChar, parsedForm.data)
                             .query`SELECT user_uid, email, role
                                     FROM "packing"."user"
-                                    WHERE email = @email and role != 'boss';
+                                    WHERE email = @email and role !== 'boss';
                             `;
             parsedResult = readUserWithoutPassAdminSchema.safeParse(result.recordset[0]);
         }
@@ -133,16 +142,20 @@ export async function readUserByEmailAdmin(email: TEmailSchema | unknown) {
 export async function readUserTotalPage(itemsPerPage: number | unknown, query?: string | unknown | undefined) {
     noStore();
 
+    const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
+    const parsedQuery = querySchema.parse(query);
+
+    const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
+
     const session = await getServerSession(options);
 
     if (!session || session.user.role !== 'boss') {
         redirect("/denied");
     }
 
-    const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
-    const parsedQuery = querySchema.parse(query);
-
-    const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        redirect("/tooManyRequests");
+    }
 
     let parsedForm;
     try {
@@ -206,18 +219,23 @@ export async function readUserByPage(itemsPerPage: number | unknown, currentPage
     // console.log("ok")
     // <dev only>
 
-    const session = await getServerSession(options);
-
-    if (!session || session.user.role !== 'boss') {
-        redirect("/denied");
-    }
-
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedCurrentPage = currentPageSchema.parse(currentPage);
     const parsedQuery = querySchema.parse(query);
 
     const OFFSET = (parsedCurrentPage - 1) * parsedItemsPerPage;
     const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
+
+    const session = await getServerSession(options);
+
+    if (!session || session.user.role !== 'boss') {
+        redirect("/denied");
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        redirect("/tooManyRequests");
+    }
+
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
@@ -284,6 +302,17 @@ export async function readAdminTotalPage(itemsPerPage: number | unknown, query?:
     const parsedQuery = querySchema.parse(query);
 
     const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
+
+    const session = await getServerSession(options);
+
+    if (!session) {
+        redirect("/denied");
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        redirect("/tooManyRequests");
+    }
+
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
@@ -355,6 +384,17 @@ export async function readAdminByPage(itemsPerPage: number | unknown, currentPag
 
     const OFFSET = (parsedCurrentPage - 1) * parsedItemsPerPage;
     const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
+
+    const session = await getServerSession(options);
+
+    if (!session) {
+        redirect("/denied");
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        redirect("/tooManyRequests");
+    }
+
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
@@ -430,6 +470,13 @@ export async function signIn(email: TEmailSchema | unknown, password: TPasswordS
             message: "Invalid input provided, failed to sign in!"
         };
     };
+
+    if (await rateLimitByIP(5, 1000*60)) {
+        return { 
+            error: {error: ["Too many requests, try again later."]},
+            message: "Too many requests, try again later."
+        };
+    }
 
     let parsedResult;
     try {
@@ -512,6 +559,13 @@ export async function signUp(email: TEmailSchema | unknown, password: TPasswordS
         };
     };
 
+    if (await rateLimitByIP(5, 1000*60)) {
+        return { 
+            error: {error: ["Too many requests, try again later."]},
+            message: "Too many requests, try again later."
+        };
+    }
+
     try {
         
         if (parsedEnv.DB_TYPE === "PRISMA") {
@@ -547,7 +601,10 @@ export async function signUp(email: TEmailSchema | unknown, password: TPasswordS
 export async function updateUser(formData: FormData | unknown): StatePromise {
 
     if (!(formData instanceof FormData)) {
-        throw new Error('Invalid input provided !');
+        return { 
+            error: {error: ["Invalid input provided !"]},
+            message: "Invalid input provided !"
+        };  
     };
 
     const now = new Date();
@@ -567,8 +624,18 @@ export async function updateUser(formData: FormData | unknown): StatePromise {
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.user_uid != parsedForm.data.user_uid )) {
-        redirect("/denied");
+    if (!session || (session.user.role !== 'boss' && session.user.user_uid !== parsedForm.data.user_uid )) {
+        return { 
+            error: {error: ["Access denied."]},
+            message: "Access denied."
+        };
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        return { 
+            error: {error: ["Too many requests, try again later."]},
+            message: "Too many requests, try again later."
+        };
     }
 
     try {
@@ -620,8 +687,18 @@ export async function deleteUser(user_uid: string | unknown): StatePromise {
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.user_uid != parsedForm.data.user_uid )) {
-        redirect("/denied");
+    if (!session || (session.user.role !== 'boss' && session.user.user_uid !== parsedForm.data.user_uid )) {
+        return { 
+            error: {error: ["Access denied."]},
+            message: "Access denied."
+        };
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        return { 
+            error: {error: ["Too many requests, try again later."]},
+            message: "Too many requests, try again later."
+        };
     }
 
     try {
@@ -664,8 +741,12 @@ export async function readUserById(user_uid: string | unknown) {
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.user_uid != parsed_uid.data )) {
+    if (!session || (session.user.role !== 'boss' && session.user.user_uid !== parsed_uid.data )) {
         redirect("/denied");
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        redirect("/tooManyRequests");
     }
 
     let parsedForm;
@@ -712,7 +793,10 @@ export async function readUserById(user_uid: string | unknown) {
 export async function updateRole(formData: FormData | unknown): StatePromise {
 
     if (!(formData instanceof FormData)) {
-        throw new Error('Invalid input provided !');
+        return { 
+            error: {error: ["Invalid input provided !"]},
+            message: "Invalid input provided !"
+        };  
     };
 
     const now = new Date();
@@ -732,8 +816,18 @@ export async function updateRole(formData: FormData | unknown): StatePromise {
 
     const session = await getServerSession(options);
 
-    if (!session || session.user.role !== 'boss') {
-        redirect("/denied");
+    if (!session || (session.user.role !== 'boss')) {
+        return { 
+            error: {error: ["Access denied."]},
+            message: "Access denied."
+        };
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        return { 
+            error: {error: ["Too many requests, try again later."]},
+            message: "Too many requests, try again later."
+        };
     }
 
     try {
@@ -771,7 +865,10 @@ export async function updateRole(formData: FormData | unknown): StatePromise {
 export async function updateRoleAdmin(formData: FormData | unknown): StatePromise {
 
     if (!(formData instanceof FormData)) {
-        throw new Error('Invalid input provided !');
+        return { 
+            error: {error: ["Invalid input provided !"]},
+            message: "Invalid input provided !"
+        };  
     };
 
     const now = new Date();
@@ -791,8 +888,18 @@ export async function updateRoleAdmin(formData: FormData | unknown): StatePromis
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
-        redirect("/denied");
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin' )) {
+        return { 
+            error: {error: ["Access denied."]},
+            message: "Access denied."
+        };
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        return { 
+            error: {error: ["Too many requests, try again later."]},
+            message: "Too many requests, try again later."
+        };
     }
 
     try {
@@ -816,7 +923,7 @@ export async function updateRoleAdmin(formData: FormData | unknown): StatePromis
                             .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
                             .query`UPDATE "packing"."user" 
                                     SET role = @role, user_updated_dt = @user_updated_dt
-                                    WHERE user_uid = @user_uid and role != 'boss';
+                                    WHERE user_uid = @user_uid and role !== 'boss';
                             `;
         }
     } 

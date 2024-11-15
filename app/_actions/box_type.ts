@@ -1,5 +1,6 @@
 'use server'
 
+import { rateLimitByIP, rateLimitByUid } from "@/app/_libs/rate_limit";
 import { getServerSession } from "next-auth/next";
 import { options } from "@/app/_libs/nextAuth_options";
 import { redirect } from "next/navigation";
@@ -23,14 +24,18 @@ export async function readBoxTypeTotalPage(itemsPerPage: number | unknown, query
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedQuery = querySchema.parse(query);
+    const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
         redirect("/denied");
     }
 
-    const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        redirect("/tooManyRequests");
+    }
+
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
@@ -94,7 +99,7 @@ export async function readBoxTypeByPage(itemsPerPage: number | unknown, currentP
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
         redirect("/denied");
     }
     
@@ -166,7 +171,7 @@ export async function readBoxType() {
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
         redirect("/denied");
     }
 
@@ -222,7 +227,7 @@ export async function readBoxTypeUid(box_part_number: string | unknown) {
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
         redirect("/denied");
     }
 
@@ -264,7 +269,10 @@ export async function readBoxTypeUid(box_part_number: string | unknown) {
 export async function createBoxType(prevState: State | unknown, formData: FormData | unknown): StatePromise {
 
     if (!(formData instanceof FormData)) {
-        throw new Error('Invalid input provided !');
+        return { 
+            error: {error: ["Invalid input provided !"]},
+            message: "Invalid input provided !"
+        };  
     };
 
     const now = new Date();
@@ -287,8 +295,18 @@ export async function createBoxType(prevState: State | unknown, formData: FormDa
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
-        redirect("/denied");
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin' )) {
+        return { 
+            error: {error: ["Access denied."]},
+            message: "Access denied."
+        };
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        return { 
+            error: {error: ["Too many requests, try again later."]},
+            message: "Too many requests, try again later."
+        };
     }
 
     try {
@@ -329,7 +347,10 @@ export async function createBoxType(prevState: State | unknown, formData: FormDa
 export async function updateBoxType(prevState: State | unknown, formData: FormData | unknown): StatePromise {
 
     if (!(formData instanceof FormData)) {
-        throw new Error('Invalid input provided !');
+        return { 
+            error: {error: ["Invalid input provided !"]},
+            message: "Invalid input provided !"
+        };  
     };
 
     const now = new Date();
@@ -349,8 +370,18 @@ export async function updateBoxType(prevState: State | unknown, formData: FormDa
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
-        redirect("/denied");
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin' )) {
+        return { 
+            error: {error: ["Access denied."]},
+            message: "Access denied."
+        };
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        return { 
+            error: {error: ["Too many requests, try again later."]},
+            message: "Too many requests, try again later."
+        };
     }
 
     try {
@@ -402,8 +433,18 @@ export async function deleteBoxType(box_type_uid: string): StatePromise {
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
-        redirect("/denied");
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin' )) {
+        return { 
+            error: {error: ["Access denied."]},
+            message: "Access denied."
+        };
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        return { 
+            error: {error: ["Too many requests, try again later."]},
+            message: "Too many requests, try again later."
+        };
     }
 
     try {
@@ -446,7 +487,7 @@ export async function readBoxTypeById(box_type_uid: string) {
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role != 'admin')) {
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
         redirect("/denied");
     }
 

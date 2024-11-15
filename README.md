@@ -89,7 +89,7 @@
 <br>
 
 # Global Error Hander
-[global-error.tsx](app/global-error.tsx) is defined to handle global unexpected errors, allow users to retry/refresh the page.
+[global-error.tsx](/app/global-error.tsx) is defined to handle global unexpected errors, allow users to retry/refresh the page.
 
 <br>
 
@@ -175,8 +175,8 @@
 <br>
 
 # Seeding the database
-1. Initial placeholder-data to be loaded is defined in [data_placeholder.js](app/_scripts/data_placeholder.js).
-2. Seed functions are defined in [seed.ts](app/_scripts/seed.ts). 
+1. Initial placeholder-data to be loaded is defined in [data_placeholder.js](/app/_scripts/data_placeholder.js).
+2. Seed functions are defined in [seed.ts](/app/_scripts/seed.ts). 
     - `Promise.all` is used to initiate all promises and receive all responses at the same time in single transaction.
 3. In [package.json](package.json), `"seed": " dotenv -e .env -- npx esrun /app/_script/seed.ts"` is included in scripts.
     ```js
@@ -244,6 +244,11 @@
 
                 if (!session || (session.user.role !== 'boss' && session.user.user_uid != parsedForm.data.user_uid )) {
                     redirect("/denied");
+                }
+
+                // Apply rate-limiting to avoid server overhead or malicious attack
+                if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+                    redirect("/tooManyRequests");
                 }
 
                 // Good to go ! Now, its safe to execute database actions after all the checks !
@@ -447,10 +452,19 @@
     export const config = { matcher: ["/protected/:path*", "/restricted/:path*"] }
     ```
 4. Authorization is also defined in [middleware.ts](middleware.ts) with `role`.
+    - User without logging in has no access to generic contents, except url start with `"/authenticated"`, `"/protected"` and `"/restricted"`.
     - User with `role="user"` has access to all contents, except url start with `"/protected"` and `"/restricted"`.
-    - User with `role="admin"` has access to all contents,`"/restricted"`.
-    - User with `role="boxx"` has access to all contents.
+    - User with `role="admin"` has access to all contents, except url start with `"/restricted"`.
+    - User with `role="boss"` has access to all contents.
     ```ts
+    if (request.nextUrl.pathname.startsWith("/authenticated")
+        && !request.nextauth.token)
+    {
+        return NextResponse.rewrite(
+            new URL("/denied", request.url)
+        )
+    }
+
     if (request.nextUrl.pathname.startsWith("/protected")
         && request.nextauth.token?.role !== "admin"
         && request.nextauth.token?.role !== "boss")
