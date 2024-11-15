@@ -1,11 +1,29 @@
 'use server'
 
+import { rateLimitByIP, rateLimitByUid } from "@/app/_libs/rate_limit";
+import { getServerSession } from "next-auth/next";
+import { options } from "@/app/_libs/nextAuth_options";
+import { redirect } from "next/navigation";
 import * as path from "path";
 import * as fs from "fs";
 import { writeFile, rm } from "fs/promises";
 
-export async function uploadFile(formData: FormData, dirName: string) {
+export async function uploadFile(formData: FormData | unknown, dirName: string | unknown) {
         
+    if (!(formData instanceof FormData) || typeof dirName !== 'string' || !(formData.get('file') instanceof File)) {
+        throw new Error('Invalid input provided !')
+    };
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
+        redirect("/denied");
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        redirect("/tooManyRequests");
+    }
+
     const file: File = formData.get('file') as File;
 
     if (!file) {

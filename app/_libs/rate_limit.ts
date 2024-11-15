@@ -37,7 +37,7 @@ export async function rateLimitByIP(maxRequests: number=60, windowSize=1000*60) 
 
 export async function rateLimitByUid(uid: string, maxRequests: number=60, windowSize=1000*60) {
 
-  console.log(trackers);
+  // console.log(trackers);
 
   const now = Date.now();
 

@@ -46,7 +46,8 @@ export const options: NextAuthOptions = {
                 const result = await signIn(credentials.email, credentials.password);
 
                 if (!result || "error" in result) {
-                    return null
+                    throw new Error(JSON.stringify(result.error))
+                    // return null
                 }
 
                 return result as User;
