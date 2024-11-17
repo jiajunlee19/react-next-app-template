@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 export const users = [
   {
     user_uid: '1493ac72-2669-5f17-a7c2-b78dca0f0344',
-    email: 'jiajunlee@email.com',
+    username: 'jiajunlee',
     password: await bcrypt.hash('12345678', 10),
     role: 'boss',
     user_created_dt: new Date(),

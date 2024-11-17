@@ -26,10 +26,10 @@ export const columns = [
             type: "text",
         },
     }),
-    columnHelper.accessor("email", {
-        id: "email",
-        header: "email",
-        footer: "email",
+    columnHelper.accessor("username", {
+        id: "username",
+        header: "username",
+        footer: "username",
         meta: {
             type: "text",
         },

@@ -16,7 +16,7 @@ datasource db {
 
 model User {
   user_uid String @db.Uuid @id @unique
-  email String @db.VarChar(100)
+  username String @db.VarChar(100)
   password String @db.VarChar(100)
   role Role @default(user)
   user_created_dt DateTime @db.Timestamp()

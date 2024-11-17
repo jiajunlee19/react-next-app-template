@@ -389,7 +389,7 @@
         <input ... defaultValue={params.get('query')?.toString()} />
     ...
     ```
-    - Example can be found in [/restricted/auth/updateRoleByEmail/component.tsx](/app/\(pages\)/restricted/auth/updateRoleByEmail/component.tsx).
+    - Example can be found in [/restricted/auth/updateRoleByUsername/component.tsx](/app/\(pages\)/restricted/auth/updateRoleByUsername/component.tsx).
 
 <br>
 
@@ -533,9 +533,9 @@
 6. Sign In Page is defined in [/auth/signIn/page.tsx](/app/\(pages\)/auth/signIn/page.tsx).
 7. Sign Out Page is defined in [/auth/signOut/page.tsx](/app/\(pages\)/auth/signOut/page.tsx).
 8. New user are defaulted as `role="user"`.
-9. User with `role="admin"` can update any user's role to `user` or `admin` in [/protected/auth/updateRoleByEmail/page.tsx](/app/\(pages\)/protected/auth/updateRoleByEmail/page.tsx).
+9. User with `role="admin"` can update any user's role to `user` or `admin` in [/protected/auth/updateRoleByUsername/page.tsx](/app/\(pages\)/protected/auth/updateRoleByUsername/page.tsx).
 10. User with `role="boss"` can view all users in [/restricted/auth/user/page.tsx](/app/\(pages\)/restricted/auth/user/page.tsx).
-11. User with `role="boss"` can update any user's role in [/restricted/auth/user/[user_uid]/updateRole/page.tsx](/app/\(pages\)/restricted/auth/user/[user_uid]/updateRole/page.tsx) or [/restricted/auth/updateRoleByEmail/page.tsx](/app/\(pages\)/restricted/auth/updateRoleByEmail/page.tsx).
+11. User with `role="boss"` can update any user's role in [/restricted/auth/user/[user_uid]/updateRole/page.tsx](/app/\(pages\)/restricted/auth/user/[user_uid]/updateRole/page.tsx) or [/restricted/auth/updateRoleByUsername/page.tsx](/app/\(pages\)/restricted/auth/updateRoleByUsername/page.tsx).
 
 <br>
 
