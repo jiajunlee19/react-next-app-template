@@ -6,29 +6,47 @@ services:
       - dev-db
     restart: no
     environment:
-      POSTGRES_DB: ${POSTGRES_DATABASE}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: pgadmin
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: pgadmin
+  #   networks:
+  #     - dev-db
+  #   restart: no
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${DB_PASSWORD}@email.com
+  #     PGADMIN_DEFAULT_PASSWORD: ${DB_PASSWORD}
+  #   ports:
+  #     - "5050:80"
+  #   volumes:
+  #     - ./pgadmin_data:/var/lib/pgadmin
+  #   depends_on:
+  #     - postgres
+
+  ldap:
+    image: osixia/openldap:1.5.0
+    container_name: ldap
     networks:
       - dev-db
     restart: no
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${POSTGRES_PASSWORD}@email.com
-      PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_PASSWORD}
+      LDAP_ORGANISATION: ${LDAP_ORGANISATION}
+      LDAP_DOMAIN: ${LDAP_DOMAIN}
+      LDAP_BASE_DN: ${LDAP_BASE_DN}
+      LDAP_ADMIN_PASSWORD: admin
     ports:
-      - "5050:80"
-    volumes:
-      - ./pgadmin_data:/var/lib/pgadmin
-    depends_on:
-      - postgres
+        - 389:389
+        - 636:636
+    # volumes:
+    #   - ./ldap_data:/var/lib/ldap
+    #   - ./ldap_data/config:/etc/ldap/slapd.d
 
 networks:
   dev-db:
