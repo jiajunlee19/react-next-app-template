@@ -197,7 +197,7 @@
     objectClass: person
     cn: user
     sn: user
-    userPassword: user
+    userPassword: 12345678
     EOF
 
     # Grant read access to user
@@ -210,6 +210,10 @@
 
     # Verify user access
     ldapsearch -x -D "cn=user,ou=company,dc=company,dc=com" -w user -b "dc=company,dc=com"
+
+    # To delete user
+    ldapdelete -x -D "cn=admin,dc=company,dc=com" -w admin "cn=user,ou=company,dc=company,dc=com"
+
     ```
 3. Run `npx prisma generate` and `npx prisma db push` to initialize the local database.
 4. To visualize the database / schema, run `npx prisma studio` and navigate to [http://localhost:5555/](http://localhost:5555/).
