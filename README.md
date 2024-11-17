@@ -175,15 +175,45 @@
 <br>
 
 # Creating dev database for local development
-1. For local development, run a local Postgres server with docker, defined in [/dev-db/compose.yaml](/dev-db/compose.yaml)
+1. For local development, run a local Postgres/LDAP server with docker, defined in [/dev-db/compose.yaml](/dev-db/compose.yaml)
     ```
     docker compose --env-file=../.env up -d
     ```
-2. Run `npx prisma generate` and `npx prisma db push` to initialize the local database.
-3. To visualize the database / schema, you can either: 
-    - If pgadmin is used, navigate to [http://localhost:5050/](http://localhost:5050/), login with the credential set in [/dev-db/compose.yaml](/dev-db/compose.yaml), then add a new server if not exists with the postgres connection.
-    - If prisma is used, run `npx prisma studio` and navigate to [http://localhost:5555/](http://localhost:5555/).
-4. See next section on how to seed the database with pre-defined placeholder data.
+2. To initialize the LDAP server, run below commands:
+    ```bash
+    # Create bash shell
+    docker exec -it ldap /bin/bash
+    
+    # Create org unit
+    ldapadd -x -w admin -D "cn=admin,dc=company,dc=com" << EOF
+    dn: ou=company,dc=company,dc=com
+    objectClass: organizationalUnit
+    ou: company
+    EOF
+
+    # Create user
+    ldapadd -x -w admin -D "cn=admin,dc=company,dc=com" << EOF
+    dn: cn=user,ou=company,dc=company,dc=com
+    objectClass: person
+    cn: user
+    sn: user
+    userPassword: user
+    EOF
+
+    # Grant read access to user
+    ldapmodify -H ldapi:/// -Y EXTERNAL << EOF
+    dn: olcDatabase={1}mdb,cn=config
+    changetype: modify
+    add: olcAccess
+    olcAccess: {2}to * by dn="cn=user,ou=company,dc=company,dc=com" read
+    EOF
+
+    # Verify user access
+    ldapsearch -x -D "cn=user,ou=company,dc=company,dc=com" -w user -b "dc=company,dc=com"
+    ```
+3. Run `npx prisma generate` and `npx prisma db push` to initialize the local database.
+4. To visualize the database / schema, run `npx prisma studio` and navigate to [http://localhost:5555/](http://localhost:5555/).
+5. See next section on how to seed the database with pre-defined placeholder data.
 
 <br>
 
