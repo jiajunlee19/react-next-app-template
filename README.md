@@ -174,6 +174,19 @@
 
 <br>
 
+# Creating dev database for local development
+1. For local development, run a local Postgres server with docker, defined in [/dev-db/compose.yaml](/dev-db/compose.yaml)
+    ```
+    docker compose --env-file=../.env up -d
+    ```
+2. Run `npx prisma generate` and `npx prisma db push` to initialize the local database.
+3. To visualize the database / schema, you can either: 
+    - If pgadmin is used, navigate to [http://localhost:5050/](http://localhost:5050/), login with the credential set in [/dev-db/compose.yaml](/dev-db/compose.yaml), then add a new server if not exists with the postgres connection.
+    - If prisma is used, run `npx prisma studio` and navigate to [http://localhost:5555/](http://localhost:5555/).
+4. See next section on how to seed the database with pre-defined placeholder data.
+
+<br>
+
 # Seeding the database
 1. Initial placeholder-data to be loaded is defined in [data_placeholder.js](/app/_scripts/data_placeholder.js).
 2. Seed functions are defined in [seed.ts](/app/_scripts/seed.ts). 
