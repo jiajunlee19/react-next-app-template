@@ -11,20 +11,14 @@ export const envSchema = z.object({
     // DB_TYPE (PRISMA / RAW)
     DB_TYPE: z.enum(['PRISMA', 'RAW']),
 
-    // POSTGRESS connections
-    POSTGRES_URL: z.string().min(1).startsWith('postgres://'),
-    POSTGRES_PRISMA_URL: z.string().min(1).startsWith('postgres://'),
-    POSTGRES_URL_NON_POOLING: z.string().min(1).startsWith('postgres://'),
-    POSTGRES_USER: z.string().min(1),
-    POSTGRES_HOST: z.string().min(1),
-    POSTGRES_PASSWORD: z.string().min(1),
-    POSTGRES_DATABASE: z.string().min(1),
-
-    // Database connection
-    DB_SERVER: z.string().min(1),
-    DB_NAME: z.string().min(1),
+    // Database connections
+    DB_URL: z.string().min(1),
+    DB_PRISMA_URL: z.string().min(1),
+    DB_URL_NON_POOLING: z.string().min(1),
     DB_USER: z.string().min(1),
-    DB_PWD: z.string().min(1),
+    DB_HOST: z.string().min(1),
+    DB_PASSWORD: z.string().min(1),
+    DB_DATABASE: z.string().min(1),
 
     // Next Auth
     NEXTAUTH_URL: z.string().min(1).url(),
@@ -34,6 +28,7 @@ export const envSchema = z.object({
     LDAP_ORGANISATION: z.string().min(1),
     LDAP_DOMAIN: z.string().min(1),
     LDAP_BASE_DN: z.string().min(1),
+    LDAP_URL: z.string().min(1).url(),
 
     // UUID namespace secret
     UUID5_NAMESPACE: z.string().min(1),
