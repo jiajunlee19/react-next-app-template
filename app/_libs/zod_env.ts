@@ -1,5 +1,4 @@
 import { z } from 'zod';
-// import { v5 as uuidv5 } from 'uuid';
 
 export const envSchema = z.object({
 
@@ -27,11 +26,14 @@ export const envSchema = z.object({
     DB_USER: z.string().min(1),
     DB_PWD: z.string().min(1),
 
-    // GitHub OAuth
-    GITHUB_ID: z.string().min(1),
-    GITHUB_SECRET: z.string().min(1),
+    // Next Auth
     NEXTAUTH_URL: z.string().min(1).url(),
     NEXTAUTH_SECRET: z.string().min(1),
+
+    // LDAP
+    LDAP_ORGANISATION: z.string().min(1),
+    LDAP_DOMAIN: z.string().min(1),
+    LDAP_BASE_DN: z.string().min(1),
 
     // UUID namespace secret
     UUID5_NAMESPACE: z.string().min(1),
@@ -39,4 +41,3 @@ export const envSchema = z.object({
 });
 
 export const parsedEnv = envSchema.parse(process.env);
-// export const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
