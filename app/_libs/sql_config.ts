@@ -1,5 +1,3 @@
-import "server-only";
-
 import { envSchema } from "@/app/_libs/zod_env";
 
 const parsedEnv = envSchema.parse(process.env);
