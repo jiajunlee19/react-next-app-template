@@ -14,7 +14,7 @@ export const options: NextAuthOptions = {
             credentials: {
                 username: {
                     label: "Username:",
-                    type: "username",
+                    type: "text",
                     placeholder: "Enter your username",
                 },
                 password: {
@@ -25,29 +25,25 @@ export const options: NextAuthOptions = {
             },
             async authorize(credentials) {
 
-                console.log('ldap checking')
+                console.log('ldap checking ')
                 if (!credentials || !credentials.username || !credentials.password) {
                     return null;
                 }
                 
-                // Docs: https://next-auth.js.org/tutorials/ldap-auth-example
-                return new Promise((resolve, reject) => {
-                    ldap_client?.bind(credentials.username, credentials.password, (error) => {
-                        if (error) {
-                            console.log('Failed', credentials.username)
-                            reject({
-                                error: "Invalid credential provided, failed to sign in!",
-                                message: "Invalid credential provided, failed to sign in!"
-                            })
-                        }
-                        else {
-                            console.log('Success', credentials.username)
-                            resolve({
-                                username: credentials?.username,
-                            } as User)
-                        }
-                    })
-                });
+                // Docs: https://github.com/ldapts/ldapts/tree/main
+                try {
+                    console.log('ldap checks')
+                    await ldap_client.bind(credentials.username, credentials.password);
+                    console.log('success', credentials.username)
+                    return {
+                        username: credentials.username,
+                    } as User
+                } catch (error) {
+                    console.log('failed', credentials.username)
+                    throw new Error(JSON.stringify(error))
+                } finally {
+                    await ldap_client.unbind();
+                }
             },
         }),
         CredentialsProvider({
@@ -56,7 +52,7 @@ export const options: NextAuthOptions = {
             credentials: {
                 username: {
                     label: "Username:",
-                    type: "username",
+                    type: "text",
                     placeholder: "Enter your username",
                 },
                 password: {

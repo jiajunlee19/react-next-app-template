@@ -1,11 +1,14 @@
 import { parsedEnv } from '@/app/_libs/zod_env';
-import ldap from 'ldapjs';
+import { Client } from 'ldapts';
 
 const ldapClientSingleton = () => {
     console.log('creating client')
-    return ldap.createClient({
+    return new Client({
         // ldap://localhost:389/ou=company,dc=company,dc=com
         url: parsedEnv.LDAP_URL,
+        timeout: 0,
+        connectTimeout: 0,
+        strictDN: true,
     });
   }
   
