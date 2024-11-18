@@ -209,7 +209,7 @@
     EOF
 
     # Verify user access
-    ldapsearch -x -D "cn=user,ou=company,dc=company,dc=com" -w user -b "dc=company,dc=com"
+    ldapsearch -x -D "cn=user,ou=company,dc=company,dc=com" -w 12345678 -b "dc=company,dc=com"
 
     # To delete user
     ldapdelete -x -D "cn=admin,dc=company,dc=com" -w admin "cn=user,ou=company,dc=company,dc=com"

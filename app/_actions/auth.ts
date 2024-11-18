@@ -18,6 +18,7 @@ import prisma from '@/prisma/prisma';
 import { unstable_noStore as noStore } from 'next/cache';
 import { type StatePromise } from '@/app/_libs/types';
 import { flattenNestedObject } from '@/app/_libs/nested_object';
+import ldap_client from "@/app/_libs/ldap";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
@@ -537,6 +538,50 @@ export async function signIn(username: TUsernameSchema | unknown, password: TPas
         };
     }
 
+};
+
+export async function signInLDAP(username: TUsernameSchema | unknown, password: TPasswordSchema | unknown) {
+
+    const parsedForm = signInSchema.safeParse({
+        username: username,
+        password: password,
+    });
+
+    if (!parsedForm.success) {
+        return { 
+            error: parsedForm.error.flatten().fieldErrors,
+            message: "Invalid input provided, failed to sign in!"
+        };
+    };
+
+    if (await rateLimitByIP(5, 1000*60)) {
+        return { 
+            error: {error: ["Too many requests, try again later."]},
+            message: "Too many requests, try again later."
+        };
+    }
+
+    try {
+        
+        await ldap_client.bind(`cn=${parsedForm.data.username},ou=${parsedEnv.LDAP_ORGANISATION},${parsedEnv.LDAP_BASE_DN}`, parsedForm.data.password);
+        const userWithoutPassword = {
+            username: parsedForm.data.username,
+        }
+        const jwtToken = signJwtToken(userWithoutPassword);
+        const userWithToken = {
+            ...userWithoutPassword,
+            jwtToken,
+        };
+        await ldap_client.unbind();
+        return userWithToken
+
+    } catch (error) {
+        await ldap_client.unbind();
+        return {
+            error: {error: ["Invalid user provided, failed to sign in!"]},
+            message: "Invalid user provided, failed to sign in!"
+        }
+    }
 };
 
 export async function signUp(username: TUsernameSchema | unknown, password: TPasswordSchema | unknown): StatePromise {
