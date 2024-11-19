@@ -8,7 +8,7 @@ import { v5 as uuidv5 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import sql from 'mssql';
 import { sqlConfig } from "@/app/_libs/sql_config";
-import { type TEmailSchema, type TPasswordSchema, emailSchema, signInSchema, signUpSchema, readUserSchema, readUserWithoutPassSchema, updateUserSchema, deleteUserSchema, updateRoleSchema, updateRoleAdminSchema, readUserWithoutPassAdminSchema } from "@/app/_libs/zod_auth";
+import { type TUsernameSchema, type TPasswordSchema, usernameSchema, signInSchema, signUpSchema, readUserSchema, readUserWithoutPassSchema, updateUserSchema, deleteUserSchema, updateRoleSchema, updateRoleAdminSchema, readUserWithoutPassAdminSchema } from "@/app/_libs/zod_auth";
 import { uuidSchema, itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/zod_server';
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import { revalidatePath } from 'next/cache';
@@ -18,13 +18,14 @@ import prisma from '@/prisma/prisma';
 import { unstable_noStore as noStore } from 'next/cache';
 import { type StatePromise } from '@/app/_libs/types';
 import { flattenNestedObject } from '@/app/_libs/nested_object';
+import ldap_client from "@/app/_libs/ldap";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
-export async function readUserByEmail(email: TEmailSchema | unknown) {
+export async function readUserByUsername(username: TUsernameSchema | unknown) {
     noStore();
 
-    const parsedForm = emailSchema.safeParse(email);
+    const parsedForm = usernameSchema.safeParse(username);
 
     if (!parsedForm.success) {
         throw new Error(parsedForm.error.message)
@@ -45,11 +46,11 @@ export async function readUserByEmail(email: TEmailSchema | unknown) {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
             const result = await prisma.user.findFirst({
                 where: {
-                    email: parsedForm.data,
+                    username: parsedForm.data,
                 },
                 select: {
                     user_uid: true,
-                    email: true,
+                    username: true,
                     role: true,
                 },
             })
@@ -60,10 +61,10 @@ export async function readUserByEmail(email: TEmailSchema | unknown) {
         else {
             let pool = await sql.connect(sqlConfig);
             const result = await pool.request()
-                            .input('email', sql.VarChar, parsedForm.data)
-                            .query`SELECT user_uid, email, role
+                            .input('username', sql.VarChar, parsedForm.data)
+                            .query`SELECT user_uid, username, role
                                     FROM "packing"."user"
-                                    WHERE email = @email;
+                                    WHERE username = @username;
                             `;
             parsedResult = readUserWithoutPassSchema.safeParse(result.recordset[0]);
         }
@@ -79,9 +80,9 @@ export async function readUserByEmail(email: TEmailSchema | unknown) {
     return parsedResult.data
 };
 
-export async function readUserByEmailAdmin(email: TEmailSchema | unknown) {
+export async function readUserByUsernameAdmin(username: TUsernameSchema | unknown) {
     noStore();
-    const parsedForm = emailSchema.safeParse(email);
+    const parsedForm = usernameSchema.safeParse(username);
 
     if (!parsedForm.success) {
         throw new Error(parsedForm.error.message)
@@ -102,14 +103,14 @@ export async function readUserByEmailAdmin(email: TEmailSchema | unknown) {
         if (parsedEnv.DB_TYPE === 'PRISMA') {
             const result = await prisma.user.findFirst({
                 where: {
-                    email: parsedForm.data,
+                    username: parsedForm.data,
                     role: {
                         not: 'boss',
                     },
                 },
                 select: {
                     user_uid: true,
-                    email: true,
+                    username: true,
                     role: true,
                 },
             })
@@ -120,10 +121,10 @@ export async function readUserByEmailAdmin(email: TEmailSchema | unknown) {
         else {
             let pool = await sql.connect(sqlConfig);
             const result = await pool.request()
-                            .input('email', sql.VarChar, parsedForm.data)
-                            .query`SELECT user_uid, email, role
+                            .input('username', sql.VarChar, parsedForm.data)
+                            .query`SELECT user_uid, username, role
                                     FROM "packing"."user"
-                                    WHERE email = @email and role !== 'boss';
+                                    WHERE username = @username and role !== 'boss';
                             `;
             parsedResult = readUserWithoutPassAdminSchema.safeParse(result.recordset[0]);
         }
@@ -163,14 +164,14 @@ export async function readUserTotalPage(itemsPerPage: number | unknown, query?: 
             const result = await prisma.user.findMany({
                 select: {
                     user_uid: true,
-                    email: true,
+                    username: true,
                     role: true,
                 },
                 where: {
                     ...(parsedQuery &&
                         {
                             OR: [
-                                ...(['user_uid', 'email'].map((e) => {
+                                ...(['user_uid', 'username'].map((e) => {
                                     return {
                                         [e]: {
                                             search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
@@ -190,9 +191,9 @@ export async function readUserTotalPage(itemsPerPage: number | unknown, query?: 
             let pool = await sql.connect(sqlConfig);
             const result = await pool.request()
                             .input('query', sql.VarChar, QUERY)
-                            .query`SELECT user_uid, email, role 
+                            .query`SELECT user_uid, username, role 
                                     FROM "packing"."user"
-                                    WHERE (user_uid like @query OR email like @query);
+                                    WHERE (user_uid like @query OR username like @query);
                             `;
             parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
         }
@@ -242,14 +243,14 @@ export async function readUserByPage(itemsPerPage: number | unknown, currentPage
             const result = await prisma.user.findMany({
                 select: {
                     user_uid: true,
-                    email: true,
+                    username: true,
                     role: true,
                 },
                 where: {
                     ...(parsedQuery &&
                         {
                             OR: [
-                                ...(['user_uid', 'email'].map((e) => {
+                                ...(['user_uid', 'username'].map((e) => {
                                     return {
                                         [e]: {
                                             search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
@@ -273,10 +274,10 @@ export async function readUserByPage(itemsPerPage: number | unknown, currentPage
                             .input('offset', sql.Int, OFFSET)
                             .input('limit', sql.Int, parsedItemsPerPage)
                             .input('query', sql.VarChar, QUERY)
-                            .query`SELECT user_uid, email, role 
+                            .query`SELECT user_uid, username, role 
                                     FROM "packing"."user"
-                                    WHERE (user_uid like @query OR email like @query)
-                                    ORDER BY email asc
+                                    WHERE (user_uid like @query OR username like @query)
+                                    ORDER BY username asc
                                     OFFSET @offset ROWS
                                     FETCH NEXT @limit ROWS ONLY;
                             `;
@@ -319,7 +320,7 @@ export async function readAdminTotalPage(itemsPerPage: number | unknown, query?:
             const result = await prisma.user.findMany({
                 select: {
                     user_uid: true,
-                    email: true,
+                    username: true,
                     role: true,
                 },
                 where: {
@@ -327,7 +328,7 @@ export async function readAdminTotalPage(itemsPerPage: number | unknown, query?:
                     ...(parsedQuery &&
                     {
                         OR: [
-                            ...(['email'].map((e) => {
+                            ...(['username'].map((e) => {
                                 return {
                                     [e]: {
                                         search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
@@ -348,10 +349,10 @@ export async function readAdminTotalPage(itemsPerPage: number | unknown, query?:
             const result = await pool.request()
                             .input('role', sql.VarChar, 'admin')
                             .input('query', sql.VarChar, QUERY)
-                            .query`SELECT user_uid, email, role 
+                            .query`SELECT user_uid, username, role 
                                     FROM "packing"."user"
                                     WHERE role = @role
-                                    AND (email like @query);
+                                    AND (username like @query);
                             `;
             parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
         }
@@ -401,7 +402,7 @@ export async function readAdminByPage(itemsPerPage: number | unknown, currentPag
             const result = await prisma.user.findMany({
                 select: {
                     user_uid: true,
-                    email: true,
+                    username: true,
                     role: true,
                 },
                 where: {
@@ -409,7 +410,7 @@ export async function readAdminByPage(itemsPerPage: number | unknown, currentPag
                     ...(parsedQuery &&
                     {
                         OR: [
-                            ...(['email'].map((e) => {
+                            ...(['username'].map((e) => {
                                 return {
                                     [e]: {
                                         search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
@@ -434,11 +435,11 @@ export async function readAdminByPage(itemsPerPage: number | unknown, currentPag
                             .input('offset', sql.Int, OFFSET)
                             .input('limit', sql.Int, parsedItemsPerPage)
                             .input('query', sql.VarChar, QUERY)
-                            .query`SELECT user_uid, email, role 
+                            .query`SELECT user_uid, username, role 
                                     FROM "packing"."user"
                                     WHERE role = @role
-                                    AND (email like @query)
-                                    ORDER BY email asc
+                                    AND (username like @query)
+                                    ORDER BY username asc
                                     OFFSET @offset ROWS
                                     FETCH NEXT @limit ROWS ONLY;
                             `;
@@ -457,10 +458,10 @@ export async function readAdminByPage(itemsPerPage: number | unknown, currentPag
     return parsedForm.data
 };
 
-export async function signIn(email: TEmailSchema | unknown, password: TPasswordSchema | unknown) {
+export async function signIn(username: TUsernameSchema | unknown, password: TPasswordSchema | unknown) {
 
     const parsedForm = signInSchema.safeParse({
-        email: email,
+        username: username,
         password: password,
     });
 
@@ -483,11 +484,11 @@ export async function signIn(email: TEmailSchema | unknown, password: TPasswordS
         if (parsedEnv.DB_TYPE === 'PRISMA') {
             const result = await prisma.user.findFirst({
                 where: {
-                    email: parsedForm.data.email,
+                    username: parsedForm.data.username,
                 },
                 select: {
                     user_uid: true,
-                    email: true,
+                    username: true,
                     password: true,
                     role: true,
                 },
@@ -499,10 +500,10 @@ export async function signIn(email: TEmailSchema | unknown, password: TPasswordS
         else {
             let pool = await sql.connect(sqlConfig);
             const result = await pool.request()
-                            .input('email', sql.VarChar, parsedForm.data.email)
-                            .query`SELECT user_uid, email, password, role
+                            .input('username', sql.VarChar, parsedForm.data.username)
+                            .query`SELECT user_uid, username, password, role
                                     FROM "packing"."user"
-                                    WHERE email = @email;
+                                    WHERE username = @username;
                             `;
             parsedResult = readUserSchema.safeParse(result.recordset[0]);
         }
@@ -539,13 +540,57 @@ export async function signIn(email: TEmailSchema | unknown, password: TPasswordS
 
 };
 
-export async function signUp(email: TEmailSchema | unknown, password: TPasswordSchema | unknown): StatePromise {
+export async function signInLDAP(username: TUsernameSchema | unknown, password: TPasswordSchema | unknown) {
+
+    const parsedForm = signInSchema.safeParse({
+        username: username,
+        password: password,
+    });
+
+    if (!parsedForm.success) {
+        return { 
+            error: parsedForm.error.flatten().fieldErrors,
+            message: "Invalid input provided, failed to sign in!"
+        };
+    };
+
+    if (await rateLimitByIP(5, 1000*60)) {
+        return { 
+            error: {error: ["Too many requests, try again later."]},
+            message: "Too many requests, try again later."
+        };
+    }
+
+    try {
+        
+        await ldap_client.bind(`cn=${parsedForm.data.username},ou=${parsedEnv.LDAP_ORGANISATION},${parsedEnv.LDAP_BASE_DN}`, parsedForm.data.password);
+        const userWithoutPassword = {
+            username: parsedForm.data.username,
+        }
+        const jwtToken = signJwtToken(userWithoutPassword);
+        const userWithToken = {
+            ...userWithoutPassword,
+            jwtToken,
+        };
+        await ldap_client.unbind();
+        return userWithToken
+
+    } catch (error) {
+        await ldap_client.unbind();
+        return {
+            error: {error: ["Invalid user provided, failed to sign in!"]},
+            message: "Invalid user provided, failed to sign in!"
+        }
+    }
+};
+
+export async function signUp(username: TUsernameSchema | unknown, password: TPasswordSchema | unknown): StatePromise {
 
     const now = new Date();
 
     const parsedForm = signUpSchema.safeParse({
-        user_uid: (typeof email == 'string') ? uuidv5(email, UUID5_SECRET) : undefined,
-        email: email,
+        user_uid: (typeof username == 'string') ? uuidv5(username, UUID5_SECRET) : undefined,
+        username: username,
         password: password,
         role: 'user',
         user_created_dt: now,
@@ -577,14 +622,14 @@ export async function signUp(email: TEmailSchema | unknown, password: TPasswordS
             let pool = await sql.connect(sqlConfig);
             const result = await pool.request()
                             .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
-                            .input('email', sql.VarChar, parsedForm.data.email)
+                            .input('username', sql.VarChar, parsedForm.data.username)
                             .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10),)
                             .input('role', sql.VarChar, parsedForm.data.role)
                             .input('user_created_dt', sql.DateTime, parsedForm.data.user_created_dt)
                             .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
                             .query`INSERT INTO "packing"."user" 
-                                    (user_uid, email, password, role, user_created_dt, user_updated_dt)
-                                    VALUES (@user_uid, @email, @password, @role, @user_created_dt, @user_updated_dt);
+                                    (user_uid, username, password, role, user_created_dt, user_updated_dt)
+                                    VALUES (@user_uid, @username, @password, @role, @user_created_dt, @user_updated_dt);
                             `;
         }
     } 
@@ -755,7 +800,7 @@ export async function readUserById(user_uid: string | unknown) {
             const result = await prisma.user.findUnique({
                 select: {
                     user_uid: true,
-                    email: true,
+                    username: true,
                     role: true,
                     user_created_dt: true,
                     user_updated_dt: true,
@@ -771,7 +816,7 @@ export async function readUserById(user_uid: string | unknown) {
             let pool = await sql.connect(sqlConfig);
             const result = await pool.request()
                             .input('user_uid', sql.VarChar, parsed_uid)
-                            .query`SELECT user_uid, email, role, user_created_dt, user_updated_dt 
+                            .query`SELECT user_uid, username, role, user_created_dt, user_updated_dt 
                                     FROM "packing"."user"
                                     WHERE user_uid = @user_uid;
                             `;

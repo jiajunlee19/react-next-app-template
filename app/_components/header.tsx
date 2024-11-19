@@ -22,7 +22,7 @@ export default function Header() {
     ];
 
     const rightNavLinksA = [
-        { name: session?.user.email, href: "/auth/user/" + session?.user.user_uid, icon: "" },
+        { name: session?.user.username, href: "/auth/user/" + session?.user.user_uid, icon: "" },
         { name: "Sign Out", href: "/auth/signOut", icon: "" },
     ];
 
@@ -38,12 +38,12 @@ export default function Header() {
     const actionNavLinksProtected = [
         { name: "Upload File", href: "/protected/file/upload", icon: "" },
         { name: "Manage Box Type", href: "/protected/box_type", icon: "" },
-        { name: "Update User Role", href: "/protected/auth/updateRoleByEmail", icon: "" },
+        { name: "Update User Role", href: "/protected/auth/updateRoleByUsername", icon: "" },
     ];
 
     const actionNavLinksRestricted = [
         { name: "User List", href: "/restricted/auth/user", icon: "" },
-        { name: "Update Role by Email", href: "/restricted/auth/updateRoleByEmail", icon: "" },
+        { name: "Update Role by Username", href: "/restricted/auth/updateRoleByUsername", icon: "" },
     ];
 
     const pathname = usePathname();

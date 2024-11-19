@@ -46,8 +46,8 @@ export default function UserComponent({ params }: { params: {user_uid: string} }
                     }
                 }>
                 <input name="user_uid" type="text" value={session.user.user_uid} hidden readOnly formNoValidate />
-                <label htmlFor="email">Email: </label>
-                <input name="email" type="email" value={session.user.email} readOnly required formNoValidate />
+                <label htmlFor="username">Username: </label>
+                <input name="username" type="text" value={session.user.username} readOnly required formNoValidate />
                 <label htmlFor="password">Password: </label>
                 <input name="password" type="password" placeholder="Enter your password" onChange={(e) => passwordRef.current = e.target.value} autoComplete="off" required formNoValidate />
                 <label htmlFor="role">Role: </label>
@@ -70,7 +70,7 @@ export default function UserComponent({ params }: { params: {user_uid: string} }
                         }
                     }
                 }>
-                <SubmitButton buttonClass="btn-cancel w-80 mr-4 mt-8" buttonTitle={"Delete " + session.user.email} onButtonClick={handleSubmitClick} submitingButtonTitle="Deleting" />
+                <SubmitButton buttonClass="btn-cancel w-80 mr-4 mt-8" buttonTitle={"Delete " + session.user.username} onButtonClick={handleSubmitClick} submitingButtonTitle="Deleting" />
             </form>
         </>
     );

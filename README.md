@@ -174,6 +174,65 @@
 
 <br>
 
+# Creating dev database for local development
+1. For local development, run a local Postgres/LDAP server with docker, defined in [/dev-db/compose.yaml](/dev-db/compose.yaml)
+    ```
+    docker compose --env-file=../.env up -d
+    ```
+2. To initialize the LDAP server, run below commands:
+    ```bash
+    # Create bash shell
+    docker exec -it ldap /bin/bash
+    
+    # Create org unit
+    ldapadd -x -w admin -D "cn=admin,dc=company,dc=com" << EOF
+    dn: ou=company,dc=company,dc=com
+    objectClass: organizationalUnit
+    ou: company
+    EOF
+
+    # Create user
+    ldapadd -x -w admin -D "cn=admin,dc=company,dc=com" << EOF
+    dn: cn=user,ou=company,dc=company,dc=com
+    objectClass: person
+    cn: user
+    sn: user
+    userPassword: 12345678
+    EOF
+
+    # Grant read access to user
+    ldapmodify -H ldapi:/// -Y EXTERNAL << EOF
+    dn: olcDatabase={1}mdb,cn=config
+    changetype: modify
+    add: olcAccess
+    olcAccess: {2}to * by dn="cn=user,ou=company,dc=company,dc=com" read
+    EOF
+
+    # Verify user access
+    ldapsearch -x -D "cn=user,ou=company,dc=company,dc=com" -w 12345678 -b "dc=company,dc=com"
+
+    # To delete user
+    ldapdelete -x -D "cn=admin,dc=company,dc=com" -w admin "cn=user,ou=company,dc=company,dc=com"
+
+    ```
+3. In [auth.ts](/app/_actions/auth.ts), ensure that the correct dn format is used for ldap authentication.
+    ```ts
+    import ldap_client from "@/app/_libs/ldap";
+
+    ...
+
+    // Depending on your ldap server, the dn format could be different
+    // In our example: cn=username,ou=company.com,dc=company,dc=com
+    await ldap_client.bind(`cn=${parsedForm.data.username},ou=${parsedEnv.LDAP_ORGANISATION},${parsedEnv.LDAP_BASE_DN}`, parsedForm.data.password);
+
+    ...
+    ```
+4. Run `npx prisma generate` and `npx prisma db push` to initialize the local database.
+5. To visualize the database / schema, run `npx prisma studio` and navigate to [http://localhost:5555/](http://localhost:5555/).
+6. See next section on how to seed the database with pre-defined placeholder data.
+
+<br>
+
 # Seeding the database
 1. Initial placeholder-data to be loaded is defined in [data_placeholder.js](/app/_scripts/data_placeholder.js).
 2. Seed functions are defined in [seed.ts](/app/_scripts/seed.ts). 
@@ -342,7 +401,7 @@
         <input ... defaultValue={params.get('query')?.toString()} />
     ...
     ```
-    - Example can be found in [/restricted/auth/updateRoleByEmail/component.tsx](/app/\(pages\)/restricted/auth/updateRoleByEmail/component.tsx).
+    - Example can be found in [/restricted/auth/updateRoleByUsername/component.tsx](/app/\(pages\)/restricted/auth/updateRoleByUsername/component.tsx).
 
 <br>
 
@@ -486,9 +545,9 @@
 6. Sign In Page is defined in [/auth/signIn/page.tsx](/app/\(pages\)/auth/signIn/page.tsx).
 7. Sign Out Page is defined in [/auth/signOut/page.tsx](/app/\(pages\)/auth/signOut/page.tsx).
 8. New user are defaulted as `role="user"`.
-9. User with `role="admin"` can update any user's role to `user` or `admin` in [/protected/auth/updateRoleByEmail/page.tsx](/app/\(pages\)/protected/auth/updateRoleByEmail/page.tsx).
+9. User with `role="admin"` can update any user's role to `user` or `admin` in [/protected/auth/updateRoleByUsername/page.tsx](/app/\(pages\)/protected/auth/updateRoleByUsername/page.tsx).
 10. User with `role="boss"` can view all users in [/restricted/auth/user/page.tsx](/app/\(pages\)/restricted/auth/user/page.tsx).
-11. User with `role="boss"` can update any user's role in [/restricted/auth/user/[user_uid]/updateRole/page.tsx](/app/\(pages\)/restricted/auth/user/[user_uid]/updateRole/page.tsx) or [/restricted/auth/updateRoleByEmail/page.tsx](/app/\(pages\)/restricted/auth/updateRoleByEmail/page.tsx).
+11. User with `role="boss"` can update any user's role in [/restricted/auth/user/[user_uid]/updateRole/page.tsx](/app/\(pages\)/restricted/auth/user/[user_uid]/updateRole/page.tsx) or [/restricted/auth/updateRoleByUsername/page.tsx](/app/\(pages\)/restricted/auth/updateRoleByUsername/page.tsx).
 
 <br>
 

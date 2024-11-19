@@ -1,14 +1,12 @@
-import "server-only";
-
 import { envSchema } from "@/app/_libs/zod_env";
 
 const parsedEnv = envSchema.parse(process.env);
 
 export const sqlConfig = {
     user: parsedEnv.DB_USER,
-    password: parsedEnv.DB_PWD,
-    database: parsedEnv.DB_NAME,
-    server: parsedEnv.DB_SERVER,
+    password: parsedEnv.DB_PASSWORD,
+    database: parsedEnv.DB_DATABASE,
+    server: parsedEnv.DB_HOST,
     pool: {
       max: 10,
       min: 0,
