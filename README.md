@@ -215,9 +215,21 @@
     ldapdelete -x -D "cn=admin,dc=company,dc=com" -w admin "cn=user,ou=company,dc=company,dc=com"
 
     ```
-3. Run `npx prisma generate` and `npx prisma db push` to initialize the local database.
-4. To visualize the database / schema, run `npx prisma studio` and navigate to [http://localhost:5555/](http://localhost:5555/).
-5. See next section on how to seed the database with pre-defined placeholder data.
+3. In [auth.ts](/app/_actions/auth.ts), ensure that the correct dn format is used for ldap authentication.
+    ```ts
+    import ldap_client from "@/app/_libs/ldap";
+
+    ...
+
+    // Depending on your ldap server, the dn format could be different
+    // In our example: cn=username,ou=company.com,dc=company,dc=com
+    await ldap_client.bind(`cn=${parsedForm.data.username},ou=${parsedEnv.LDAP_ORGANISATION},${parsedEnv.LDAP_BASE_DN}`, parsedForm.data.password);
+
+    ...
+    ```
+4. Run `npx prisma generate` and `npx prisma db push` to initialize the local database.
+5. To visualize the database / schema, run `npx prisma studio` and navigate to [http://localhost:5555/](http://localhost:5555/).
+6. See next section on how to seed the database with pre-defined placeholder data.
 
 <br>
 
