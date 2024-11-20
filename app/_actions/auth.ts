@@ -563,7 +563,8 @@ export async function signInLDAP(username: TUsernameSchema | unknown, password: 
 
     try {
         
-        await ldap_client.bind(`cn=${parsedForm.data.username},ou=${parsedEnv.LDAP_ORGANISATION},${parsedEnv.LDAP_BASE_DN}`, parsedForm.data.password);
+        const dn = `uid=${parsedForm.data.username},${parsedEnv.LDAP_BASE_DN}`;
+        await ldap_client.bind(dn, parsedForm.data.password);
         const userWithoutPassword = {
             username: parsedForm.data.username,
         }
