@@ -542,6 +542,8 @@ export async function signIn(username: TUsernameSchema | unknown, password: TPas
 
 export async function signInLDAP(username: TUsernameSchema | unknown, password: TPasswordSchema | unknown) {
 
+    const now = new Date();
+
     const parsedForm = signInSchema.safeParse({
         username: username,
         password: password,
@@ -565,16 +567,15 @@ export async function signInLDAP(username: TUsernameSchema | unknown, password: 
         
         const dn = `uid=${parsedForm.data.username},${parsedEnv.LDAP_BASE_DN}`;
         await ldap_client.bind(dn, parsedForm.data.password);
-        const userWithoutPassword = {
-            username: parsedForm.data.username,
+
+        // [TODO]: Sign up as new ldap user when successfully logged-in
+        const signUpResult = await signUp(parsedForm.data.username, parsedForm.data.password);
+        if (signUpResult.error) {
+            await updateUserLDAP(parsedForm.data.username, parsedForm.data.password);
         }
-        const jwtToken = signJwtToken(userWithoutPassword);
-        const userWithToken = {
-            ...userWithoutPassword,
-            jwtToken,
-        };
+
         await ldap_client.unbind();
-        return userWithToken
+        return await signIn(parsedForm.data.username, parsedForm.data.password);
 
     } catch (error) {
         await ldap_client.unbind();
@@ -583,6 +584,62 @@ export async function signInLDAP(username: TUsernameSchema | unknown, password: 
             message: "Invalid user provided, failed to sign in!"
         }
     }
+};
+
+export async function updateUserLDAP(username: TUsernameSchema | unknown, password: TPasswordSchema | unknown) {
+
+    const now = new Date();
+
+    const parsedForm = updateUserSchema.safeParse({
+        user_uid: (typeof username == 'string') ? uuidv5(username, UUID5_SECRET) : undefined,
+        password: password,
+        user_updated_dt: now,
+    });
+
+    if (!parsedForm.success) {
+        return { 
+            error: parsedForm.error.flatten().fieldErrors,
+            message: "Invalid input provided, failed to sign in!"
+        };
+    };
+
+    if (await rateLimitByIP(5, 1000*60)) {
+        return { 
+            error: {error: ["Too many requests, try again later."]},
+            message: "Too many requests, try again later."
+        };
+    }
+
+    try {
+        
+        if (parsedEnv.DB_TYPE === "PRISMA") {
+            const result = await prisma.user.update({
+                where: {
+                    user_uid: parsedForm.data.user_uid,
+                },
+                data: {...parsedForm.data, password: await bcrypt.hash(parsedForm.data.password, 10)},
+            });
+        }
+        else {
+            let pool = await sql.connect(sqlConfig);
+            const result = await pool.request()
+                            .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
+                            .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10),)
+                            .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
+                            .query`UPDATE "packing"."user" 
+                                    SET password = @password, user_updated_dt = @user_updated_dt
+                                    WHERE user_uid = @user_uid;
+                            `;
+        }
+    } 
+    catch (err) {
+        return { 
+            error: {error: [getErrorMessage(err)]},
+            message: "Invalid user provided, failed to update user!"
+        };
+    }
+
+    return { message: `Successfully updated user ${parsedForm.data.user_uid}` }
 };
 
 export async function signUp(username: TUsernameSchema | unknown, password: TPasswordSchema | unknown): StatePromise {
@@ -709,7 +766,7 @@ export async function updateUser(formData: FormData | unknown): StatePromise {
     catch (err) {
         return { 
             error: {error: [getErrorMessage(err)]},
-            message: "Invalid user provided, failed to sign up!"
+            message: "Invalid user provided, failed to update user!"
         };
     }
 
