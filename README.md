@@ -177,59 +177,12 @@
 # Creating dev database for local development
 1. For local development, run a local Postgres/LDAP server with docker, defined in [/dev-db/compose.yaml](/dev-db/compose.yaml)
     ```
+    cd dev-db
     docker compose --env-file=../.env up -d
     ```
-2. To initialize the LDAP server, run below commands:
-    ```bash
-    # Create bash shell
-    docker exec -it ldap /bin/bash
-    
-    # Create org unit
-    ldapadd -x -w admin -D "cn=admin,dc=company,dc=com" << EOF
-    dn: ou=company,dc=company,dc=com
-    objectClass: organizationalUnit
-    ou: company
-    EOF
-
-    # Create user
-    ldapadd -x -w admin -D "cn=admin,dc=company,dc=com" << EOF
-    dn: cn=user,ou=company,dc=company,dc=com
-    objectClass: person
-    cn: user
-    sn: user
-    userPassword: 12345678
-    EOF
-
-    # Grant read access to user
-    ldapmodify -H ldapi:/// -Y EXTERNAL << EOF
-    dn: olcDatabase={1}mdb,cn=config
-    changetype: modify
-    add: olcAccess
-    olcAccess: {2}to * by dn="cn=user,ou=company,dc=company,dc=com" read
-    EOF
-
-    # Verify user access
-    ldapsearch -x -D "cn=user,ou=company,dc=company,dc=com" -w 12345678 -b "dc=company,dc=com"
-
-    # To delete user
-    ldapdelete -x -D "cn=admin,dc=company,dc=com" -w admin "cn=user,ou=company,dc=company,dc=com"
-
-    ```
-3. In [auth.ts](/app/_actions/auth.ts), ensure that the correct dn format is used for ldap authentication.
-    ```ts
-    import ldap_client from "@/app/_libs/ldap";
-
-    ...
-
-    // Depending on your ldap server, the dn format could be different
-    // In our example: cn=username,ou=company.com,dc=company,dc=com
-    await ldap_client.bind(`cn=${parsedForm.data.username},ou=${parsedEnv.LDAP_ORGANISATION},${parsedEnv.LDAP_BASE_DN}`, parsedForm.data.password);
-
-    ...
-    ```
-4. Run `npx prisma generate` and `npx prisma db push` to initialize the local database.
-5. To visualize the database / schema, run `npx prisma studio` and navigate to [http://localhost:5555/](http://localhost:5555/).
-6. See next section on how to seed the database with pre-defined placeholder data.
+2. Run `npx prisma generate` and `npx prisma db push` to initialize the local database.
+3. To visualize the database / schema, run `npx prisma studio` and navigate to [http://localhost:5555/](http://localhost:5555/).
+4. See next section on how to seed the database with pre-defined placeholder data.
 
 <br>
 
@@ -550,6 +503,77 @@
 11. User with `role="boss"` can update any user's role in [/restricted/auth/user/[user_uid]/updateRole/page.tsx](/app/\(pages\)/restricted/auth/user/[user_uid]/updateRole/page.tsx) or [/restricted/auth/updateRoleByUsername/page.tsx](/app/\(pages\)/restricted/auth/updateRoleByUsername/page.tsx).
 
 <br>
+
+# Authentication with LDAP server
+1. This project uses an openLDAP test server for authentication.
+    ```bash
+    // Set your .env with these
+    LDAP_ORGANISATION="scientists"
+    LDAP_DOMAIN="example.com"
+    LDAP_BASE_DN="dc=example,dc=com"
+    LDAP_URL="LDAP://ldap.forumsys.com:389"
+
+    // user available are newton, einstein, tesla
+    // password = password
+    ```
+
+2. Alternatively, you may run your own dockerized LDAP server for development purposes.
+    ```bash
+    # Set these in .env
+    LDAP_ORGANISATION="company"
+    LDAP_DOMAIN="company.com"
+    LDAP_BASE_DN="dc=company,dc=com"
+    LDAP_URL="ldap://localhost:389"
+    ```
+    - Spin up the LDAP server defined in [/dev-db/compose.yaml](/dev-db/compose.yaml), then run below commands:
+        ```bash
+        # Create bash shell
+        docker exec -it ldap /bin/bash
+        
+        # Create org unit
+        ldapadd -x -w admin -D "cn=admin,dc=company,dc=com" << EOF
+        dn: ou=company,dc=company,dc=com
+        objectClass: organizationalUnit
+        ou: company
+        EOF
+
+        # Create user
+        ldapadd -x -w admin -D "cn=admin,dc=company,dc=com" << EOF
+        dn: cn=user,ou=company,dc=company,dc=com
+        objectClass: person
+        cn: user
+        sn: user
+        userPassword: 12345678
+        EOF
+
+        # Grant read access to user
+        ldapmodify -H ldapi:/// -Y EXTERNAL << EOF
+        dn: olcDatabase={1}mdb,cn=config
+        changetype: modify
+        add: olcAccess
+        olcAccess: {2}to * by dn="cn=user,ou=company,dc=company,dc=com" read
+        EOF
+
+        # Verify user access
+        ldapsearch -x -D "cn=user,ou=company,dc=company,dc=com" -w 12345678 -b "dc=company,dc=com"
+
+        # To delete user
+        ldapdelete -x -D "cn=admin,dc=company,dc=com" -w admin "cn=user,ou=company,dc=company,dc=com"
+
+        ```
+3. In [auth.ts](/app/_actions/auth.ts), ensure that the correct dn format is used for ldap authentication.
+    ```ts
+    import ldap_client from "@/app/_libs/ldap";
+
+    ...
+
+    // Depending on your ldap server, the dn format could be different
+    // In our example: uid=tesla,dc=example,dc=com
+    const dn = `uid=${parsedForm.data.username},${parsedEnv.LDAP_BASE_DN}`;
+    await ldap_client.bind(dn, parsedForm.data.password);
+
+    ...
+    ```
 
 # Learn More
 To learn more about Next.js, take a look at the following resources:

@@ -37,7 +37,7 @@ export default function SignInComponent() {
         <>
             <h1>Sign In</h1>
             <form ref={formRef} action={ async (formData) => {
-                        const result = await signIn("username", {
+                        const result = await signIn("LDAP", {
                             username: usernameRef.current,
                             password: passwordRef.current,
                             redirect: false,
