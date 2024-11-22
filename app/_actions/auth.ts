@@ -568,7 +568,6 @@ export async function signInLDAP(username: TUsernameSchema | unknown, password: 
         const dn = `uid=${parsedForm.data.username},${parsedEnv.LDAP_BASE_DN}`;
         await ldap_client.bind(dn, parsedForm.data.password);
 
-        // [TODO]: Sign up as new ldap user when successfully logged-in
         const signUpResult = await signUp(parsedForm.data.username, parsedForm.data.password);
         if (signUpResult.error) {
             await updateUserLDAP(parsedForm.data.username, parsedForm.data.password);

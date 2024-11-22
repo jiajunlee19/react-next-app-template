@@ -28,7 +28,7 @@ export default function Header() {
 
     const rightNavLinksB = [
         { name: "Sign In", href: "/auth/signIn", icon: "" },
-        { name: "Sign Up", href: "/auth/signUp", icon: "" },
+        // { name: "Sign Up", href: "/auth/signUp", icon: "" },
     ];
 
     const actionNavLinks = [
