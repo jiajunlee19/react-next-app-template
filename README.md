@@ -63,6 +63,14 @@ This section outlined the quick start guide on how to install and use the templa
 
    # Any code changes will automatically update the dev server without restarting it
    ```
+7. Create an optimized build, then launch [http://localhost:3000](http://localhost:3000) with your browser.
+   ```bash
+   # Build optimize package
+   npm run dev-build
+
+   # Start the optimized build server
+   npm run start
+   ```
 
 <br>
 
