@@ -14,6 +14,7 @@
     - [Improving Accessibility](#improving-accessibility)
     - [Navigating between pages](#navigating-between-pages)
     - [Seeding the database](#seeding-the-database)
+    - [Publishing changes to Database with Prisma](#publishing-changes-to-database-with-prisma)
     - [Data fetching with Server Action](#data-fetching-with-server-action)
     - [Server Action Form \& Error Handling](#server-action-form--error-handling)
     - [State Management with SearchParams](#state-management-with-searchparams)
@@ -310,6 +311,32 @@ This section outlines the important concepts used in this template.
     { success: 'Successfully seed trays' }
     { success: 'Successfully seed lots' }
     ```
+
+<br>
+
+### Publishing changes to Database with Prisma
+1. Regenerate Prisma models, when there's an update on [prisma/schema.prisma](/prisma/schema.prisma).
+    ```bash
+    # Generate prisma models
+    npx prisma generate
+    ```
+2. Generate a migrate file.
+   ```bash
+   # Generate a migrate file, but not deploying it to database yet
+   npx prisma migrate dev --name init --create-only
+   ```
+3. In development, apply the migration from []() to the development database.
+   ```bash
+   # Deploy to development database
+   # Note: You should not use "migrate dev" in production !!! 
+    npx prisma migrate dev
+   ```
+4. In production, apply the migration by using `migrate deploy` instead.
+   ```bash
+   # Deploy to production database
+   # You don't typically run this command manually, this should be handled by the CI/CD pipeline.
+    npx prisma migrate deploy
+   ```
 
 <br>
 
