@@ -36,6 +36,7 @@
 - This is a template of react-next-app, built on top of [Next.js](https://nextjs.org/) by [jiajunlee](https://github.com/jiajunlee19). 
 - For quick start guide, navigate to the [Getting Started](#getting-started) section.
 - Most important concepts used in this project are described in [Important Concepts](#important-concepts) section.
+- Take a look on the sample production-deployed website: [https://react-next-app-packing.vercel.app/](https://react-next-app-packing.vercel.app/)
 
 <br>
 
