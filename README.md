@@ -748,6 +748,9 @@ Check out the [Next.js deployment documentation](https://nextjs.org/docs/deploym
 ## CI/CD with Jenkins
 Jenkins is a DevOps tool. Jenkins pipeline can be designed to automate the install/build/deploy process, triggered by dedicated events. Refers to the [Jenkinsfile](/jenkins/Jenkinsfile) definition.
 
+![Jenkins Workflow.png](/Misc/Jenkins%20Workflow.PNG)
+
+
 For details, check out the [jenkins-template](https://github.com/jiajunlee19/jenkins-template).
 
 <br>
