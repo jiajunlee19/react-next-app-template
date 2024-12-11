@@ -1,0 +1,16 @@
+services:
+  server:
+    image: react-next-app-template-test:latest
+    container_name: react-next-app-template-test
+    networks:
+      - react-next-app-template-test
+    restart: no
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    env_file:
+      - .env
+
+networks:
+  react-next-app-template-test:
+    name: react-next-app-template-test
