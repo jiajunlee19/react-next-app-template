@@ -236,6 +236,7 @@ This section outlines the important concepts used in this template.
     - It prevents layout shift while images are loading.
     - Images are auto-resizing accordingly on viewport size
     - Images are lazy-loaded as they enter viewport.
+    - Images are loaded based on the required display size instead of actual size, saving memory storage for large images.
     ```
     import Image from "next/image";
     <Image
