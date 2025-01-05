@@ -1,8 +1,8 @@
-import { readBoxTypeTotalPage, readBoxTypeByPage } from "@/app/_actions/box_type";
+import { readTypeTotalPage, readTypeByPage } from "@/app/_actions/type";
 import Pagination from "@/app/_components/basic/pagination";
 import TableSkeleton from "@/app/_components/basic/skeletons";
 import DataTable from "@/app/_components/data_table";
-import { columns } from "@/app/(pages)/protected/box_type/columns";
+import { columns } from "@/app/(pages)/protected/type/columns";
 import Link from "next/link";
 import { Suspense } from "react";
 import type { Metadata } from 'next';
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     description: 'Developed by jiajunlee',
 };
 
-export default async function BoxType(
+export default async function Type(
     props: { searchParams?: Promise<{ itemsPerPage?: string, currentPage?: string, query?: string }> }
 ) {
     const searchParams = await props.searchParams;
@@ -21,18 +21,18 @@ export default async function BoxType(
     const currentPage = Number(searchParams?.currentPage) || 1;
     const query = searchParams?.query || undefined;
 
-    const totalPage = await readBoxTypeTotalPage(itemsPerPage, query);
+    const totalPage = await readTypeTotalPage(itemsPerPage, query);
 
     const pageTitle = 'Manage Box Type';
 
     const createButtonTitle = 'Create New Box Type';
 
-    const readAction = readBoxTypeByPage;
+    const readAction = readTypeByPage;
 
     return (
         <>
             <h1>{pageTitle}</h1>
-            <Link className="btn btn-primary w-min no-underline p-[1%]" href="/protected/box_type/create">
+            <Link className="btn btn-primary w-min no-underline p-[1%]" href="/protected/type/create">
                 {createButtonTitle}
             </Link>
             <Suspense fallback={<TableSkeleton columnCount={4} rowCount={10} />}>

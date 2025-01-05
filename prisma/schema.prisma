@@ -11,7 +11,7 @@ datasource db {
   provider = "postgresql"
   url = env("DB_PRISMA_URL") // uses connection pooling
   directUrl = env("DB_URL_NON_POOLING") // uses a direct connection
-  schemas  = ["packing"]
+  schemas  = ["template"]
 }
 
 model User {
@@ -23,101 +23,7 @@ model User {
   user_updated_dt DateTime @db.Timestamp()
 
   @@map(name: "user")
-  @@schema("packing")
-}
-
-model BoxType {
-  box_type_uid String @db.Uuid @id @unique
-  box_part_number String @db.VarChar(50)
-  box_max_tray Int @db.Integer
-  box_type_created_dt DateTime @db.Timestamp()
-  box_type_updated_dt DateTime @db.Timestamp()
-
-  boxes Box[]
-
-  @@map(name: "box_type")
-  @@schema("packing")
-}
-
-model TrayType {
-  tray_type_uid String @db.Uuid @id @unique
-  tray_part_number String @db.VarChar(50)
-  tray_max_drive Int @db.Integer
-  tray_type_created_dt DateTime @db.Timestamp()
-  tray_type_updated_dt DateTime @db.Timestamp()
-
-  trays Tray[]
-
-  @@map(name: "tray_type")
-  @@schema("packing")
-
-}
-
-model Shipdoc {
-  shipdoc_uid String @db.Uuid @id @unique
-  shipdoc_number String @db.VarChar(50)
-  shipdoc_contact String @db.VarChar(50)
-  shipdoc_created_dt DateTime @db.Timestamp()
-  shipdoc_updated_dt DateTime @db.Timestamp()
-
-  Boxes Box[]
-
-  @@map(name: "shipdoc")
-  @@schema("packing")
-}
-
-enum Status {
-  active
-  shipped
-
-  @@schema("packing")
-}
-
-model Box {
-  box_uid String @db.Uuid @id @unique
-  box_type_uid String @db.Uuid
-  shipdoc_uid String @db.Uuid
-  box_status Status @default(active)
-  box_created_dt DateTime @db.Timestamp()
-  box_updated_dt DateTime @db.Timestamp()
-
-  trays Tray[]
-
-  fk_box_type_uid BoxType @relation(fields: [box_type_uid], references: [box_type_uid], onDelete: Restrict, onUpdate: Restrict)
-  fk_shipdoc_uid Shipdoc @relation(fields: [shipdoc_uid], references: [shipdoc_uid], onDelete: Restrict, onUpdate: Restrict)
-
-  @@map(name: "box")
-  @@schema("packing")
-}
-
-model Tray {
-  tray_uid String @db.Uuid @id @unique
-  box_uid String @db.Uuid
-  tray_type_uid String @db.Uuid
-  tray_created_dt DateTime @db.Timestamp()
-  tray_updated_dt DateTime @db.Timestamp()
-
-  lots Lot[]
-
-  fk_box_uid Box @relation(fields: [box_uid], references: [box_uid], onDelete: Restrict, onUpdate: Restrict)
-  fk_tray_type_uid TrayType @relation(fields: [tray_type_uid], references: [tray_type_uid], onDelete: Restrict, onUpdate: Restrict)
-
-  @@map(name: "tray")
-  @@schema("packing")
-}
-
-model Lot {
-  lot_uid String @db.Uuid @id @unique
-  tray_uid String @db.Uuid
-  lot_id String @db.VarChar(50)
-  lot_qty Int @db.Integer
-  lot_created_dt DateTime @db.Timestamp()
-  lot_updated_dt DateTime @db.Timestamp()
-
-  fk_tray_uid Tray @relation(fields: [tray_uid], references: [tray_uid], onDelete: Restrict, onUpdate: Restrict)
-
-  @@map(name: "lot")
-  @@schema("packing")
+  @@schema("template")
 }
 
 enum Role {
@@ -125,5 +31,15 @@ enum Role {
   admin
   boss
 
-  @@schema("packing")
+  @@schema("template")
+}
+
+model Type {
+  type_uid String @db.Uuid @id @unique
+  type String @db.VarChar(50)
+  type_created_dt DateTime @db.Timestamp()
+  type_updated_dt DateTime @db.Timestamp()
+
+  @@map(name: "type")
+  @@schema("template")
 }

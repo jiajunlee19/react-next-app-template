@@ -125,13 +125,7 @@ This section outlined the quick start guide on how to install and use the templa
    ```
 3. The database should be seeded with initial data, result of `console.log` messages should be shown in the terminal. 
     ```
-    { success: 'Successfully seed users' }
-    { success: 'Successfully seed box_type' }
-    { success: 'Successfully seed tray_type' }
-    { success: 'Successfully seed shipdocs' }
-    { success: 'Successfully seed box' }
-    { success: 'Successfully seed trays' }
-    { success: 'Successfully seed lots' }
+    { success: 'Successfully seed table' }
     ```
 
 <br>
@@ -294,7 +288,7 @@ This section outlines the important concepts used in this template.
     ```
     <main-page-label> / <current-page-label>
     ```
-    - Example can be found in [/box_type/create/page.tsx](/app/\(pages\)/box_type/create/page.tsx).
+    - Example can be found in [/type/create/page.tsx](/app/\(pages\)/type/create/page.tsx).
 
 <br>
 
@@ -313,13 +307,7 @@ This section outlines the important concepts used in this template.
 4. Run `npm run seed`
 5. The database should be seeded with initial data, result of `console.log` messages should be shown in the terminal. 
     ```
-    { success: 'Successfully seed users' }
-    { success: 'Successfully seed box_type' }
-    { success: 'Successfully seed tray_type' }
-    { success: 'Successfully seed shipdocs' }
-    { success: 'Successfully seed box' }
-    { success: 'Successfully seed trays' }
-    { success: 'Successfully seed lots' }
+    { success: 'Successfully seed table' }
     ```
 
 <br>
@@ -335,7 +323,7 @@ This section outlines the important concepts used in this template.
    # Generate a migrate file, but not deploying it to database yet
    npx prisma migrate dev --name init --create-only
    ```
-3. In development, apply the migration from []() to the development database.
+3. In development, apply the migration from [prisma/migrations/](/prisma/migrations/) to the development database.
    ```bash
    # Deploy to development database
    # Note: You should not use "migrate dev" in production !!! 
@@ -352,7 +340,7 @@ This section outlines the important concepts used in this template.
 
 ### Data fetching with Server Action
 1. No API layer is required, server actions can directly query database from server-side.
-2. See example on one of the server action [/_actions/box_type.ts](/app/_actions/box_type.ts).
+2. See example on one of the server action [/_actions/type.ts](/app/_actions/type.ts).
     - CRUD async/await functions are used to execute CRUD operations on database
     - [Prisma](/prisma/prisma.ts) is used as an ORM via `import prisma from '@/prisma/prisma';`
     - `revalidatePath` is used to remove the stored cache and force-fetch the latest data after the CRUD operation.
@@ -408,13 +396,13 @@ This section outlines the important concepts used in this template.
 <br>
 
 ### Server Action Form & Error Handling
-1. See example of server action [/_actions/box_type.ts](/app/_actions/box_type.ts) , flatten field errors are being returned.
+1. See example of server action [/_actions/type.ts](/app/_actions/type.ts) , flatten field errors are being returned.
     ```ts
         ...
 
         return { 
         error: parsedForm.error.flatten().fieldErrors,
-        message: "Invalid input provided, failed to create box_type!"
+        message: "Invalid input provided, failed to create type!"
     };
     ```
 2. In [form.tsx](/app/_components/basic/form.tsx), each form field is handled with `state.error` with the help of `useActionState`.
@@ -536,7 +524,7 @@ This section outlines the important concepts used in this template.
 2. Page nav component is generated in [pagination.tsx](/app/_components/basic/pagination.tsx).
 3. Pagination is achieved by getting `currentPage` from searchParams and `totalPage` from server action.
     ```ts
-        export default async function BoxType(
+        export default async function Type(
             props: { searchParams?: Promise<{ itemsPerPage?: string, currentPage?: string, query?: string }> }
         ) {
             const searchParams = await props.searchParams;
@@ -545,7 +533,7 @@ This section outlines the important concepts used in this template.
             const currentPage = Number(searchParams?.currentPage) || 1;
             const query = searchParams?.query || undefined;
 
-            const totalPage = await readBoxTypeTotalPage(itemsPerPage, query);
+            const totalPage = await readTypeTotalPage(itemsPerPage, query);
 
         ...
 
@@ -563,7 +551,7 @@ This section outlines the important concepts used in this template.
 ### Search Query
 1. Search query is achieved by getting `query` from searchParams.
     ```ts
-    export default async function BoxType(
+    export default async function Type(
         props: { searchParams?: Promise<{ ... query?: string }> }
     ) {
     const searchParams = await props.searchParams;
@@ -573,7 +561,7 @@ This section outlines the important concepts used in this template.
     }
     ```
 2. In server actions, query is passed as argument. The search is implemeneted with `FullTextSearch` for `prisma` or `like` for `raw query`.
-3. See examples in [_actions/box_types.ts](/app/_actions/box_types.ts) and [/box_type/page.tsx](/app/\(pages\)/box_type/page.tsx).
+3. See examples in [_actions/types.ts](/app/_actions/types.ts) and [/type/page.tsx](/app/\(pages\)/type/page.tsx).
 
 <br>
 

@@ -39,7 +39,7 @@ export default function Header() {
 
     const actionNavLinksProtected = [
         { name: "Upload File", href: "/protected/file/upload", icon: "" },
-        { name: "Manage Box Type", href: "/protected/box_type", icon: "" },
+        { name: "Manage Type", href: "/protected/type", icon: "" },
         { name: "Update User Role", href: "/protected/auth/updateRoleByUsername", icon: "" },
     ];
 
