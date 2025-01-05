@@ -1,4 +1,4 @@
-import { createBoxType } from "@/app/_actions/box_type";
+import { createType } from "@/app/_actions/type";
 import Breadcrumbs from "@/app/_components/basic/breadcrumbs";
 import Form from "@/app/_components/basic/form";
 import type { Metadata } from 'next'
@@ -8,13 +8,13 @@ export const metadata: Metadata = {
     description: 'Developed by jiajunlee',
 };
 
-export default function CreateBoxType() {
+export default function CreateType() {
     
     return (
         <>
             <Breadcrumbs breadcrumbs={[
-                {label: "Box Type", href: "/protected/box_type", active: false},
-                {label: "Create", href: "/protected/box_type/create", active: true}
+                {label: "Box Type", href: "/protected/type", active: false},
+                {label: "Create", href: "/protected/type/create", active: true}
             ]} />
             <Form 
                 formTitle="Create Box Type"
@@ -25,8 +25,8 @@ export default function CreateBoxType() {
                 rowData={null}
                 selectOptionData={null}
                 action="create"
-                formAction={createBoxType}
-                redirectLink="/protected/box_type"
+                formAction={createType}
+                redirectLink="/protected/type"
             />
         </>
     );
