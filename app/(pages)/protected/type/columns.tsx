@@ -25,20 +25,12 @@ export const columns = [
             type: "text",
         },
     }),
-    columnHelper.accessor("box_part_number", {
-        id: "box_part_number",
-        header: "box_part_number",
-        footer: "box_part_number",
+    columnHelper.accessor("type", {
+        id: "type",
+        header: "type",
+        footer: "type",
         meta: {
             type: "text",
-        },
-    }),
-    columnHelper.accessor("box_max_tray", {
-        id: "box_max_tray",
-        header: "box_max_tray",
-        footer: "box_max_tray",
-        meta: {
-            type: "number",
         },
     }),
     columnHelper.accessor("type_created_dt", {
