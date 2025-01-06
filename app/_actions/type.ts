@@ -17,7 +17,6 @@ import { StatePromise, type State } from '@/app/_libs/types';
 import { unstable_noStore as noStore } from 'next/cache';
 import { flattenNestedObject } from '@/app/_libs/nested_object';
 
-const DB_SCHEMA = parsedEnv.DB_SCHEMA;
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
 export async function readTypeTotalPage(itemsPerPage: number | unknown, query?: string | unknown) {
@@ -66,7 +65,7 @@ export async function readTypeTotalPage(itemsPerPage: number | unknown, query?: 
             const result = await pool.request()
                             .input('query', sql.VarChar, QUERY)
                             .query`SELECT type_uid, type, type_created_dt, type_updated_dt 
-                                    FROM "${DB_SCHEMA}"."type"
+                                    FROM [template].[type]
                                     WHERE (type_uid like @query OR type like @query);
                             `;
             parsedForm = readTypeSchema.array().safeParse(result.recordset);
@@ -143,7 +142,7 @@ export async function readTypeByPage(itemsPerPage: number | unknown, currentPage
                             .input('limit', sql.Int, parsedItemsPerPage)
                             .input('query', sql.VarChar, QUERY)
                             .query`SELECT type_uid, type, type_created_dt, type_updated_dt 
-                                    FROM "${DB_SCHEMA}"."type"
+                                    FROM [template].[type]
                                     WHERE (type_uid like @query OR type like @query)
                                     ORDER BY type asc
                                     OFFSET @offset ROWS
@@ -199,7 +198,7 @@ export async function readType() {
             let pool = await sql.connect(sqlConfig);
             const result = await pool.request()
                             .query`SELECT type_uid, type, type_created_dt, type_updated_dt 
-                                    FROM "${DB_SCHEMA}"."type";
+                                    FROM [template].[type];
                             `;
             parsedForm = readTypeSchema.array().safeParse(result.recordset);
         }
@@ -260,7 +259,7 @@ export async function readTypeUid(type: string | unknown) {
             const result = await pool.request()
                             .input('type', sql.VarChar, parsedInput.data.type)
                             .query`SELECT type_uid, type, type_created_dt, type_updated_dt 
-                                    FROM "${DB_SCHEMA}"."type"
+                                    FROM [template].[type]
                                     WHERE type = @type;
                             `;
             parsedForm = readTypeSchema.safeParse(result.recordset[0]);
@@ -335,7 +334,7 @@ export async function createType(prevState: State | unknown, formData: FormData 
                             .input('type', sql.VarChar, parsedForm.data.type)
                             .input('type_created_dt', sql.DateTime, parsedForm.data.type_created_dt)
                             .input('type_updated_dt', sql.DateTime, parsedForm.data.type_updated_dt)
-                            .query`INSERT INTO "${DB_SCHEMA}"."type" 
+                            .query`INSERT INTO [template].[type] 
                                     (type_uid, type, type_created_dt, type_updated_dt)
                                     VALUES (@type_uid, @type, @type_created_dt, @type_updated_dt);
                             `;
@@ -409,7 +408,7 @@ export async function updateType(prevState: State | unknown, formData: FormData 
             const result = await pool.request()
                             .input('type_uid', sql.VarChar, parsedForm.data.type_uid)
                             .input('type_updated_dt', sql.DateTime, parsedForm.data.type_updated_dt)
-                            .query`UPDATE "${DB_SCHEMA}"."type" 
+                            .query`UPDATE [template].[type] 
                                     SET type_updated_dt = @type_updated_dt
                                     WHERE type_uid = @type_uid;
                             `;
@@ -469,7 +468,7 @@ export async function deleteType(type_uid: string): StatePromise {
             let pool = await sql.connect(sqlConfig);
             const result = await pool.request()
                             .input('type_uid', sql.VarChar, parsedForm.data.type_uid)
-                            .query`DELETE FROM "${DB_SCHEMA}"."type" 
+                            .query`DELETE FROM [template].[type] 
                                     WHERE type_uid = @type_uid;
                             `;
         }
@@ -522,7 +521,7 @@ export async function readTypeById(type_uid: string) {
             const result = await pool.request()
                             .input('type_uid', sql.VarChar, parsedInput.data.type_uid)
                             .query`SELECT type_uid, type, type_created_dt, type_updated_dt 
-                                    FROM "${DB_SCHEMA}"."type"
+                                    FROM [template].[type]
                                     WHERE type_uid = @type_uid;
                             `;
             parsedForm = readTypeSchema.safeParse(result.recordset[0]);
