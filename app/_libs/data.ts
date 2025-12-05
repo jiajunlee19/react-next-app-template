@@ -54,12 +54,22 @@ export const experiences = [
     description:
       "I prototyped, developed, qualified and ramped both Client/Enterprise SSD Products from NPI to High-Volume-Manufacturing (HVM), with 100% NPI qualification success rate. I enabled Micron Penang with full-fledged capabilities by ramping the first Low-Temp Solder SSD,  first E3.S/U.2 Rigid-Flex Complex Form Factor SSDs, and first Gen 5 SSD with high capacity/performance. I improved Micron’s Capacity Flexibility by extending SSD qualification into Micron Batu Kawan, Penang as dual site qualification in parallel with Micron Prai, Penang.",
     icon: React.createElement(ArchiveBoxXMarkIcon, { className: "dark:fill-white" }),
-    date: "2020 - Present",
+    date: "2020 - 2025",
+  },
+  {
+    title: "Senior Agentic/Robotic Automation System Engineer",
+    location: "Micron Technology, Penang, Malaysia",
+    description:
+      "I developed and lead multiple improvement strategies to smoothen NPI executions to achieve on-time sample delivery, cost reduction, minimize quality deviations, improve overall efficiency and drive for business excellence.",
+    icon: React.createElement(ArchiveBoxXMarkIcon, { className: "dark:fill-white" }),
+    date: "2025 - Present",
   },
 ];
 
 export const skills = [
   "Python",
+  "UiPath Maestro",
+  "UiPath Agentic AI",
   "UiPath RPA",
   "SQL",
   "Snowflake",
@@ -89,11 +99,11 @@ export const projects = [
       imageUrl: portFolioImage,
   },
   {
-    title: "High Gain Automation Project - BOMinator (Automated MAM BOM Creator)",
+    title: "High Gain Agentic Automation Project - BOMinator (Automated MES BOM Creator)",
     location: "Micron Technology, Penang, Malaysia",
-    description: "BOMinator combines BOM (Bill of Materials) with Terminator, its an Automated MAM BOM Creator, effectively “terminates” the traditional manual, time-consuming, and error-prone aspects of BOM creation, developed with UiPath, Python and Snowflake, significantly reduced the time taken for BOM Creation, from >2 hours per BOM into <2 minutes per BOM. Project details are Micron Confidential, the link below might be access-restricted.",
+    description: "BOMinator combines BOM (Bill of Materials) with Terminator, its an Automated MES BOM Creator, effectively “terminates” the traditional manual, time-consuming, and error-prone aspects of BOM creation, developed with UiPath, Python and Snowflake, significantly reduced the time taken for BOM Creation, from >2 hours per BOM into <2 minutes per BOM. Project details are Micron Confidential, the link below might be access-restricted.",
     link: "/denied",
-    tags: ["RPA", "UiPath", "Python", "Snowflake"],
+    tags: ["Agentic", "AI", "RPA", "UiPath", "Python", "Snowflake"],
     imageUrl: bominatorImage,
   },
   {
