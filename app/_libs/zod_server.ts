@@ -6,26 +6,26 @@ export const itemsPerPageSchema = z.coerce.number().int().min(1).catch(10);
 export const currentPageSchema = z.coerce.number().int().min(1).catch(1);
 export const querySchema = z.string().min(1).optional().catch(undefined);
 
-export const createTypeSchema = z.object({
-    type_uid: z.string().toLowerCase().min(1).uuid(),
-    type: z.string().toUpperCase().min(1),
-    type_created_dt: z.coerce.date(),
-    type_updated_dt: z.coerce.date(),
+export const createExampleSchema = z.object({
+    example_uid: z.string().toLowerCase().min(1).uuid(),
+    example: z.string().toUpperCase().min(1),
+    example_created_dt: z.coerce.date(),
+    example_updated_dt: z.coerce.date(),
 });
 
-export type TReadTypeSchema = z.infer<typeof readTypeSchema>;
+export type TReadExampleSchema = z.infer<typeof readExampleSchema>;
 
-export const readTypeSchema = createTypeSchema.partial();
+export const readExampleSchema = createExampleSchema.partial();
 
-export const updateTypeSchema = createTypeSchema.pick({
-    type_uid: true,
-    type_updated_dt: true,
+export const updateExampleSchema = createExampleSchema.pick({
+    example_uid: true,
+    example_updated_dt: true,
 });
 
-export const deleteTypeSchema = createTypeSchema.pick({
-    type_uid: true,
+export const deleteExampleSchema = createExampleSchema.pick({
+    example_uid: true,
 });
 
-export const TypeSchema = createTypeSchema.pick({
-    type: true,
+export const ExampleSchema = createExampleSchema.pick({
+    example: true,
 });

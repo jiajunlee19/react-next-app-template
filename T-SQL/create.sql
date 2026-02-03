@@ -1,6 +1,6 @@
-DROP TABLE iF EXISTS "template"."user";
+DROP TABLE iF EXISTS "jiajunleeWeb"."user";
 
-CREATE TABLE "template"."user" (
+CREATE TABLE "jiajunleeWeb"."user" (
     user_uid UNIQUEIDENTIFIER NOT NULL,
     username VARCHAR(100) NOT NULL,
     password VARCHAR(100) NOT NULL,
@@ -10,12 +10,3 @@ CREATE TABLE "template"."user" (
 
     CONSTRAINT pk_user_uid PRIMARY KEY CLUSTERED (user_uid)
 )
-
-CREATE TABLE "template"."type" (
-    type_uid UNIQUEIDENTIFIER NOT NULL,
-    type VARCHAR(50) NOT NULL,
-    type_created_dt DATETIME NOT NULL,
-    type_updated_dt DATETIME NOT NULL,
-
-    CONSTRAINT pk_type_uid PRIMARY KEY CLUSTERED (type_uid)
-);

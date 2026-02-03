@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "dotenv -e .env -- next dev --turbopack",
     "dev-build": "dotenv -e .env -- next build",
-    "build": "npx prisma generate && npx prisma migrate deploy && dotenv -e .env -- next build",
+    "build": "dotenv -e .env -- next build",
     "start": "dotenv -e .env -- next start",
     "lint": "next lint",
     "seed": "dotenv -e .env -- npx esrun ./app/_scripts/seed.ts",

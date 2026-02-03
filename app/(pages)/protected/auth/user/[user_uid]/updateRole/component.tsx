@@ -3,11 +3,11 @@
 import { updateRole } from "@/app/_actions/auth";
 import { notFound } from 'next/navigation';
 import Breadcrumbs from "@/app/_components/basic/breadcrumbs";
-import { TReadUserWithoutPassSchema } from "@/app/_libs/zod_auth";
+import { TReadUserWithoutPassAdminSchema } from "@/app/_libs/zod_auth";
 import FormWithoutState from "@/app/_components/basic/form_without_state";
 
 type TUpdateRoleComponentProps = {
-    user: TReadUserWithoutPassSchema | null,
+    user: TReadUserWithoutPassAdminSchema | null,
 };
 
 export default function UpdateRoleComponent({ user }: TUpdateRoleComponentProps) {
@@ -19,8 +19,8 @@ export default function UpdateRoleComponent({ user }: TUpdateRoleComponentProps)
     return (
         <>
             <Breadcrumbs breadcrumbs={[
-                {label: "User", href: "/restricted/auth/user", active: false},
-                {label: `Update ${user.user_uid}`, href: `/restricted/auth/user/${user.user_uid}/updateRole`, active: true}
+                {label: "User", href: "/protected/auth/user", active: false},
+                {label: `Update ${user.user_uid}`, href: `/protected/auth/user/${user.user_uid}/updateRole`, active: true}
             ]} />
 
             <FormWithoutState 
@@ -31,10 +31,10 @@ export default function UpdateRoleComponent({ user }: TUpdateRoleComponentProps)
                     'role': 'select',
                 }}
                 rowData={user}
-                selectOptionData={[{'role': 'user'}, {'role': 'admin'}, {'role': 'boss'}]}
+                selectOptionData={[{'role': 'user'}, {'role': 'admin'}]}
                 action="update"
                 formAction={updateRole}
-                redirectLink="/restricted/auth/user"
+                redirectLink="/protected/auth/user"
             />
         </>
     );

@@ -2,11 +2,11 @@
 import { getServerSession } from "next-auth/next";
 import { options } from "@/app/_libs/nextAuth_options";
 import { redirect } from "next/navigation";
-import { readUserTotalPage, readUserByPage } from "@/app/_actions/auth";
+import { readUserTotalPageAdmin, readUserByPageAdmin } from "@/app/_actions/auth";
 import Pagination from "@/app/_components/basic/pagination";
 import TableSkeleton from "@/app/_components/basic/skeletons";
 import DataTable from "@/app/_components/data_table";
-import { columns } from "@/app/(pages)/restricted/auth/user/columns";
+import { columns } from "@/app/(pages)/protected/auth/user/columns";
 import { Suspense } from "react";
 import type { Metadata } from 'next';
 
@@ -21,12 +21,8 @@ export default async function User(
 
     const session = await getServerSession(options);
 
-    if (!session) {
+    if (!session || session.user.role !== 'boss') {
         redirect("/denied");
-    }
-
-    if (session.user.role !== 'boss') {
-        redirect("/protected/auth/user");
     }
 
     const searchParams = await props.searchParams;
@@ -35,11 +31,11 @@ export default async function User(
     const currentPage = Number(searchParams?.currentPage) || 1;
     const query = searchParams?.query || undefined;
 
-    const totalPage = await readUserTotalPage(itemsPerPage, query);
+    const totalPage = await readUserTotalPageAdmin(itemsPerPage, query);
 
     const pageTitle = 'Manage User';
 
-    const readAction = readUserByPage;
+    const readAction = readUserByPageAdmin;
 
     return (
       <>

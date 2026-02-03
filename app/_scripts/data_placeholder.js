@@ -12,12 +12,3 @@ export const users = [
     user_updated_dt: new Date()
   }
 ]
-
-export const types = [
-  {
-    type_uid: '4a7e6e73-55f9-4bd8-a73c-f6eebe94fe69',
-    type: 'NextJS',
-    type_created_dt: new Date(),
-    type_updated_dt: new Date(),
-  }
-]

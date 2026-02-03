@@ -1,6 +1,6 @@
 'use client'
 
-import { HomeIcon } from "@heroicons/react/24/outline"
+import { HomeIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline"
 import { useSession } from "next-auth/react"
 import { useState } from "react";
 import Link from "next/link";
@@ -15,16 +15,15 @@ export default function Header() {
     const { data: session } = useSession();
 
     const leftNavLinks = [
-        { name: "Home", href: "/", icon: <HomeIcon className="h-5" /> },
+        { name: "Home", href: "/", icon: <HomeIcon className="h-6" /> },
     ];
 
     const midNavLinks = [
-        { name: "History", href: "/authenticated/history", icon: "" },
-        { name: "AdminList", href: "/authenticated/adminList", icon: "" },
+        { name: "Help", href: "/help", icon: <QuestionMarkCircleIcon className="h-6" /> },
     ];
 
     const rightNavLinksA = [
-        { name: session?.user.username, href: "/auth/user/" + session?.user.user_uid, icon: "" },
+        { name: session?.user.role === "user" ? session?.user.username : session?.user.username + " (Admin)", href: "/auth/user/" + session?.user.user_uid, icon: "" },
         { name: "Sign Out", href: "/auth/signOut", icon: "" },
     ];
 
@@ -33,19 +32,17 @@ export default function Header() {
         // { name: "Sign Up", href: "/auth/signUp", icon: "" },
     ];
 
-    const actionNavLinks = [
-        { name: "Manage Home", href: "/", icon: "" },
+    const sideNavLinks = [
+        { name: "Home", href: "/", icon: "" },
     ];
 
-    const actionNavLinksProtected = [
-        { name: "Upload File", href: "/protected/file/upload", icon: "" },
-        { name: "Manage Type", href: "/protected/type", icon: "" },
-        { name: "Update User Role", href: "/protected/auth/updateRoleByUsername", icon: "" },
+    const sideNavLinksProtected = [
+        { name: "Example", href: "/protected/example", icon: "" },
+        { name: "User List", href: "/protected/auth/user", icon: "" },
     ];
 
-    const actionNavLinksRestricted = [
+    const sideNavLinksRestricted = [
         { name: "User List", href: "/restricted/auth/user", icon: "" },
-        { name: "Update Role by Username", href: "/restricted/auth/updateRoleByUsername", icon: "" },
     ];
 
     const pathname = usePathname();
@@ -184,7 +181,7 @@ export default function Header() {
                                 <div className="absolute inset-x-0 top-0 h-16 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5 origin-[50%_50%_1px]" />
                                 <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/50 transform-none origin-[50%_50%_1px]" />
                                 <ul role="list">
-                                    {actionNavLinks.map((link) => {
+                                    {sideNavLinks.map((link) => {
                                         return (
                                             <li key={link.name} className="relative">
                                                 <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>
@@ -203,7 +200,7 @@ export default function Header() {
                                     <div className="absolute inset-x-0 top-0 h-16 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5 origin-[50%_50%_1px]" />
                                     <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/50 transform-none origin-[50%_50%_1px]" />
                                     <ul role="list">
-                                        {actionNavLinksProtected.map((link) => {
+                                        {sideNavLinksProtected.map((link) => {
                                             return (
                                                 <li key={link.name} className="relative">
                                                     <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>
@@ -224,7 +221,7 @@ export default function Header() {
                                     <div className="absolute inset-x-0 top-0 h-16 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5 origin-[50%_50%_1px]" />
                                     <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/50 transform-none origin-[50%_50%_1px]" />
                                     <ul role="list">
-                                        {actionNavLinksRestricted.map((link) => {
+                                        {sideNavLinksRestricted.map((link) => {
                                             return (
                                                 <li key={link.name} className="relative">
                                                     <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>
