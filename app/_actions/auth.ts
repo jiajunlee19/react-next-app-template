@@ -11,13 +11,10 @@ import { sqlConfig } from "@/app/_libs/sql_config";
 import { type TUsernameSchema, type TPasswordSchema, usernameSchema, signInSchema, signUpSchema, readUserSchema, readUserWithoutPassSchema, updateUserSchema, deleteUserSchema, updateRoleSchema, updateRoleAdminSchema, readUserWithoutPassAdminSchema } from "@/app/_libs/zod_auth";
 import { itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/zod_server';
 import { getErrorMessage } from '@/app/_libs/error_handler';
-import { revalidatePath } from 'next/cache';
 import { signJwtToken } from '@/app/_libs/jwt';
 import { parsedEnv } from '@/app/_libs/zod_env';
-import prisma from '@/prisma/prisma';
 import { unstable_noStore as noStore } from 'next/cache';
 import { type StatePromise } from '@/app/_libs/types';
-import { flattenNestedObject } from '@/app/_libs/nested_object';
 import ldap_client from "@/app/_libs/ldap";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
@@ -43,31 +40,14 @@ export async function readUserByUsername(username: TUsernameSchema | unknown) {
 
     let parsedResult;
     try {
-        if (parsedEnv.DB_TYPE === 'PRISMA') {
-            const result = await prisma.user.findFirst({
-                where: {
-                    username: parsedForm.data,
-                },
-                select: {
-                    user_uid: true,
-                    username: true,
-                    role: true,
-                },
-            })
-            const flattenResult = flattenNestedObject(result);
-            parsedResult = readUserWithoutPassSchema.safeParse(flattenResult);
-        }
-
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('username', sql.VarChar, parsedForm.data)
-                            .query`SELECT user_uid, username, role
-                                    FROM [template].[user]
-                                    WHERE username = @username;
-                            `;
-            parsedResult = readUserWithoutPassSchema.safeParse(result.recordset[0]);
-        }
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('username', sql.VarChar, parsedForm.data)
+                        .query`SELECT user_uid, username, role
+                                FROM [jiajunleeWeb].[user]
+                                WHERE username = @username;
+                        `;
+        parsedResult = readUserWithoutPassSchema.safeParse(result.recordset[0]);
     
         if (!parsedResult.success) {
             throw new Error(parsedResult.error.message)
@@ -100,34 +80,14 @@ export async function readUserByUsernameAdmin(username: TUsernameSchema | unknow
 
     let parsedResult;
     try {
-        if (parsedEnv.DB_TYPE === 'PRISMA') {
-            const result = await prisma.user.findFirst({
-                where: {
-                    username: parsedForm.data,
-                    role: {
-                        not: 'boss',
-                    },
-                },
-                select: {
-                    user_uid: true,
-                    username: true,
-                    role: true,
-                },
-            })
-            const flattenResult = flattenNestedObject(result);
-            parsedResult = readUserWithoutPassAdminSchema.safeParse(flattenResult);
-        }
-
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('username', sql.VarChar, parsedForm.data)
-                            .query`SELECT user_uid, username, role
-                                    FROM [template].[user]
-                                    WHERE username = @username and role !== 'boss';
-                            `;
-            parsedResult = readUserWithoutPassAdminSchema.safeParse(result.recordset[0]);
-        }
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('username', sql.VarChar, parsedForm.data)
+                        .query`SELECT user_uid, username, role
+                                FROM [jiajunleeWeb].[user]
+                                WHERE username = @username and role !== 'boss';
+                        `;
+        parsedResult = readUserWithoutPassAdminSchema.safeParse(result.recordset[0]);
     
         if (!parsedResult.success) {
             throw new Error(parsedResult.error.message)
@@ -159,43 +119,14 @@ export async function readUserTotalPage(itemsPerPage: number | unknown, query?: 
     const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
     let parsedForm;
     try {
-        if (parsedEnv.DB_TYPE === 'PRISMA') {
-            const result = await prisma.user.findMany({
-                select: {
-                    user_uid: true,
-                    username: true,
-                    role: true,
-                },
-                where: {
-                    ...(parsedQuery &&
-                        {
-                            OR: [
-                                ...(['user_uid', 'username'].map((e) => {
-                                    return {
-                                        [e]: {
-                                            search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
-                                        },
-                                    };
-                                })),
-                            ],
-                        }),
-                },
-            });
-            const flattenResult = result.map((row) => {
-                return flattenNestedObject(row)
-            });
-            parsedForm = readUserWithoutPassSchema.array().safeParse(flattenResult);
-        }
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('query', sql.VarChar, QUERY)
-                            .query`SELECT user_uid, username, role 
-                                    FROM [template].[user]
-                                    WHERE (user_uid like @query OR username like @query);
-                            `;
-            parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
-        }
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('query', sql.VarChar, QUERY)
+                        .query`SELECT user_uid, username, role 
+                                FROM [jiajunleeWeb].[user]
+                                WHERE (user_uid like @query OR username like @query);
+                        `;
+        parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)
@@ -204,20 +135,13 @@ export async function readUserTotalPage(itemsPerPage: number | unknown, query?: 
     catch (err) {
         throw new Error(getErrorMessage(err))
     }
+
     const totalPage = Math.ceil(parsedForm.data.length / parsedItemsPerPage);
-    // revalidatePath('/restricted/auth/user');
     return totalPage
 };
 
 export async function readUserByPage(itemsPerPage: number | unknown, currentPage: number | unknown, query?: string | unknown) {
     noStore();
-
-    // <dev only> 
-    // Artifically delay the response, to view the Suspense fallback skeleton
-    // console.log("waiting 3sec")
-    // await new Promise((resolve) => setTimeout(resolve, 3000));
-    // console.log("ok")
-    // <dev only>
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedCurrentPage = currentPageSchema.parse(currentPage);
@@ -238,50 +162,19 @@ export async function readUserByPage(itemsPerPage: number | unknown, currentPage
 
     let parsedForm;
     try {
-        if (parsedEnv.DB_TYPE === 'PRISMA') {
-            const result = await prisma.user.findMany({
-                select: {
-                    user_uid: true,
-                    username: true,
-                    role: true,
-                },
-                where: {
-                    ...(parsedQuery &&
-                        {
-                            OR: [
-                                ...(['user_uid', 'username'].map((e) => {
-                                    return {
-                                        [e]: {
-                                            search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
-                                        },
-                                    };
-                                })),
-                            ],
-                        }),
-                },
-                skip: OFFSET,
-                take: parsedItemsPerPage,
-            });
-            const flattenResult = result.map((row) => {
-                return flattenNestedObject(row)
-            });
-            parsedForm = readUserWithoutPassSchema.array().safeParse(flattenResult);
-        }
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('offset', sql.Int, OFFSET)
-                            .input('limit', sql.Int, parsedItemsPerPage)
-                            .input('query', sql.VarChar, QUERY)
-                            .query`SELECT user_uid, username, role 
-                                    FROM [template].[user]
-                                    WHERE (user_uid like @query OR username like @query)
-                                    ORDER BY username asc
-                                    OFFSET @offset ROWS
-                                    FETCH NEXT @limit ROWS ONLY;
-                            `;
-            parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
-        }
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('offset', sql.Int, OFFSET)
+                        .input('limit', sql.Int, parsedItemsPerPage)
+                        .input('query', sql.VarChar, QUERY)
+                        .query`SELECT user_uid, username, role 
+                                FROM [jiajunleeWeb].[user]
+                                WHERE (user_uid like @query OR username like @query)
+                                ORDER BY username asc
+                                OFFSET @offset ROWS
+                                FETCH NEXT @limit ROWS ONLY;
+                        `;
+        parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)
@@ -291,7 +184,93 @@ export async function readUserByPage(itemsPerPage: number | unknown, currentPage
         throw new Error(getErrorMessage(err))
     }
 
-    // revalidatePath('/restricted/auth/user');
+    return parsedForm.data
+};
+
+export async function readUserTotalPageAdmin(itemsPerPage: number | unknown, query?: string | unknown) {
+    noStore();
+
+    const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
+    const parsedQuery = querySchema.parse(query);
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
+        redirect("/denied");
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        redirect("/tooManyRequests");
+    }
+
+    const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
+    let parsedForm;
+    try {
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('query', sql.VarChar, QUERY)
+                        .query`SELECT user_uid, username, role 
+                                FROM [jiajunleeWeb].[user]
+                                WHERE role != 'boss' AND (user_uid like @query OR username like @query);
+                        `;
+        parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.recordset);
+
+        if (!parsedForm.success) {
+            throw new Error(parsedForm.error.message)
+        };
+    } 
+    catch (err) {
+        throw new Error(getErrorMessage(err))
+    }
+
+    const totalPage = Math.ceil(parsedForm.data.length / parsedItemsPerPage);
+    return totalPage
+};
+
+export async function readUserByPageAdmin(itemsPerPage: number | unknown, currentPage: number | unknown, query?: string | unknown) {
+    noStore();
+
+    const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
+    const parsedCurrentPage = currentPageSchema.parse(currentPage);
+    const parsedQuery = querySchema.parse(query);
+
+    const OFFSET = (parsedCurrentPage - 1) * parsedItemsPerPage;
+    const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
+
+    const session = await getServerSession(options);
+
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
+        redirect("/denied");
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        redirect("/tooManyRequests");
+    }
+
+    let parsedForm;
+    try {
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('offset', sql.Int, OFFSET)
+                        .input('limit', sql.Int, parsedItemsPerPage)
+                        .input('query', sql.VarChar, QUERY)
+                        .query`SELECT user_uid, username, role 
+                                FROM [jiajunleeWeb].[user]
+                                WHERE role != 'boss' AND (user_uid like @query OR username like @query)
+                                ORDER BY username asc
+                                OFFSET @offset ROWS
+                                FETCH NEXT @limit ROWS ONLY;
+                        `;
+        parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.recordset);
+
+        if (!parsedForm.success) {
+            throw new Error(parsedForm.error.message)
+        };
+    } 
+    catch (err) {
+        throw new Error(getErrorMessage(err))
+    }
+
     return parsedForm.data
 };
 
@@ -315,46 +294,16 @@ export async function readAdminTotalPage(itemsPerPage: number | unknown, query?:
 
     let parsedForm;
     try {
-        if (parsedEnv.DB_TYPE === 'PRISMA') {
-            const result = await prisma.user.findMany({
-                select: {
-                    user_uid: true,
-                    username: true,
-                    role: true,
-                },
-                where: {
-                    role: "admin",
-                    ...(parsedQuery &&
-                    {
-                        OR: [
-                            ...(['username'].map((e) => {
-                                return {
-                                    [e]: {
-                                        search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
-                                    },
-                                };
-                            })),
-                        ],
-                    })
-                },
-            });
-            const flattenResult = result.map((row) => {
-                return flattenNestedObject(row)
-            });
-            parsedForm = readUserWithoutPassSchema.array().safeParse(flattenResult);
-        }
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('role', sql.VarChar, 'admin')
-                            .input('query', sql.VarChar, QUERY)
-                            .query`SELECT user_uid, username, role 
-                                    FROM [template].[user]
-                                    WHERE role = @role
-                                    AND (username like @query);
-                            `;
-            parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
-        }
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('role', sql.VarChar, 'admin')
+                        .input('query', sql.VarChar, QUERY)
+                        .query`SELECT user_uid, username, role 
+                                FROM [jiajunleeWeb].[user]
+                                WHERE role = @role
+                                AND (username like @query);
+                        `;
+        parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)
@@ -363,20 +312,13 @@ export async function readAdminTotalPage(itemsPerPage: number | unknown, query?:
     catch (err) {
         throw new Error(getErrorMessage(err))
     }
+
     const totalPage = Math.ceil(parsedForm.data.length / parsedItemsPerPage);
-    // revalidatePath('/authenticated/adminList');
     return totalPage
 };
 
 export async function readAdminByPage(itemsPerPage: number | unknown, currentPage: number | unknown, query?: string | unknown) {
     noStore();
-
-    // <dev only> 
-    // Artifically delay the response, to view the Suspense fallback skeleton
-    // console.log("waiting 3sec")
-    // await new Promise((resolve) => setTimeout(resolve, 3000));
-    // console.log("ok")
-    // <dev only>
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedCurrentPage = currentPageSchema.parse(currentPage);
@@ -397,53 +339,21 @@ export async function readAdminByPage(itemsPerPage: number | unknown, currentPag
 
     let parsedForm;
     try {
-        if (parsedEnv.DB_TYPE === 'PRISMA') {
-            const result = await prisma.user.findMany({
-                select: {
-                    user_uid: true,
-                    username: true,
-                    role: true,
-                },
-                where: {
-                    role: "admin",
-                    ...(parsedQuery &&
-                    {
-                        OR: [
-                            ...(['username'].map((e) => {
-                                return {
-                                    [e]: {
-                                        search: `${parsedQuery.replace(/[\s\n\t]/g, '_')}:*`,
-                                    },
-                                };
-                            })),
-                        ],
-                    })
-                },
-                skip: OFFSET,
-                take: parsedItemsPerPage,
-            });
-            const flattenResult = result.map((row) => {
-                return flattenNestedObject(row)
-            });
-            parsedForm = readUserWithoutPassSchema.array().safeParse(flattenResult);
-        }
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('role', sql.VarChar, 'admin')
-                            .input('offset', sql.Int, OFFSET)
-                            .input('limit', sql.Int, parsedItemsPerPage)
-                            .input('query', sql.VarChar, QUERY)
-                            .query`SELECT user_uid, username, role 
-                                    FROM [template].[user]
-                                    WHERE role = @role
-                                    AND (username like @query)
-                                    ORDER BY username asc
-                                    OFFSET @offset ROWS
-                                    FETCH NEXT @limit ROWS ONLY;
-                            `;
-            parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
-        }
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('role', sql.VarChar, 'admin')
+                        .input('offset', sql.Int, OFFSET)
+                        .input('limit', sql.Int, parsedItemsPerPage)
+                        .input('query', sql.VarChar, QUERY)
+                        .query`SELECT user_uid, username, role 
+                                FROM [jiajunleeWeb].[user]
+                                WHERE role = @role
+                                AND (username like @query)
+                                ORDER BY username asc
+                                OFFSET @offset ROWS
+                                FETCH NEXT @limit ROWS ONLY;
+                        `;
+        parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)
@@ -453,7 +363,6 @@ export async function readAdminByPage(itemsPerPage: number | unknown, currentPag
         throw new Error(getErrorMessage(err))
     }
 
-    // revalidatePath('/authenticated/adminList');
     return parsedForm.data
 };
 
@@ -480,32 +389,14 @@ export async function signIn(username: TUsernameSchema | unknown, password: TPas
 
     let parsedResult;
     try {
-        if (parsedEnv.DB_TYPE === 'PRISMA') {
-            const result = await prisma.user.findFirst({
-                where: {
-                    username: parsedForm.data.username,
-                },
-                select: {
-                    user_uid: true,
-                    username: true,
-                    password: true,
-                    role: true,
-                },
-            })
-            const flattenResult = flattenNestedObject(result);
-            parsedResult = readUserSchema.safeParse(flattenResult);
-        }
-
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('username', sql.VarChar, parsedForm.data.username)
-                            .query`SELECT user_uid, username, password, role
-                                    FROM [template].[user]
-                                    WHERE username = @username;
-                            `;
-            parsedResult = readUserSchema.safeParse(result.recordset[0]);
-        }
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('username', sql.VarChar, parsedForm.data.username)
+                        .query`SELECT user_uid, username, password, role
+                                FROM [jiajunleeWeb].[user]
+                                WHERE username = @username;
+                        `;
+        parsedResult = readUserSchema.safeParse(result.recordset[0]);
     
         if (!parsedResult.success) {
             return { 
@@ -609,26 +500,15 @@ export async function updateUserLDAP(username: TUsernameSchema | unknown, passwo
     }
 
     try {
-        
-        if (parsedEnv.DB_TYPE === "PRISMA") {
-            const result = await prisma.user.update({
-                where: {
-                    user_uid: parsedForm.data.user_uid,
-                },
-                data: {...parsedForm.data, password: await bcrypt.hash(parsedForm.data.password, 10)},
-            });
-        }
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
-                            .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10),)
-                            .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
-                            .query`UPDATE [template].[user] 
-                                    SET password = @password, user_updated_dt = @user_updated_dt
-                                    WHERE user_uid = @user_uid;
-                            `;
-        }
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
+                        .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10),)
+                        .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
+                        .query`UPDATE [jiajunleeWeb].[user] 
+                                SET password = @password, user_updated_dt = @user_updated_dt
+                                WHERE user_uid = @user_uid;
+                        `;
     } 
     catch (err) {
         return { 
@@ -668,26 +548,18 @@ export async function signUp(username: TUsernameSchema | unknown, password: TPas
     }
 
     try {
-        
-        if (parsedEnv.DB_TYPE === "PRISMA") {
-            const result = await prisma.user.create({
-                data: {...parsedForm.data, password: await bcrypt.hash(parsedForm.data.password, 10)},
-            });
-        }
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
-                            .input('username', sql.VarChar, parsedForm.data.username)
-                            .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10),)
-                            .input('role', sql.VarChar, parsedForm.data.role)
-                            .input('user_created_dt', sql.DateTime, parsedForm.data.user_created_dt)
-                            .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
-                            .query`INSERT INTO [template].[user] 
-                                    (user_uid, username, password, role, user_created_dt, user_updated_dt)
-                                    VALUES (@user_uid, @username, @password, @role, @user_created_dt, @user_updated_dt);
-                            `;
-        }
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
+                        .input('username', sql.VarChar, parsedForm.data.username)
+                        .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10),)
+                        .input('role', sql.VarChar, parsedForm.data.role)
+                        .input('user_created_dt', sql.DateTime, parsedForm.data.user_created_dt)
+                        .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
+                        .query`INSERT INTO [jiajunleeWeb].[user] 
+                                (user_uid, username, password, role, user_created_dt, user_updated_dt)
+                                VALUES (@user_uid, @username, @password, @role, @user_created_dt, @user_updated_dt);
+                        `;
     } 
     catch (err) {
         return { 
@@ -740,26 +612,15 @@ export async function updateUser(formData: FormData | unknown): StatePromise {
     }
 
     try {
-        
-        if (parsedEnv.DB_TYPE === "PRISMA") {
-            const result = await prisma.user.update({
-                where: {
-                    user_uid: parsedForm.data.user_uid,
-                },
-                data: {...parsedForm.data, password: await bcrypt.hash(parsedForm.data.password, 10)},
-            });
-        }
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
-                            .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10),)
-                            .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
-                            .query`UPDATE [template].[user] 
-                                    SET password = @password, user_updated_dt = @user_updated_dt
-                                    WHERE user_uid = @user_uid;
-                            `;
-        }
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
+                        .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10),)
+                        .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
+                        .query`UPDATE [jiajunleeWeb].[user] 
+                                SET password = @password, user_updated_dt = @user_updated_dt
+                                WHERE user_uid = @user_uid;
+                        `;
     } 
     catch (err) {
         return { 
@@ -803,22 +664,12 @@ export async function deleteUser(user_uid: string | unknown): StatePromise {
     }
 
     try {
-        
-        if (parsedEnv.DB_TYPE === "PRISMA") {
-            const result = await prisma.user.delete({
-                where: {
-                    user_uid: parsedForm.data.user_uid,
-                },
-            });
-        }
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
-                            .query`DELETE FROM [template].[user] 
-                                    WHERE user_uid = @user_uid;
-                            `;
-        }
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
+                        .query`DELETE FROM [jiajunleeWeb].[user] 
+                                WHERE user_uid = @user_uid;
+                        `;
     } 
     catch (err) {
         return { 
@@ -827,7 +678,6 @@ export async function deleteUser(user_uid: string | unknown): StatePromise {
         };
     }
 
-    // revalidatePath("/restricted/auth/user");
     return { message: `Successfully deleted user ${parsedForm.data.user_uid}` }
 };
 
@@ -854,32 +704,14 @@ export async function readUserById(user_uid: string | unknown) {
 
     let parsedForm;
     try {
-        if (parsedEnv.DB_TYPE === 'PRISMA') {
-            const result = await prisma.user.findUnique({
-                select: {
-                    user_uid: true,
-                    username: true,
-                    role: true,
-                    user_created_dt: true,
-                    user_updated_dt: true,
-                },
-                where: {
-                    user_uid: parsedInput.data.user_uid,
-                },
-            });
-            const flattenResult = flattenNestedObject(result);
-            parsedForm = readUserWithoutPassSchema.safeParse(flattenResult);
-        }
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('user_uid', sql.VarChar, parsedInput.data.user_uid)
-                            .query`SELECT user_uid, username, role, user_created_dt, user_updated_dt 
-                                    FROM [template].[user]
-                                    WHERE user_uid = @user_uid;
-                            `;
-            parsedForm = readUserWithoutPassSchema.safeParse(result.recordset[0]);
-        }
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('user_uid', sql.VarChar, parsedInput.data.user_uid)
+                        .query`SELECT user_uid, username, role, user_created_dt, user_updated_dt 
+                                FROM [jiajunleeWeb].[user]
+                                WHERE user_uid = @user_uid;
+                        `;
+        parsedForm = readUserWithoutPassSchema.safeParse(result.recordset[0]);
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)
@@ -934,26 +766,15 @@ export async function updateRole(formData: FormData | unknown): StatePromise {
     }
 
     try {
-        
-        if (parsedEnv.DB_TYPE === "PRISMA") {
-            const result = await prisma.user.update({
-                where: {
-                    user_uid: parsedForm.data.user_uid,
-                },
-                data: parsedForm.data,
-            });
-        }
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
-                            .input('role', sql.VarChar, parsedForm.data.role)
-                            .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
-                            .query`UPDATE [template].[user] 
-                                    SET role = @role, user_updated_dt = @user_updated_dt
-                                    WHERE user_uid = @user_uid;
-                            `;
-        }
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
+                        .input('role', sql.VarChar, parsedForm.data.role)
+                        .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
+                        .query`UPDATE [jiajunleeWeb].[user] 
+                                SET role = @role, user_updated_dt = @user_updated_dt
+                                WHERE user_uid = @user_uid;
+                        `;
     } 
     catch (err) {
         return { 
@@ -1006,29 +827,15 @@ export async function updateRoleAdmin(formData: FormData | unknown): StatePromis
     }
 
     try {
-        
-        if (parsedEnv.DB_TYPE === "PRISMA") {
-            const result = await prisma.user.update({
-                where: {
-                    user_uid: parsedForm.data.user_uid,
-                    NOT: {
-                        role: 'boss',
-                    },
-                },
-                data: parsedForm.data,
-            });
-        }
-        else {
-            let pool = await sql.connect(sqlConfig);
-            const result = await pool.request()
-                            .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
-                            .input('role', sql.VarChar, parsedForm.data.role)
-                            .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
-                            .query`UPDATE [template].[user] 
-                                    SET role = @role, user_updated_dt = @user_updated_dt
-                                    WHERE user_uid = @user_uid and role !== 'boss';
-                            `;
-        }
+        let pool = await sql.connect(sqlConfig);
+        const result = await pool.request()
+                        .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
+                        .input('role', sql.VarChar, parsedForm.data.role)
+                        .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
+                        .query`UPDATE [jiajunleeWeb].[user] 
+                                SET role = @role, user_updated_dt = @user_updated_dt
+                                WHERE user_uid = @user_uid and role !== 'boss';
+                        `;
     } 
     catch (err) {
         return { 

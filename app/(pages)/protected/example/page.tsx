@@ -1,18 +1,18 @@
-import { readTypeTotalPage, readTypeByPage } from "@/app/_actions/type";
+import { readExampleTotalPage, readExampleByPage } from "@/app/_actions/example";
 import Pagination from "@/app/_components/basic/pagination";
 import TableSkeleton from "@/app/_components/basic/skeletons";
 import DataTable from "@/app/_components/data_table";
-import { columns } from "@/app/(pages)/protected/type/columns";
+import { columns } from "@/app/(pages)/protected/example/columns";
 import Link from "next/link";
 import { Suspense } from "react";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Box Type',
+    title: 'Box Example',
     description: 'Developed by jiajunlee',
 };
 
-export default async function Type(
+export default async function Example(
     props: { searchParams?: Promise<{ itemsPerPage?: string, currentPage?: string, query?: string }> }
 ) {
     const searchParams = await props.searchParams;
@@ -21,13 +21,13 @@ export default async function Type(
     const currentPage = Number(searchParams?.currentPage) || 1;
     const query = searchParams?.query || undefined;
 
-    const totalPage = await readTypeTotalPage(itemsPerPage, query);
+    const totalPage = await readExampleTotalPage(itemsPerPage, query);
 
-    const pageTitle = 'Manage Box Type';
+    const pageTitle = 'Manage Box Example';
 
-    const createButtonTitle = 'Create New Box Type';
+    const createButtonTitle = 'Create New Box Example';
 
-    const readAction = readTypeByPage;
+    const readAction = readExampleByPage;
 
     return (
         <>

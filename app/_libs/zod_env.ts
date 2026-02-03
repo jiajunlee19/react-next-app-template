@@ -8,9 +8,6 @@ export const envSchema = z.object({
     // Base url
     BASE_URL: z.string().min(1).url(),
 
-    // DB_TYPE (PRISMA / RAW)
-    DB_TYPE: z.enum(['PRISMA', 'RAW']),
-
     // Database connections
     DB_URL: z.string().min(1),
     DB_PRISMA_URL: z.string().min(1),

@@ -14,7 +14,7 @@ export default async function Home() {
     return (
         <>
             <h1>Home</h1>
-            <p>Welcome to Packing App !</p>
+            <p>Welcome !</p>
             {!session?.user.role ? 
                 <p>You are logged in as Guest and may have access to view public contents only.</p> 
                 : 
