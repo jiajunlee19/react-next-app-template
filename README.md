@@ -13,8 +13,6 @@
     - [Optimizing Font \& Images](#optimizing-font--images)
     - [Improving Accessibility](#improving-accessibility)
     - [Navigating between pages](#navigating-between-pages)
-    - [Seeding the database](#seeding-the-database)
-    - [Publishing changes to Database with Prisma](#publishing-changes-to-database-with-prisma)
     - [Data fetching with Server Action](#data-fetching-with-server-action)
     - [Server Action Form \& Error Handling](#server-action-form--error-handling)
     - [State Management with SearchParams](#state-management-with-searchparams)
@@ -48,9 +46,9 @@ This section outlined the quick start guide on how to install and use the templa
    - Select version, operating system and operating architecture based on your machine preferences.
 2. Download and install [Docker](https://www.docker.com/products/docker-desktop/).
 3. [Create a new repo with this template](https://github.com/new?template_name=react-next-app-template&template_owner=jiajunlee19)
-4. Duplicate [.env.template](/.env.template) into [.env](.env), env variables will be sourced from [.env](/.env). 
-   - [.env](/.env) should be treat as a `secret` file, its ignored by [.gitignore](/.gitignore), such that it won't be accidentally published to git repo. 
-5. Install the node packages defined in [package.json](/package.json).
+4. Duplicate [.env.template](.env.template) into [.env](.env), env variables will be sourced from [.env](.env). 
+   - [.env](.env) should be treat as a `secret` file, its ignored by [.gitignore](.gitignore), such that it won't be accidentally published to git repo. 
+5. Install the node packages defined in [package.json](package.json).
     ```bash
     # Install node packages
     npm install
@@ -77,8 +75,8 @@ This section outlined the quick start guide on how to install and use the templa
 
 ### Starting a Local Database for Development Usage
 1. To avoid impact to production database, its recommended to use a local database for development usage.
-2. In this project, the local database is confined  in the [dev-db/](/dev-db/) folder.
-3. The database-related environment variables are defined in [.env](/.env), they will be used to spin up the local database.
+2. In this project, the local database is confined  in the [dev-db/](dev-db/) folder.
+3. The database-related environment variables are defined in [.env](.env), they will be used to spin up the local database.
    ```bash
    # You may change the database settings according to your preferences
     DB_URL="postgres://admin:admin@localhost:5432/dev-db"
@@ -89,36 +87,21 @@ This section outlined the quick start guide on how to install and use the templa
     DB_PASSWORD="admin"
     DB_DATABASE="dev-db"
    ```
-4. Spin up the dockerized local database, as defined in [dev-db/compose.yaml](/dev-db/compose.yaml).
+4. Spin up the dockerized local database, as defined in [dev-db/compose.yaml](dev-db/compose.yaml).
     ```bash
     # Spin up the dev-db server
     cd dev-db
-    docker compose --env-file=../.env up -d
+    docker compose --env-file=...env up -d
 
     # Local database data is persisted in the dev-db/postgres_data/ folder
     ```
-5. Since this project uses `prisma` as ORM, the local database can be easily initialized based on the schema defined in [prisma/schema.prisma](/prisma/schema.prisma).
-   ```bash
-   # Generate the schema definition, you have to run this again if you make any changes to the schema
-   npx prisma generate
-
-   # Push the schema definition into db
-   npx prisma db push
-   ```
-6. Verify the local database is ready.
-   ```bash
-   # Visualize the database studio in http://localhost:5555/
-   npx prisma studio
-
-   # If its ready, there should be a few empty tables available in the studio.
-   ```
 
 <br>
 
 ### Seeding the Local Database
-1. Seed functions are defined in [seed.ts](/app/_scripts/seed.ts). 
+1. Seed functions are defined in [seed.ts](app/_scripts/seed.ts). 
     - `Promise.all` is used to initiate all promises and receive all responses at the same time in single transaction.
-2. Seed the database with the initial placeholder data defined in [data_placeholder.js](/app/_scripts/data_placeholder.js).
+2. Seed the database with the initial placeholder data defined in [data_placeholder.js](app/_scripts/data_placeholder.js).
    ```bash
     # Seed the database
    npm run seed
@@ -134,7 +117,7 @@ This section outlined the quick start guide on how to install and use the templa
 This section outlines the important concepts used in this template.
 
 ### Metadata
-1. In the main [layout.tsx](/app/layout.tsx), metadata title template and default are defined.
+1. In the main [layout.tsx](app/layout.tsx), metadata title template and default are defined.
     ```ts
     import type { Metadata } from 'next';
 
@@ -147,7 +130,7 @@ This section outlines the important concepts used in this template.
         metadataBase: new URL('https://github.com/jiajunlee19'),
     };
     ```
-2. Each page.tsx can have its own metadata title, their title will be replacing `%s` defined in main [layout.tsx](/app/layout.tsx).
+2. Each page.tsx can have its own metadata title, their title will be replacing `%s` defined in main [layout.tsx](app/layout.tsx).
     ```ts
     // this page title will be "Home | Template App"
     export const metadata: Metadata = {
@@ -171,7 +154,7 @@ This section outlines the important concepts used in this template.
     // your server-only component will throw an error if called in client side
     ```
 4. Keep authorization logic check as close as possible to the source-action (eg: Right Before calling server CRUD actions), filtering data based on need-to-principle, before sending over to the client side. 
-5. To prevent request overhead and brute-force attacks, use [Rate lLimiting](/app/_libs/rate_limit.ts) techniques to limit the number of requests that can be sent over to the server.
+5. To prevent request overhead and brute-force attacks, use [Rate lLimiting](app/_libs/rate_limit.ts) techniques to limit the number of requests that can be sent over to the server.
     ```ts
     import { rateLimitByUid, rateLimitByIP } from "@/app/_libs/rate_limit";
 
@@ -191,7 +174,7 @@ This section outlines the important concepts used in this template.
 <br>
 
 ### Tailwind CSS Styling
-1. Tailwind configs are setup in [tailwind.config.ts](/tailwind.config.ts)
+1. Tailwind configs are setup in [tailwind.config.ts](tailwind.config.ts)
     - To let tailwind knows where to apply tailwind styling, App directory is defined in contents.
         ```js
         content: [
@@ -201,17 +184,17 @@ This section outlines the important concepts used in this template.
         ],
         ```
     - `darkMode: class` is added to control toggle between light/dark theme with `className="dark: ..."`.
-2. Default base styles are globally applied in [globals.css](/app/globals.css).
+2. Default base styles are globally applied in [globals.css](app/globals.css).
 
 <br>
 
 ### Global Error Hander
-[global-error.tsx](/app/global-error.tsx) is defined to handle global unexpected errors, allow users to retry/refresh the page.
+[global-error.tsx](app/global-error.tsx) is defined to handle global unexpected errors, allow users to retry/refresh the page.
 
 <br>
 
 ### Optimizing Font & Images
-1. `next/font` module is used to display fonts and it's defined in [layout.tsx](/app/layout.tsx).
+1. `next/font` module is used to display fonts and it's defined in [layout.tsx](app/layout.tsx).
     - Font files are downloaded at build time into static assest, minimizing additional network requests.
     - `Antialiased` class is used to smooth out the font touch.
     ```ts
@@ -245,7 +228,7 @@ This section outlines the important concepts used in this template.
 <br>
 
 ### Improving Accessibility
-1. In [form.tsx](/app/_components/basic/form.tsx), aria relations are established to politely notify user when the error is updated.
+1. In [form.tsx](app/_components/basic/form.tsx), aria relations are established to politely notify user when the error is updated.
     ```js
     <input aria-describedby={key+"-error"} ... />
     <p id={key+"-error"} aria-live="polite" ... >
@@ -266,7 +249,7 @@ This section outlines the important concepts used in this template.
 
 ### Navigating between pages
 1. `next/link` is used to navigate between pages without rerendering the whole page.
-2. Conditionally render link color to indicate what page the user is currently viewing in [header.tsx](/app/_components/header.tsx).
+2. Conditionally render link color to indicate what page the user is currently viewing in [header.tsx](app/_components/header.tsx).
     ```ts
     import Link from 'next/link';
     import { usePathname } from 'next/navigation';
@@ -284,66 +267,18 @@ This section outlines the important concepts used in this template.
     </Link>
     );
     ```
-3. Similarly, [breadcrumbs.tsx](/app/_components/basic/breadcrumbs.tsx) is used to conditional provide navbar on top of subpages.
+3. Similarly, [breadcrumbs.tsx](app/_components/basic/breadcrumbs.tsx) is used to conditional provide navbar on top of subpages.
     ```
     <main-page-label> / <current-page-label>
     ```
-    - Example can be found in [/type/create/page.tsx](/app/\(pages\)/type/create/page.tsx).
-
-<br>
-
-### Seeding the database
-1. Initial placeholder-data to be loaded is defined in [data_placeholder.js](/app/_scripts/data_placeholder.js).
-2. Seed functions are defined in [seed.ts](/app/_scripts/seed.ts). 
-    - `Promise.all` is used to initiate all promises and receive all responses at the same time in single transaction.
-3. In [package.json](package.json), `"seed": " dotenv -e .env -- npx esrun /app/_script/seed.ts"` is included in scripts.
-    ```js
-    scripts: {
-        ... ,
-
-        "seed": " dotenv -e .env -- npx esrun /app/_script/seed.ts"
-    }
-    ```
-4. Run `npm run seed`
-5. The database should be seeded with initial data, result of `console.log` messages should be shown in the terminal. 
-    ```
-    { success: 'Successfully seed table' }
-    ```
-
-<br>
-
-### Publishing changes to Database with Prisma
-1. Regenerate Prisma models, when there's an update on [prisma/schema.prisma](/prisma/schema.prisma).
-    ```bash
-    # Generate prisma models
-    npx prisma generate
-    ```
-2. Generate a migrate file.
-   ```bash
-   # Generate a migrate file, but not deploying it to database yet
-   npx prisma migrate dev --name init --create-only
-   ```
-3. In development, apply the migration from [prisma/migrations/](/prisma/migrations/) to the development database.
-   ```bash
-   # Deploy to development database
-   # Note: You should not use "migrate dev" in production !!! 
-    npx prisma migrate dev
-   ```
-4. In production, apply the migration by using `migrate deploy` instead.
-   ```bash
-   # Deploy to production database
-   # You don't typically run this command manually, this should be handled by the CI/CD pipeline.
-    npx prisma migrate deploy
-   ```
+    - Example can be found in [/type/create/page.tsx](app/\(pages\)/type/create/page.tsx).
 
 <br>
 
 ### Data fetching with Server Action
 1. No API layer is required, server actions can directly query database from server-side.
-2. See example on one of the server action [/_actions/type.ts](/app/_actions/type.ts).
+2. See example on one of the server action [/_actions/example.ts](app/_actions/example.ts).
     - CRUD async/await functions are used to execute CRUD operations on database
-    - [Prisma](/prisma/prisma.ts) is used as an ORM via `import prisma from '@/prisma/prisma';`
-    - `revalidatePath` is used to remove the stored cache and force-fetch the latest data after the CRUD operation.
 3. For actions requiring dynamic rendering, `noStore()` is specified to prevent the response from being cached.
     ```ts
     import { unstable_noStore as noStore } from 'next/cache';
@@ -396,7 +331,7 @@ This section outlines the important concepts used in this template.
 <br>
 
 ### Server Action Form & Error Handling
-1. See example of server action [/_actions/type.ts](/app/_actions/type.ts) , flatten field errors are being returned.
+1. See example of server action [/_actions/example.ts](app/_actions/example.ts) , flatten field errors are being returned.
     ```ts
         ...
 
@@ -405,7 +340,7 @@ This section outlines the important concepts used in this template.
         message: "Invalid input provided, failed to create type!"
     };
     ```
-2. In [form.tsx](/app/_components/basic/form.tsx), each form field is handled with `state.error` with the help of `useActionState`.
+2. In [form.tsx](app/_components/basic/form.tsx), each form field is handled with `state.error` with the help of `useActionState`.
     ```ts
     import { useActionState } from "react-dom";
 
@@ -425,7 +360,7 @@ This section outlines the important concepts used in this template.
         ...
     </form>
     ```
-3. In [button_submit.tsx](/app/_components/basic/button_submit.tsx), `useFormStatus` is used to conditionally disable the submit button during form submission.
+3. In [button_submit.tsx](app/_components/basic/button_submit.tsx), `useFormStatus` is used to conditionally disable the submit button during form submission.
     ```ts
     import {useFormStatus} from 'react-dom';
     ...
@@ -480,7 +415,7 @@ This section outlines the important concepts used in this template.
         <input ... defaultValue={params.get('query')?.toString()} />
     ...
     ```
-    - Example can be found in [/restricted/auth/updateRoleByUsername/component.tsx](/app/\(pages\)/restricted/auth/updateRoleByUsername/component.tsx).
+    - Example can be found in [/restricted/auth/updateRoleByUsername/component.tsx](app/\(pages\)/restricted/auth/updateRoleByUsername/component.tsx).
 
 <br>
 
@@ -501,8 +436,8 @@ This section outlines the important concepts used in this template.
     - Simulate slow data loading with `await new Promise((resolve) => setTimeout(resolve, 3000));`.
     - The page will only loads when all required data in the page is loaded.
 2. Streaming is implemented to prevent slow data requests from blocking your whole page
-    - [loading.tsx](/app/loading.tsx) is built on top of Suspense, which fallback to a skeleton UI while page content is loading.
-    - To be more granular to stream specific components, the specific components can be wrapped with Suspense fallback to [skeletons.tsx](/app/_components/basic/skeletons.tsx).
+    - [loading.tsx](app/loading.tsx) is built on top of Suspense, which fallback to a skeleton UI while page content is loading.
+    - To be more granular to stream specific components, the specific components can be wrapped with Suspense fallback to [skeletons.tsx](app/_components/basic/skeletons.tsx).
         ```ts
         import { Suspense } from 'react';
         ...
@@ -516,12 +451,12 @@ This section outlines the important concepts used in this template.
 <br>
 
 ### Pagination
-1. Page list is generated with `generatePagination` defined in [pagination.ts](/app/_libs/pagination.ts)
+1. Page list is generated with `generatePagination` defined in [pagination.ts](app/_libs/pagination.ts)
     - If totalPage <= 7, show [1, 2, 3, 4, 5, 6, 7]
     - If totalPage > 7 and currentPage is within first 3 page, show like [1, 2, 3, ..., 9, 10]
     - If totalPage > 7 and currentPage is within the last 3 pages, show like [1, 2, ..., 8, 9, 10]
     - If totalPage > 7 and currentPage is somewhere in the middle, show like [1, ..., 4, 5, 6, ..., 10]
-2. Page nav component is generated in [pagination.tsx](/app/_components/basic/pagination.tsx).
+2. Page nav component is generated in [pagination.tsx](app/_components/basic/pagination.tsx).
 3. Pagination is achieved by getting `currentPage` from searchParams and `totalPage` from server action.
     ```ts
         export default async function Type(
@@ -561,15 +496,15 @@ This section outlines the important concepts used in this template.
     }
     ```
 2. In server actions, query is passed as argument. The search is implemeneted with `FullTextSearch` for `prisma` or `like` for `raw query`.
-3. See examples in [_actions/types.ts](/app/_actions/types.ts) and [/type/page.tsx](/app/\(pages\)/type/page.tsx).
+3. See examples in [_actions/example.ts](app/_actions/example.ts) and [/example/page.tsx](app/\(pages\)/example/page.tsx).
 
 <br>
 
 ### Authentication & Authorization
 1. Authentication is enabled with nextAuth.
-    - Options are defined in [nextAuth_options.ts](/app/_libs/nextAuth_options.ts).
-    - API Handler are defined in [/api/auth/[...nextauth]/route.ts](/app/api/auth/[...nextauth]/route.ts).
-2. To use nextAuth, [layout.tsx](/app/layout.tsx) is wrapped with [auth_provider](/app/_components/auth_provider.tsx).
+    - Options are defined in [nextAuth_options.ts](app/_libs/nextAuth_options.ts).
+    - API Handler are defined in [/api/auth/[...nextauth]/route.ts](app/api/auth/[...nextauth]/route.ts).
+2. To use nextAuth, [layout.tsx](app/layout.tsx) is wrapped with [auth_provider](app/_components/auth_provider.tsx).
     ```
     import AuthProvider from '@/app/_components/auth_provider'
     import { getServerSession } from "next-auth/next"
@@ -620,13 +555,13 @@ This section outlines the important concepts used in this template.
             )
         }
     ```
-5. Sign Up Page is defined in [/auth/signUp/page.tsx](/app/\(pages\)/auth/signUp/page.tsx).
-6. Sign In Page is defined in [/auth/signIn/page.tsx](/app/\(pages\)/auth/signIn/page.tsx).
-7. Sign Out Page is defined in [/auth/signOut/page.tsx](/app/\(pages\)/auth/signOut/page.tsx).
+5. Sign Up Page is defined in [/auth/signUp/page.tsx](app/\(pages\)/auth/signUp/page.tsx).
+6. Sign In Page is defined in [/auth/signIn/page.tsx](app/\(pages\)/auth/signIn/page.tsx).
+7. Sign Out Page is defined in [/auth/signOut/page.tsx](app/\(pages\)/auth/signOut/page.tsx).
 8. New user are defaulted as `role="user"`.
-9. User with `role="admin"` can update any user's role to `user` or `admin` in [/protected/auth/updateRoleByUsername/page.tsx](/app/\(pages\)/protected/auth/updateRoleByUsername/page.tsx).
-10. User with `role="boss"` can view all users in [/restricted/auth/user/page.tsx](/app/\(pages\)/restricted/auth/user/page.tsx).
-11. User with `role="boss"` can update any user's role in [/restricted/auth/user/[user_uid]/updateRole/page.tsx](/app/\(pages\)/restricted/auth/user/[user_uid]/updateRole/page.tsx) or [/restricted/auth/updateRoleByUsername/page.tsx](/app/\(pages\)/restricted/auth/updateRoleByUsername/page.tsx).
+9. User with `role="admin"` can update any user's role to `user` or `admin` in [/protected/auth/updateRoleByUsername/page.tsx](app/\(pages\)/protected/auth/updateRoleByUsername/page.tsx).
+10. User with `role="boss"` can view all users in [/restricted/auth/user/page.tsx](app/\(pages\)/restricted/auth/user/page.tsx).
+11. User with `role="boss"` can update any user's role in [/restricted/auth/user/[user_uid]/updateRole/page.tsx](app/\(pages\)/restricted/auth/user/[user_uid]/updateRole/page.tsx) or [/restricted/auth/updateRoleByUsername/page.tsx](app/\(pages\)/restricted/auth/updateRoleByUsername/page.tsx).
 
 <br>
 
@@ -651,7 +586,7 @@ This section outlines the important concepts used in this template.
     LDAP_BASE_DN="dc=company,dc=com"
     LDAP_URL="ldap://localhost:389"
     ```
-    - Spin up the LDAP server defined in [/dev-db/compose.yaml](/dev-db/compose.yaml), then run below commands:
+    - Spin up the LDAP server defined in [/dev-db/compose.yaml](dev-db/compose.yaml), then run below commands:
         ```bash
         ## Create bash shell
         docker exec -it ldap /bin/bash
@@ -687,7 +622,7 @@ This section outlines the important concepts used in this template.
         ldapdelete -x -D "cn=admin,dc=company,dc=com" -w admin "cn=user,ou=company,dc=company,dc=com"
 
         ```
-3. In [auth.ts](/app/_actions/auth.ts), ensure that the correct dn format is used for ldap authentication.
+3. In [auth.ts](app/_actions/auth.ts), ensure that the correct dn format is used for ldap authentication.
     ```ts
     import ldap_client from "@/app/_libs/ldap";
 
@@ -717,27 +652,27 @@ Check out the [Next.js deployment documentation](https://nextjs.org/docs/deploym
 <br>
 
 ## Containerize with Docker
-1. Configure `standalone` output in [next.config.js](/next.config.js)
+1. Configure `standalone` output in [next.config.js](next.config.js)
     ```js
     const nextConfig = {
         output: 'standalone',
     }
     ```
-2. [Dockerfile](/Dockerfile) is created to build docker image. 
+2. [Dockerfile](Dockerfile) is created to build docker image. 
     - It uses multi-stage concept (base -> deps -> builder -> runner) and pass only relevant files between stages.
     - Production image generated from runner stage, contains only the necessary files needed to run the app.
     - Instead of the `root` user, the production image will be run as a normal privileged `nextjs` user.
 
-3. [compose.yaml](/compose.yaml) is created to easily manage docker run process (including network creation, container creation etc.)
+3. [compose.yaml](compose.yaml) is created to easily manage docker run process (including network creation, container creation etc.)
     - Use `docker compose --env-file .env up -d` to startup the docker container.
     - Use `docker compose down` to shutdown the docker container.
 
 <br>
 
 ## CI/CD with Jenkins
-Jenkins is a DevOps tool. Jenkins pipeline can be designed to automate the install/build/deploy process, triggered by dedicated events. Refers to the [Jenkinsfile](/jenkins/Jenkinsfile) definition.
+Jenkins is a DevOps tool. Jenkins pipeline can be designed to automate the install/build/deploy process, triggered by dedicated events. Refers to the [Jenkinsfile](jenkins/Jenkinsfile) definition.
 
-![Jenkins Workflow.png](/Misc/Jenkins%20Workflow.PNG)
+![Jenkins Workflow.png](Misc/Jenkins%20Workflow.PNG)
 
 
 For details, check out the [jenkins-template](https://github.com/jiajunlee19/jenkins-template).
