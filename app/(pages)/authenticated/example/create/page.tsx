@@ -13,8 +13,8 @@ export default function CreateExample() {
     return (
         <>
             <Breadcrumbs breadcrumbs={[
-                {label: "Example", href: "/protected/example", active: false},
-                {label: "Create", href: "/protected/example/create", active: true}
+                {label: "Example", href: "/authenticated/example", active: false},
+                {label: "Create", href: "/authenticated/example/create", active: true}
             ]} />
             <Form 
                 formTitle="Create Box Example"
@@ -25,7 +25,7 @@ export default function CreateExample() {
                 selectOptionData={null}
                 action="create"
                 formAction={createExample}
-                redirectLink="/protected/example"
+                redirectLink="/authenticated/example"
             />
         </>
     );

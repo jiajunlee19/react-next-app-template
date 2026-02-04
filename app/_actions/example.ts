@@ -38,7 +38,7 @@ export async function readExampleTotalPage(itemsPerPage: number | unknown, query
         let pool = await sql.connect(sqlConfig);
         const result = await pool.request()
                         .input('query', sql.VarChar, QUERY)
-                        .query`SELECT example_uid, example, example_created_dt, example_updated_dt 
+                        .query`SELECT example_uid, example, example_created_dt, example_updated_dt, example_updated_by
                                 FROM [jiajunleeWeb].[example]
                                 WHERE (example_uid like @query OR example like @query);
                         `;
@@ -82,10 +82,11 @@ export async function readExampleByPage(itemsPerPage: number | unknown, currentP
                         .input('offset', sql.Int, OFFSET)
                         .input('limit', sql.Int, parsedItemsPerPage)
                         .input('query', sql.VarChar, QUERY)
-                        .query`SELECT example_uid, example, example_created_dt, example_updated_dt 
-                                FROM [jiajunleeWeb].[example]
-                                WHERE (example_uid like @query OR example like @query)
-                                ORDER BY example asc
+                        .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
+                                FROM [jiajunleeWeb].[example] e
+                                left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
+                                WHERE (e.example_uid like @query OR e.example like @query)
+                                ORDER BY e.example asc
                                 OFFSET @offset ROWS
                                 FETCH NEXT @limit ROWS ONLY;
                         `;
@@ -119,8 +120,10 @@ export async function readExample() {
     try {
         let pool = await sql.connect(sqlConfig);
         const result = await pool.request()
-                        .query`SELECT example_uid, example, example_created_dt, example_updated_dt 
-                                FROM [jiajunleeWeb].[example];
+                        .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
+                                FROM [jiajunleeWeb].[example] e
+                                left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
+                                ;
                         `;
         parsedForm = readExampleSchema.array().safeParse(result.recordset);
 
@@ -161,9 +164,10 @@ export async function readExampleUid(example: string | unknown) {
         let pool = await sql.connect(sqlConfig);
         const result = await pool.request()
                         .input('example', sql.VarChar, parsedInput.data.example)
-                        .query`SELECT example_uid, example, example_created_dt, example_updated_dt 
-                                FROM [jiajunleeWeb].[example]
-                                WHERE example = @example;
+                        .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
+                                FROM [jiajunleeWeb].[example] e
+                                left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
+                                WHERE e.example = @example;
                         `;
         parsedForm = readExampleSchema.safeParse(result.recordset[0]);
 
@@ -228,9 +232,10 @@ export async function createExample(prevState: State | unknown, formData: FormDa
                         .input('example', sql.VarChar, parsedForm.data.example)
                         .input('example_created_dt', sql.DateTime, parsedForm.data.example_created_dt)
                         .input('example_updated_dt', sql.DateTime, parsedForm.data.example_updated_dt)
+                        .input('example_updated_by', sql.VarChar, session.user.user_uid)
                         .query`INSERT INTO [jiajunleeWeb].[example] 
-                                (example_uid, example, example_created_dt, example_updated_dt)
-                                VALUES (@example_uid, @example, @example_created_dt, @example_updated_dt);
+                                (example_uid, example, example_created_dt, example_updated_dt, example_updated_by)
+                                VALUES (@example_uid, @example, @example_created_dt, @example_updated_dt, @example_updated_by);
                         `;
     } 
     catch (err) {
@@ -290,8 +295,9 @@ export async function updateExample(prevState: State | unknown, formData: FormDa
         const result = await pool.request()
                         .input('example_uid', sql.VarChar, parsedForm.data.example_uid)
                         .input('example_updated_dt', sql.DateTime, parsedForm.data.example_updated_dt)
+                        .input('example_updated_by', sql.VarChar, session.user.user_uid)
                         .query`UPDATE [jiajunleeWeb].[example] 
-                                SET example_updated_dt = @example_updated_dt
+                                SET example_updated_dt = @example_updated_dt, example_updated_by = @example_updated_by
                                 WHERE example_uid = @example_uid;
                         `;
     } 
@@ -379,9 +385,10 @@ export async function readExampleById(example_uid: string) {
         let pool = await sql.connect(sqlConfig);
         const result = await pool.request()
                         .input('example_uid', sql.VarChar, parsedInput.data.example_uid)
-                        .query`SELECT example_uid, example, example_created_dt, example_updated_dt 
-                                FROM [jiajunleeWeb].[example]
-                                WHERE example_uid = @example_uid;
+                        .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
+                                FROM [jiajunleeWeb].[example] e
+                                left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
+                                WHERE e.example_uid = @example_uid;
                         `;
         parsedForm = readExampleSchema.safeParse(result.recordset[0]);
 

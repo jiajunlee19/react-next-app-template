@@ -8,7 +8,7 @@ import { TReadExampleSchema } from "@/app/_libs/zod_server";
 import { createColumnHelper } from "@tanstack/react-table";
 
 // "[placeholder-id]" will be replaced by "id" for each row in DataTable
-const hrefUpdate = "/protected/example/[example_uid]/update";
+const hrefUpdate = "/authenticated/example/[example_uid]/update";
 
 const deleteAction = deleteExample;
 
@@ -51,6 +51,14 @@ export const columns = [
         },
         cell: ({ cell }) => cell.getValue()?.toLocaleString(),
     }),
+    columnHelper.accessor("example_updated_by", {
+        id: "example_updated_by",
+        header: "example_updated_by",
+        footer: "example_updated_by",
+        meta: {
+            example: "text",
+        },
+    }),
     columnHelper.display({
         id: "action",
         header: "action",
@@ -58,7 +66,7 @@ export const columns = [
         cell: ({ row }) => (
             <div className="flex gap-1 justify-center align-middle">
                 {!!hrefUpdate && <UpdateButton href={hrefUpdate.replace("[example_uid]", row.original.example_uid as string)} />}
-                {!!deleteAction && <TableActionButton id={row.original.example_uid as string} action={deleteAction} redirectLink="/protected/example" icon={<TrashIcon className="h-5" />} confirmMsg={confirmMsg} />}
+                {!!deleteAction && <TableActionButton id={row.original.example_uid as string} action={deleteAction} redirectLink="/authenticated/example" icon={<TrashIcon className="h-5" />} confirmMsg={confirmMsg} />}
             </div>
         ),
     }),
