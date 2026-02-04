@@ -35,6 +35,32 @@ export const columns = [
             type: "text",
         },
     }),
+    columnHelper.accessor("user_created_dt", {
+        id: "user_created_dt",
+        header: "user_created_dt",
+        footer: "user_created_dt",
+        meta: {
+            example: "date",
+        },
+        cell: ({ cell }) => cell.getValue()?.toLocaleString(),
+    }),
+    columnHelper.accessor("user_updated_dt", {
+        id: "user_updated_dt",
+        header: "user_updated_dt",
+        footer: "user_updated_dt",
+        meta: {
+            example: "date",
+        },
+        cell: ({ cell }) => cell.getValue()?.toLocaleString(),
+    }),
+    columnHelper.accessor("user_updated_by", {
+        id: "user_updated_by",
+        header: "user_updated_by",
+        footer: "user_updated_by",
+        meta: {
+            example: "text",
+        },
+    }),
     columnHelper.display({
         id: "action",
         header: "action",
