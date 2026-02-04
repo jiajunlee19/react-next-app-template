@@ -24,7 +24,7 @@ CREATE TABLE "jiajunleeWeb"."example" (
 
     CONSTRAINT pk_example_uid PRIMARY KEY CLUSTERED (example_uid),
     CONSTRAINT fk_example_updated_by FOREIGN KEY (example_updated_by)
-        REFERENCES "jiajunleeWeb"."user"(user_uid)
+        REFERENCES [jiajunleeWeb].[user](user_uid)
         ON UPDATE CASCADE
         ON DELETE NO ACTION
 )
