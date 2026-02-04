@@ -1,5 +1,5 @@
-DROP TABLE iF EXISTS "jiajunleeWeb"."user";
 DROP TABLE iF EXISTS "jiajunleeWeb"."example";
+DROP TABLE iF EXISTS "jiajunleeWeb"."user";
 
 CREATE TABLE "jiajunleeWeb"."user" (
     user_uid UNIQUEIDENTIFIER NOT NULL,
@@ -8,8 +8,11 @@ CREATE TABLE "jiajunleeWeb"."user" (
     role VARCHAR(50) NOT NULL,
     user_created_dt DATETIME NOT NULL,
     user_updated_dt DATETIME NOT NULL,
+    user_updated_by UNIQUEIDENTIFIER NULL,
 
-    CONSTRAINT pk_user_uid PRIMARY KEY CLUSTERED (user_uid)
+    CONSTRAINT pk_user_uid PRIMARY KEY CLUSTERED (user_uid),
+    CONSTRAINT fk_user_updated_by FOREIGN KEY (user_updated_by)
+        REFERENCES [jiajunleeWeb].[user](user_uid)
 )
 
 CREATE TABLE "jiajunleeWeb"."example" (
