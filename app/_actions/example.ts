@@ -301,7 +301,7 @@ export async function createExample(prevState: State | unknown, formData: FormDa
         else {
             let pool = await sql.connect(msSqlConfig);
             const result = await pool.request()
-                            .input('example_uid', sql.VarChar, parsedForm.data.example_uid)
+                            .input('example_uid', sql.UniqueIdentifier, parsedForm.data.example_uid)
                             .input('example', sql.VarChar, parsedForm.data.example)
                             .input('example_created_dt', sql.DateTime, parsedForm.data.example_created_dt)
                             .input('example_updated_dt', sql.DateTime, parsedForm.data.example_updated_dt)
@@ -380,7 +380,7 @@ export async function updateExample(prevState: State | unknown, formData: FormDa
         else {
             let pool = await sql.connect(msSqlConfig);
             const result = await pool.request()
-                            .input('example_uid', sql.VarChar, parsedForm.data.example_uid)
+                            .input('example_uid', sql.UniqueIdentifier, parsedForm.data.example_uid)
                             .input('example_updated_dt', sql.DateTime, parsedForm.data.example_updated_dt)
                             .input('example_updated_by', sql.VarChar, parsedForm.data.example_updated_by)
                             .query`UPDATE [jiajunleeWeb].[example] 
@@ -443,7 +443,7 @@ export async function deleteExample(example_uid: string): StatePromise {
         else {
             let pool = await sql.connect(msSqlConfig);
             const result = await pool.request()
-                            .input('example_uid', sql.VarChar, parsedForm.data.example_uid)
+                            .input('example_uid', sql.UniqueIdentifier, parsedForm.data.example_uid)
                             .query`DELETE FROM [jiajunleeWeb].[example] 
                                     WHERE example_uid = @example_uid;
                             `;
