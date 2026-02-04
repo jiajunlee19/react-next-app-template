@@ -7,7 +7,8 @@ import { redirect } from "next/navigation";
 import { v5 as uuidv5 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import sql from 'mssql';
-import { sqlConfig } from "@/app/_libs/sql_config";
+import { Pool } from 'pg';
+import { pgSqlConfig, msSqlConfig } from "@/app/_libs/sql_config";
 import { type TUsernameSchema, type TPasswordSchema, usernameSchema, signInSchema, signUpSchema, readUserSchema, readUserWithoutPassSchema, updateUserSchema, deleteUserSchema, updateRoleSchema, updateRoleAdminSchema, readUserWithoutPassAdminSchema } from "@/app/_libs/zod_auth";
 import { itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/zod_server';
 import { getErrorMessage } from '@/app/_libs/error_handler';
@@ -18,87 +19,6 @@ import { type StatePromise } from '@/app/_libs/types';
 import ldap_client from "@/app/_libs/ldap";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
-
-export async function readUserByUsername(username: TUsernameSchema | unknown) {
-    noStore();
-
-    const parsedForm = usernameSchema.safeParse(username);
-
-    if (!parsedForm.success) {
-        throw new Error(parsedForm.error.message)
-    };
-
-    const session = await getServerSession(options);
-
-    if (!session || session.user.role !== 'boss') {
-        redirect("/denied");
-    }
-
-    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
-        redirect("/tooManyRequests");
-    }
-
-    let parsedResult;
-    try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('username', sql.VarChar, parsedForm.data)
-                        .query`SELECT user_uid, username, role
-                                FROM [jiajunleeWeb].[user]
-                                WHERE username = @username;
-                        `;
-        parsedResult = readUserWithoutPassSchema.safeParse(result.recordset[0]);
-    
-        if (!parsedResult.success) {
-            throw new Error(parsedResult.error.message)
-        };
-    } 
-    catch (err) {
-        throw new Error(getErrorMessage(err))
-    }
-
-    return parsedResult.data
-};
-
-export async function readUserByUsernameAdmin(username: TUsernameSchema | unknown) {
-    noStore();
-    const parsedForm = usernameSchema.safeParse(username);
-
-    if (!parsedForm.success) {
-        throw new Error(parsedForm.error.message)
-    };
-
-    const session = await getServerSession(options);
-
-    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
-        redirect("/denied");
-    }
-
-    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
-        redirect("/tooManyRequests");
-    }
-
-    let parsedResult;
-    try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('username', sql.VarChar, parsedForm.data)
-                        .query`SELECT user_uid, username, role
-                                FROM [jiajunleeWeb].[user]
-                                WHERE username = @username and role !== 'boss';
-                        `;
-        parsedResult = readUserWithoutPassAdminSchema.safeParse(result.recordset[0]);
-    
-        if (!parsedResult.success) {
-            throw new Error(parsedResult.error.message)
-        };
-    } 
-    catch (err) {
-        throw new Error(getErrorMessage(err))
-    }
-
-    return parsedResult.data
-};
 
 export async function readUserTotalPage(itemsPerPage: number | unknown, query?: string | unknown) {
     noStore();
@@ -119,14 +39,28 @@ export async function readUserTotalPage(itemsPerPage: number | unknown, query?: 
     const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
     let parsedForm;
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('query', sql.VarChar, QUERY)
-                        .query`SELECT user_uid, username, role 
-                                FROM [jiajunleeWeb].[user]
-                                WHERE (user_uid like @query OR username like @query);
-                        `;
-        parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `SELECT user_uid, username, role, user_created_dt, user_updated_dt
+                            FROM "jiajunleeWeb"."user"
+                            WHERE (CAST(user_uid AS TEXT) LIKE $1 OR username LIKE $1);`,
+                            [QUERY]
+            );
+            parsedForm = readUserWithoutPassSchema.array().safeParse(result.rows);
+            await pool.end();
+        } 
+        
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('query', sql.VarChar, QUERY)
+                            .query`SELECT user_uid, username, role, user_created_dt, user_updated_dt
+                                    FROM [jiajunleeWeb].[user]
+                                    WHERE (user_uid like @query OR username like @query);
+                            `;
+            parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
+        }
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)
@@ -162,19 +96,37 @@ export async function readUserByPage(itemsPerPage: number | unknown, currentPage
 
     let parsedForm;
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('offset', sql.Int, OFFSET)
-                        .input('limit', sql.Int, parsedItemsPerPage)
-                        .input('query', sql.VarChar, QUERY)
-                        .query`SELECT user_uid, username, role 
-                                FROM [jiajunleeWeb].[user]
-                                WHERE (user_uid like @query OR username like @query)
-                                ORDER BY username asc
-                                OFFSET @offset ROWS
-                                FETCH NEXT @limit ROWS ONLY;
-                        `;
-        parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `SELECT u1.user_uid, u1.username, u1.role, u1.user_created_dt, u1.user_updated_dt, COALESCE(u.username, 'system') AS user_updated_by
+                            FROM "jiajunleeWeb"."user" u1
+                            LEFT JOIN "jiajunleeWeb"."user" u ON u1.user_updated_by = u.user_uid
+                            WHERE (CAST(u1.user_uid AS TEXT) LIKE $1 OR u1.username LIKE $1)
+                            ORDER BY u1.username ASC
+                            OFFSET $2 LIMIT $3;`,
+                            [QUERY, OFFSET, parsedItemsPerPage]
+            );
+            parsedForm = readUserWithoutPassSchema.array().safeParse(result.rows);    
+            await pool.end(); 
+        } 
+
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('offset', sql.Int, OFFSET)
+                            .input('limit', sql.Int, parsedItemsPerPage)
+                            .input('query', sql.VarChar, QUERY)
+                            .query`SELECT u1.user_uid, u1.username, u1.role, u1.user_created_dt, u1.user_updated_dt, COALESCE(u.username, 'system') as user_updated_by
+                                    FROM [jiajunleeWeb].[user] u1
+                                    left join [jiajunleeWeb].[user] u ON u1.user_updated_by = u.user_uid
+                                    WHERE (u1.user_uid like @query OR u1.username like @query)
+                                    ORDER BY u1.username asc
+                                    OFFSET @offset ROWS
+                                    FETCH NEXT @limit ROWS ONLY;
+                            `;
+            parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
+        }
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)
@@ -206,14 +158,28 @@ export async function readUserTotalPageAdmin(itemsPerPage: number | unknown, que
     const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
     let parsedForm;
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('query', sql.VarChar, QUERY)
-                        .query`SELECT user_uid, username, role 
-                                FROM [jiajunleeWeb].[user]
-                                WHERE role != 'boss' AND (user_uid like @query OR username like @query);
-                        `;
-        parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.recordset);
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `SELECT user_uid, username, role, user_created_dt, user_updated_dt
+                            FROM "jiajunleeWeb"."user"
+                            WHERE role != 'boss' AND (CAST(user_uid AS TEXT) LIKE $1 OR username LIKE $1);`,
+                            [QUERY]
+            );
+            parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.rows);
+            await pool.end();
+        }
+
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('query', sql.VarChar, QUERY)
+                            .query`SELECT user_uid, username, role, user_created_dt, user_updated_dt
+                                    FROM [jiajunleeWeb].[user]
+                                    WHERE role != 'boss' AND (user_uid like @query OR username like @query);
+                            `;
+            parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.recordset);
+        }
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)
@@ -249,111 +215,37 @@ export async function readUserByPageAdmin(itemsPerPage: number | unknown, curren
 
     let parsedForm;
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('offset', sql.Int, OFFSET)
-                        .input('limit', sql.Int, parsedItemsPerPage)
-                        .input('query', sql.VarChar, QUERY)
-                        .query`SELECT user_uid, username, role 
-                                FROM [jiajunleeWeb].[user]
-                                WHERE role != 'boss' AND (user_uid like @query OR username like @query)
-                                ORDER BY username asc
-                                OFFSET @offset ROWS
-                                FETCH NEXT @limit ROWS ONLY;
-                        `;
-        parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.recordset);
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `SELECT u1.user_uid, u1.username, u1.role, COALESCE(u.username, 'system') AS user_updated_by
+                            FROM "jiajunleeWeb"."user" u1
+                            LEFT JOIN "jiajunleeWeb"."user" u ON u1.user_updated_by = u.user_uid
+                            WHERE u1.role != 'boss' AND (CAST(u1.user_uid AS TEXT) LIKE $1 OR u1.username LIKE $1)
+                            ORDER BY u1.username ASC
+                            OFFSET $2 LIMIT $3;`,
+                            [QUERY, OFFSET, parsedItemsPerPage]
+            );
+            parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.rows);
+            await pool.end();
+        }
 
-        if (!parsedForm.success) {
-            throw new Error(parsedForm.error.message)
-        };
-    } 
-    catch (err) {
-        throw new Error(getErrorMessage(err))
-    }
-
-    return parsedForm.data
-};
-
-export async function readAdminTotalPage(itemsPerPage: number | unknown, query?: string | unknown) {
-    noStore();
-
-    const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
-    const parsedQuery = querySchema.parse(query);
-
-    const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
-
-    const session = await getServerSession(options);
-
-    if (!session) {
-        redirect("/denied");
-    }
-
-    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
-        redirect("/tooManyRequests");
-    }
-
-    let parsedForm;
-    try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('role', sql.VarChar, 'admin')
-                        .input('query', sql.VarChar, QUERY)
-                        .query`SELECT user_uid, username, role 
-                                FROM [jiajunleeWeb].[user]
-                                WHERE role = @role
-                                AND (username like @query);
-                        `;
-        parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
-
-        if (!parsedForm.success) {
-            throw new Error(parsedForm.error.message)
-        };
-    } 
-    catch (err) {
-        throw new Error(getErrorMessage(err))
-    }
-
-    const totalPage = Math.ceil(parsedForm.data.length / parsedItemsPerPage);
-    return totalPage
-};
-
-export async function readAdminByPage(itemsPerPage: number | unknown, currentPage: number | unknown, query?: string | unknown) {
-    noStore();
-
-    const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
-    const parsedCurrentPage = currentPageSchema.parse(currentPage);
-    const parsedQuery = querySchema.parse(query);
-
-    const OFFSET = (parsedCurrentPage - 1) * parsedItemsPerPage;
-    const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
-
-    const session = await getServerSession(options);
-
-    if (!session) {
-        redirect("/denied");
-    }
-
-    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
-        redirect("/tooManyRequests");
-    }
-
-    let parsedForm;
-    try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('role', sql.VarChar, 'admin')
-                        .input('offset', sql.Int, OFFSET)
-                        .input('limit', sql.Int, parsedItemsPerPage)
-                        .input('query', sql.VarChar, QUERY)
-                        .query`SELECT user_uid, username, role 
-                                FROM [jiajunleeWeb].[user]
-                                WHERE role = @role
-                                AND (username like @query)
-                                ORDER BY username asc
-                                OFFSET @offset ROWS
-                                FETCH NEXT @limit ROWS ONLY;
-                        `;
-        parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('offset', sql.Int, OFFSET)
+                            .input('limit', sql.Int, parsedItemsPerPage)
+                            .input('query', sql.VarChar, QUERY)
+                            .query`SELECT u1.user_uid, u1.username, u1.role, COALESCE(u.username, 'system') as user_updated_by
+                                    FROM [jiajunleeWeb].[user]
+                                    left join [jiajunleeWeb].[user] u ON u1.user_updated_by = u.user_uid
+                                    WHERE u1.role != 'boss' AND (u1.user_uid like @query OR u1.username like @query)
+                                    ORDER BY u1.username asc
+                                    OFFSET @offset ROWS
+                                    FETCH NEXT @limit ROWS ONLY;
+                            `;
+            parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.recordset);
+        }
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)
@@ -389,14 +281,28 @@ export async function signIn(username: TUsernameSchema | unknown, password: TPas
 
     let parsedResult;
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('username', sql.VarChar, parsedForm.data.username)
-                        .query`SELECT user_uid, username, password, role
-                                FROM [jiajunleeWeb].[user]
-                                WHERE username = @username;
-                        `;
-        parsedResult = readUserSchema.safeParse(result.recordset[0]);
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `SELECT user_uid, username, password, role
+                            FROM "jiajunleeWeb"."user"
+                            WHERE username = $1;`,
+                            [username]
+            );
+            parsedResult = readUserSchema.safeParse(result.rows[0]);
+            await pool.end();
+        }
+        
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('username', sql.VarChar, parsedForm.data.username)
+                            .query`SELECT user_uid, username, password, role
+                                    FROM [jiajunleeWeb].[user]
+                                    WHERE username = @username;
+                            `;
+            parsedResult = readUserSchema.safeParse(result.recordset[0]);
+        }
     
         if (!parsedResult.success) {
             return { 
@@ -500,15 +406,28 @@ export async function updateUserLDAP(username: TUsernameSchema | unknown, passwo
     }
 
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
-                        .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10),)
-                        .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
-                        .query`UPDATE [jiajunleeWeb].[user] 
-                                SET password = @password, user_updated_dt = @user_updated_dt
-                                WHERE user_uid = @user_uid;
-                        `;
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `UPDATE "jiajunleeWeb"."user"
+                            SET password = $1, user_updated_dt = $2
+                            WHERE user_uid = $3;`,
+                            [await bcrypt.hash(parsedForm.data.password, 10), parsedForm.data.user_updated_dt, parsedForm.data.user_uid]
+            );
+            await pool.end();
+        }
+        
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('user_uid', sql.UniqueIdentifier, parsedForm.data.user_uid)
+                            .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10))
+                            .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
+                            .query`UPDATE [jiajunleeWeb].[user] 
+                                    SET password = @password, user_updated_dt = @user_updated_dt
+                                    WHERE user_uid = @user_uid;
+                            `;
+        }
     } 
     catch (err) {
         return { 
@@ -548,18 +467,31 @@ export async function signUp(username: TUsernameSchema | unknown, password: TPas
     }
 
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
-                        .input('username', sql.VarChar, parsedForm.data.username)
-                        .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10),)
-                        .input('role', sql.VarChar, parsedForm.data.role)
-                        .input('user_created_dt', sql.DateTime, parsedForm.data.user_created_dt)
-                        .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
-                        .query`INSERT INTO [jiajunleeWeb].[user] 
-                                (user_uid, username, password, role, user_created_dt, user_updated_dt)
-                                VALUES (@user_uid, @username, @password, @role, @user_created_dt, @user_updated_dt);
-                        `;
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `INSERT INTO "jiajunleeWeb"."user"
+                            (user_uid, username, password, role, user_created_dt, user_updated_dt)
+                            VALUES ($1, $2, $3, $4, $5, $6);`,
+                            [parsedForm.data.user_uid, parsedForm.data.username, await bcrypt.hash(parsedForm.data.password, 10), parsedForm.data.role, parsedForm.data.user_created_dt, parsedForm.data.user_updated_dt]
+            );
+            await pool.end();
+        }
+
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('user_uid', sql.UniqueIdentifier, parsedForm.data.user_uid)
+                            .input('username', sql.VarChar, parsedForm.data.username)
+                            .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10))
+                            .input('role', sql.VarChar, parsedForm.data.role)
+                            .input('user_created_dt', sql.DateTime, parsedForm.data.user_created_dt)
+                            .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
+                            .query`INSERT INTO [jiajunleeWeb].[user] 
+                                    (user_uid, username, password, role, user_created_dt, user_updated_dt)
+                                    VALUES (@user_uid, @username, @password, @role, @user_created_dt, @user_updated_dt);
+                            `;
+        }
     } 
     catch (err) {
         return { 
@@ -612,15 +544,30 @@ export async function updateUser(formData: FormData | unknown): StatePromise {
     }
 
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
-                        .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10),)
-                        .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
-                        .query`UPDATE [jiajunleeWeb].[user] 
-                                SET password = @password, user_updated_dt = @user_updated_dt
-                                WHERE user_uid = @user_uid;
-                        `;
+
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `UPDATE "jiajunleeWeb"."user"
+                            SET password = $1, user_updated_dt = $2, user_updated_by = $3
+                            WHERE user_uid = $4;`,
+                            [await bcrypt.hash(parsedForm.data.password, 10), parsedForm.data.user_updated_dt, session.user.user_uid, parsedForm.data.user_uid]
+            );
+            await pool.end();
+        }      
+
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('user_uid', sql.UniqueIdentifier, parsedForm.data.user_uid)
+                            .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10))
+                            .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
+                            .input('user_updated_by', sql.VarChar, session.user.user_uid)
+                            .query`UPDATE [jiajunleeWeb].[user] 
+                                    SET password = @password, user_updated_dt = @user_updated_dt, user_updated_by = @user_updated_by
+                                    WHERE user_uid = @user_uid;
+                            `;
+        }
     } 
     catch (err) {
         return { 
@@ -664,12 +611,24 @@ export async function deleteUser(user_uid: string | unknown): StatePromise {
     }
 
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
-                        .query`DELETE FROM [jiajunleeWeb].[user] 
-                                WHERE user_uid = @user_uid;
-                        `;
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `DELETE FROM "jiajunleeWeb"."user"
+                            WHERE user_uid = $1;`,
+                            [parsedForm.data.user_uid]
+            );
+            await pool.end();
+        }
+
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('user_uid', sql.UniqueIdentifier, parsedForm.data.user_uid)
+                            .query`DELETE FROM [jiajunleeWeb].[user] 
+                                    WHERE user_uid = @user_uid;
+                            `;
+        }
     } 
     catch (err) {
         return { 
@@ -704,14 +663,31 @@ export async function readUserById(user_uid: string | unknown) {
 
     let parsedForm;
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('user_uid', sql.VarChar, parsedInput.data.user_uid)
-                        .query`SELECT user_uid, username, role, user_created_dt, user_updated_dt 
-                                FROM [jiajunleeWeb].[user]
-                                WHERE user_uid = @user_uid;
-                        `;
-        parsedForm = readUserWithoutPassSchema.safeParse(result.recordset[0]);
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `SELECT u1.user_uid, u1.username, u1.role, u1.user_created_dt, u1.user_updated_dt,
+                                    COALESCE(u.username, 'system') AS user_updated_by
+                            FROM "jiajunleeWeb"."user" u1
+                            LEFT JOIN "jiajunleeWeb"."user" u ON u1.user_updated_by = u.user_uid
+                            WHERE u1.user_uid = $1;`,
+                            [parsedInput.data.user_uid]
+            );
+            parsedForm = readUserWithoutPassSchema.safeParse(result.rows[0]);
+            await pool.end();
+        }
+        
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('user_uid', sql.UniqueIdentifier, parsedInput.data.user_uid)
+                            .query`SELECT u1.user_uid, u1.username, u1.role, u1.user_created_dt, u1.user_updated_dt, COALESCE(u.username, 'system') as user_updated_by
+                                    FROM [jiajunleeWeb].[user] u1
+                                    left join [jiajunleeWeb].[user] u ON u1.user_updated_by = u.user_uid
+                                    WHERE u1.user_uid = @user_uid;
+                            `;
+            parsedForm = readUserWithoutPassSchema.safeParse(result.recordset[0]);
+        }
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)
@@ -766,15 +742,29 @@ export async function updateRole(formData: FormData | unknown): StatePromise {
     }
 
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
-                        .input('role', sql.VarChar, parsedForm.data.role)
-                        .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
-                        .query`UPDATE [jiajunleeWeb].[user] 
-                                SET role = @role, user_updated_dt = @user_updated_dt
-                                WHERE user_uid = @user_uid;
-                        `;
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `UPDATE "jiajunleeWeb"."user"
+                            SET role = $1, user_updated_dt = $2, user_updated_by = $3
+                            WHERE user_uid = $4;`,
+                            [parsedForm.data.role, parsedForm.data.user_updated_dt, session.user.user_uid, parsedForm.data.user_uid]
+            );
+            await pool.end();
+        }
+
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('user_uid', sql.UniqueIdentifier, parsedForm.data.user_uid)
+                            .input('role', sql.VarChar, parsedForm.data.role)
+                            .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
+                            .input('user_updated_by', sql.VarChar, session.user.user_uid)
+                            .query`UPDATE [jiajunleeWeb].[user] 
+                                    SET role = @role, user_updated_dt = @user_updated_dt, user_updated_by = @user_updated_by
+                                    WHERE user_uid = @user_uid;
+                            `;
+        }
     } 
     catch (err) {
         return { 
@@ -827,15 +817,29 @@ export async function updateRoleAdmin(formData: FormData | unknown): StatePromis
     }
 
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('user_uid', sql.VarChar, parsedForm.data.user_uid)
-                        .input('role', sql.VarChar, parsedForm.data.role)
-                        .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
-                        .query`UPDATE [jiajunleeWeb].[user] 
-                                SET role = @role, user_updated_dt = @user_updated_dt
-                                WHERE user_uid = @user_uid and role !== 'boss';
-                        `;
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `UPDATE "jiajunleeWeb"."user"
+                            SET role = $1, user_updated_dt = $2, user_updated_by = $3
+                            WHERE user_uid = $4 AND role <> 'boss';`,
+                            [parsedForm.data.role, parsedForm.data.user_updated_dt, session.user.user_uid, parsedForm.data.user_uid]
+            );
+            await pool.end();
+        }
+
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('user_uid', sql.UniqueIdentifier, parsedForm.data.user_uid)
+                            .input('role', sql.VarChar, parsedForm.data.role)
+                            .input('user_updated_dt', sql.DateTime, parsedForm.data.user_updated_dt)
+                            .input('user_updated_by', sql.VarChar, session.user.user_uid)
+                            .query`UPDATE [jiajunleeWeb].[user] 
+                                    SET role = @role, user_updated_dt = @user_updated_dt, user_updated_by = @user_updated_by
+                                    WHERE user_uid = @user_uid and role <> 'boss';
+                            `;
+        }
     } 
     catch (err) {
         return { 

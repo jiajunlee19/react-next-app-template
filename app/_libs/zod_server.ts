@@ -11,15 +11,19 @@ export const createExampleSchema = z.object({
     example: z.string().toUpperCase().min(1),
     example_created_dt: z.coerce.date(),
     example_updated_dt: z.coerce.date(),
+    example_updated_by: z.string().toLowerCase().min(1).uuid(),
 });
 
 export type TReadExampleSchema = z.infer<typeof readExampleSchema>;
 
-export const readExampleSchema = createExampleSchema.partial();
+export const readExampleSchema = createExampleSchema.extend({
+    example_updated_by: z.string().toLowerCase().min(1).max(100),
+}).partial();
 
 export const updateExampleSchema = createExampleSchema.pick({
     example_uid: true,
     example_updated_dt: true,
+    example_updated_by: true,
 });
 
 export const deleteExampleSchema = createExampleSchema.pick({

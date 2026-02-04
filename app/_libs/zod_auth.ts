@@ -22,6 +22,7 @@ export const signUpSchema = z.object({
     role: roleSchema,
     user_created_dt: z.coerce.date(),
     user_updated_dt: z.coerce.date(),
+    user_updated_by: z.string().toLowerCase().min(1).uuid().optional(),
 });
 
 
@@ -36,10 +37,9 @@ export const signInSchema = signUpSchema.pick({
 
 export type TReadUserSchema = z.infer<typeof readUserSchema>;
 
-export const readUserSchema = signUpSchema.omit({
-    user_created_dt: true,
-    user_updated_dt: true,
-});
+export const readUserSchema = signUpSchema.extend({
+    user_updated_by: usernameSchema,
+}).partial();
 
 
 
@@ -66,6 +66,7 @@ export const updateUserSchema = signUpSchema.pick({
     user_uid: true,
     password: true,
     user_updated_dt: true,
+    user_updated_by: true,
 });
 
 
@@ -84,6 +85,7 @@ export const updateRoleSchema = signUpSchema.pick({
     user_uid: true,
     role: true,
     user_updated_dt: true,
+    user_updated_by: true,
 });
 
 export type TUpdateRoleAdminSchema = z.infer<typeof updateRoleAdminSchema>;
@@ -91,6 +93,7 @@ export type TUpdateRoleAdminSchema = z.infer<typeof updateRoleAdminSchema>;
 export const updateRoleAdminSchema = signUpSchema.pick({
     user_uid: true,
     user_updated_dt: true,
+    user_updated_by: true,
 }).extend({
     role: roleWithoutBossSchema,
 });
