@@ -6,7 +6,8 @@ import { options } from "@/app/_libs/nextAuth_options";
 import { redirect } from "next/navigation";
 import { v5 as uuidv5 } from 'uuid';
 import sql from 'mssql';
-import { sqlConfig } from "@/app/_libs/sql_config";
+import { Pool } from 'pg';
+import { pgSqlConfig, msSqlConfig } from "@/app/_libs/sql_config";
 import { readExampleSchema, createExampleSchema, updateExampleSchema, deleteExampleSchema, ExampleSchema } from "@/app/_libs/zod_server";
 import { itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/zod_server';
 import { parsedEnv } from '@/app/_libs/zod_env';
@@ -35,14 +36,28 @@ export async function readExampleTotalPage(itemsPerPage: number | unknown, query
     const QUERY = parsedQuery ? `${parsedQuery || ''}%` : '%';
     let parsedForm;
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('query', sql.VarChar, QUERY)
-                        .query`SELECT example_uid, example, example_created_dt, example_updated_dt, example_updated_by
-                                FROM [jiajunleeWeb].[example]
-                                WHERE (example_uid like @query OR example like @query);
-                        `;
-        parsedForm = readExampleSchema.array().safeParse(result.recordset);
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `SELECT example_uid, example, example_created_dt, example_updated_dt, example_updated_by
+                            FROM "jiajunleeWeb"."example"
+                            WHERE (CAST(example_uid AS TEXT) LIKE $1 OR example LIKE $1);`,
+                            [QUERY]
+            );
+            parsedForm = readExampleSchema.array().safeParse(result.rows);
+            await pool.end();
+        }
+
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('query', sql.VarChar, QUERY)
+                            .query`SELECT example_uid, example, example_created_dt, example_updated_dt, example_updated_by
+                                    FROM [jiajunleeWeb].[example]
+                                    WHERE (example_uid like @query OR example like @query);
+                            `;
+            parsedForm = readExampleSchema.array().safeParse(result.recordset);
+        }
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)
@@ -77,20 +92,37 @@ export async function readExampleByPage(itemsPerPage: number | unknown, currentP
     const OFFSET = (parsedCurrentPage - 1) * parsedItemsPerPage;
     let parsedForm;
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('offset', sql.Int, OFFSET)
-                        .input('limit', sql.Int, parsedItemsPerPage)
-                        .input('query', sql.VarChar, QUERY)
-                        .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
-                                FROM [jiajunleeWeb].[example] e
-                                left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
-                                WHERE (e.example_uid like @query OR e.example like @query)
-                                ORDER BY e.example asc
-                                OFFSET @offset ROWS
-                                FETCH NEXT @limit ROWS ONLY;
-                        `;
-        parsedForm = readExampleSchema.array().safeParse(result.recordset);
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') AS example_updated_by
+                            FROM "jiajunleeWeb"."example" e
+                            LEFT JOIN "jiajunleeWeb"."user" u ON e.example_updated_by = u.user_uid
+                            WHERE (CAST(e.example_uid AS TEXT) LIKE $1 OR e.example LIKE $1)
+                            ORDER BY e.example ASC
+                            OFFSET $2 LIMIT $3;`,
+                            [QUERY, OFFSET, parsedItemsPerPage]
+            );
+            parsedForm = readExampleSchema.array().safeParse(result.rows);
+            await pool.end();
+        }
+        
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('offset', sql.Int, OFFSET)
+                            .input('limit', sql.Int, parsedItemsPerPage)
+                            .input('query', sql.VarChar, QUERY)
+                            .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
+                                    FROM [jiajunleeWeb].[example] e
+                                    left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
+                                    WHERE (e.example_uid like @query OR e.example like @query)
+                                    ORDER BY e.example asc
+                                    OFFSET @offset ROWS
+                                    FETCH NEXT @limit ROWS ONLY;
+                            `;
+            parsedForm = readExampleSchema.array().safeParse(result.recordset);
+        }
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)
@@ -118,14 +150,27 @@ export async function readExample() {
 
     let parsedForm;
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
-                                FROM [jiajunleeWeb].[example] e
-                                left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
-                                ;
-                        `;
-        parsedForm = readExampleSchema.array().safeParse(result.recordset);
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') AS example_updated_by
+                            FROM "jiajunleeWeb"."example" e
+                            LEFT JOIN "jiajunleeWeb"."user" u ON e.example_updated_by = u.user_uid;`
+            );
+            parsedForm = readExampleSchema.array().safeParse(result.rows);
+            await pool.end();
+        }
+        
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
+                                    FROM [jiajunleeWeb].[example] e
+                                    left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
+                                    ;
+                            `;
+            parsedForm = readExampleSchema.array().safeParse(result.recordset);
+        }
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)
@@ -161,15 +206,30 @@ export async function readExampleUid(example: string | unknown) {
 
     let parsedForm;
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('example', sql.VarChar, parsedInput.data.example)
-                        .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
-                                FROM [jiajunleeWeb].[example] e
-                                left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
-                                WHERE e.example = @example;
-                        `;
-        parsedForm = readExampleSchema.safeParse(result.recordset[0]);
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') AS example_updated_by
+                            FROM "jiajunleeWeb"."example" e
+                            LEFT JOIN "jiajunleeWeb"."user" u ON e.example_updated_by = u.user_uid
+                            WHERE e.example = $1;`,
+                            [parsedInput.data.example]
+            );
+            parsedForm = readExampleSchema.safeParse(result.rows[0]);
+            await pool.end();
+        }
+        
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('example', sql.VarChar, parsedInput.data.example)
+                            .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
+                                    FROM [jiajunleeWeb].[example] e
+                                    left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
+                                    WHERE e.example = @example;
+                            `;
+            parsedForm = readExampleSchema.safeParse(result.recordset[0]);
+        }
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)
@@ -194,21 +254,6 @@ export async function createExample(prevState: State | unknown, formData: FormDa
 
     const now = new Date();
 
-    const example = formData.get('example');
-    const parsedForm = createExampleSchema.safeParse({
-        example_uid: (typeof example == 'string') ? uuidv5(example, UUID5_SECRET) : undefined,
-        example: formData.get('example'),
-        example_created_dt: now,
-        example_updated_dt: now,
-    });
-
-    if (!parsedForm.success) {
-        return { 
-            error: parsedForm.error.flatten().fieldErrors,
-            message: "Invalid input provided, failed to create example!"
-        };
-    };
-
     const session = await getServerSession(options);
 
     if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin' )) {
@@ -225,18 +270,47 @@ export async function createExample(prevState: State | unknown, formData: FormDa
         };
     }
 
+    const example = formData.get('example');
+    const parsedForm = createExampleSchema.safeParse({
+        example_uid: (typeof example == 'string') ? uuidv5(example, UUID5_SECRET) : undefined,
+        example: formData.get('example'),
+        example_created_dt: now,
+        example_updated_dt: now,
+        example_updated_by: session.user.user_uid,
+    });
+
+    if (!parsedForm.success) {
+        return { 
+            error: parsedForm.error.flatten().fieldErrors,
+            message: "Invalid input provided, failed to create example!"
+        };
+    };
+
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('example_uid', sql.VarChar, parsedForm.data.example_uid)
-                        .input('example', sql.VarChar, parsedForm.data.example)
-                        .input('example_created_dt', sql.DateTime, parsedForm.data.example_created_dt)
-                        .input('example_updated_dt', sql.DateTime, parsedForm.data.example_updated_dt)
-                        .input('example_updated_by', sql.VarChar, session.user.user_uid)
-                        .query`INSERT INTO [jiajunleeWeb].[example] 
-                                (example_uid, example, example_created_dt, example_updated_dt, example_updated_by)
-                                VALUES (@example_uid, @example, @example_created_dt, @example_updated_dt, @example_updated_by);
-                        `;
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `INSERT INTO "jiajunleeWeb"."example"
+                            (example_uid, example, example_created_dt, example_updated_dt, example_updated_by)
+                            VALUES ($1, $2, $3, $4, $5);`,
+                            [parsedForm.data.example_uid, parsedForm.data.example, parsedForm.data.example_created_dt, parsedForm.data.example_updated_dt, parsedForm.data.example_updated_by]
+            );
+            await pool.end();
+        }
+        
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('example_uid', sql.VarChar, parsedForm.data.example_uid)
+                            .input('example', sql.VarChar, parsedForm.data.example)
+                            .input('example_created_dt', sql.DateTime, parsedForm.data.example_created_dt)
+                            .input('example_updated_dt', sql.DateTime, parsedForm.data.example_updated_dt)
+                            .input('example_updated_by', sql.VarChar, parsedForm.data.example_updated_by)
+                            .query`INSERT INTO [jiajunleeWeb].[example] 
+                                    (example_uid, example, example_created_dt, example_updated_dt, example_updated_by)
+                                    VALUES (@example_uid, @example, @example_created_dt, @example_updated_dt, @example_updated_by);
+                            `;
+        }
     } 
     catch (err) {
         return { 
@@ -262,18 +336,6 @@ export async function updateExample(prevState: State | unknown, formData: FormDa
 
     const now = new Date();
 
-    const parsedForm = updateExampleSchema.safeParse({
-        example_uid: formData.get('example_uid'),
-        example_updated_dt: now,
-    });
-
-    if (!parsedForm.success) {
-        return { 
-            error: parsedForm.error.flatten().fieldErrors,
-            message: "Invalid input provided, failed to update example!"
-        };
-    };
-
     const session = await getServerSession(options);
 
     if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin' )) {
@@ -290,16 +352,42 @@ export async function updateExample(prevState: State | unknown, formData: FormDa
         };
     }
 
+    const parsedForm = updateExampleSchema.safeParse({
+        example_uid: formData.get('example_uid'),
+        example_updated_dt: now,
+        example_updated_by: session.user.user_uid,
+    });
+
+    if (!parsedForm.success) {
+        return { 
+            error: parsedForm.error.flatten().fieldErrors,
+            message: "Invalid input provided, failed to update example!"
+        };
+    };
+
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('example_uid', sql.VarChar, parsedForm.data.example_uid)
-                        .input('example_updated_dt', sql.DateTime, parsedForm.data.example_updated_dt)
-                        .input('example_updated_by', sql.VarChar, session.user.user_uid)
-                        .query`UPDATE [jiajunleeWeb].[example] 
-                                SET example_updated_dt = @example_updated_dt, example_updated_by = @example_updated_by
-                                WHERE example_uid = @example_uid;
-                        `;
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `UPDATE "jiajunleeWeb"."example"
+                            SET example_updated_dt = $1, example_updated_by = $2
+                            WHERE example_uid = $3;`,
+                            [parsedForm.data.example_updated_dt, parsedForm.data.example_updated_by, parsedForm.data.example_uid]
+            );
+            await pool.end();
+        }
+
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('example_uid', sql.VarChar, parsedForm.data.example_uid)
+                            .input('example_updated_dt', sql.DateTime, parsedForm.data.example_updated_dt)
+                            .input('example_updated_by', sql.VarChar, parsedForm.data.example_updated_by)
+                            .query`UPDATE [jiajunleeWeb].[example] 
+                                    SET example_updated_dt = @example_updated_dt, example_updated_by = @example_updated_by
+                                    WHERE example_uid = @example_uid;
+                            `;
+        }
     } 
     catch (err) {
         return { 
@@ -342,12 +430,24 @@ export async function deleteExample(example_uid: string): StatePromise {
     }
 
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('example_uid', sql.VarChar, parsedForm.data.example_uid)
-                        .query`DELETE FROM [jiajunleeWeb].[example] 
-                                WHERE example_uid = @example_uid;
-                        `;
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `DELETE FROM "jiajunleeWeb"."example"
+                            WHERE example_uid = $1;`,
+                            [parsedForm.data.example_uid]
+            );
+            await pool.end();
+        }
+        
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('example_uid', sql.VarChar, parsedForm.data.example_uid)
+                            .query`DELETE FROM [jiajunleeWeb].[example] 
+                                    WHERE example_uid = @example_uid;
+                            `;
+        }
     } 
     catch (err) {
         return { 
@@ -382,15 +482,31 @@ export async function readExampleById(example_uid: string) {
 
     let parsedForm;
     try {
-        let pool = await sql.connect(sqlConfig);
-        const result = await pool.request()
-                        .input('example_uid', sql.VarChar, parsedInput.data.example_uid)
-                        .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
-                                FROM [jiajunleeWeb].[example] e
-                                left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
-                                WHERE e.example_uid = @example_uid;
-                        `;
-        parsedForm = readExampleSchema.safeParse(result.recordset[0]);
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt,
+                                    COALESCE(u.username, 'system') AS example_updated_by
+                            FROM "jiajunleeWeb"."example" e
+                            LEFT JOIN "jiajunleeWeb"."user" u ON e.example_updated_by = u.user_uid
+                            WHERE e.example_uid = $1;`,
+                            [parsedInput.data.example_uid]
+            );
+            parsedForm = readExampleSchema.safeParse(result.rows[0]);
+            await pool.end();
+        }
+        
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('example_uid', sql.VarChar, parsedInput.data.example_uid)
+                            .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
+                                    FROM [jiajunleeWeb].[example] e
+                                    left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
+                                    WHERE e.example_uid = @example_uid;
+                            `;
+            parsedForm = readExampleSchema.safeParse(result.recordset[0]);
+        }
 
         if (!parsedForm.success) {
             throw new Error(parsedForm.error.message)

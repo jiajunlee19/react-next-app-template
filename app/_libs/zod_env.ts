@@ -8,6 +8,9 @@ export const envSchema = z.object({
     // Base url
     BASE_URL: z.string().min(1).url(),
 
+    // Database Type
+    DB_TYPE: z.enum(["PG", "MSSQL"]),
+
     // Database connections
     DB_URL: z.string().min(1),
     DB_PRISMA_URL: z.string().min(1),

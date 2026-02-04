@@ -32,7 +32,7 @@ export default async function Example(
     return (
         <>
             <h1>{pageTitle}</h1>
-            <Link className="btn btn-primary w-min no-underline p-[1%]" href="/protected/type/create">
+            <Link className="btn btn-primary w-min no-underline p-[1%]" href="/authenticated/example/create">
                 {createButtonTitle}
             </Link>
             <Suspense fallback={<TableSkeleton columnCount={4} rowCount={10} />}>

@@ -34,10 +34,10 @@ export default function Header() {
 
     const sideNavLinks = [
         { name: "Home", href: "/", icon: "" },
+        { name: "Example", href: "/authenticated/example", icon: "" },
     ];
 
     const sideNavLinksProtected = [
-        { name: "Example", href: "/protected/example", icon: "" },
         { name: "User List", href: "/protected/auth/user", icon: "" },
     ];
 

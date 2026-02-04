@@ -30,11 +30,11 @@ export default async function UpdateExample(props: {params: Promise<{example_uid
     return (
         <>
             <Breadcrumbs breadcrumbs={[
-                {label: "Box Example", href: "/authenticated/example", active: false},
+                {label: "Example", href: "/authenticated/example", active: false},
                 {label: `Update ${example_uid}`, href: `/authenticated/example/${example_uid}/update`, active: true}
             ]} />
             <Form 
-                formTitle="Update Box Example"
+                formTitle="Update Example"
                 inputType={{
                     'example_uid': 'hidden',
                     'example': 'readonly',
