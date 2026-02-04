@@ -2,13 +2,14 @@
 
 import { HomeIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline"
 import { useSession } from "next-auth/react"
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import SearchBar from "@/app/_components/basic/search_bar";
 import { usePathname } from "next/navigation"
 import { twMerge } from "tailwind-merge";
 import { CrossIcon, DarkIcon, HamburgerIcon, LightIcon, SearchIcon } from "@/app/_components/basic/icons";
 import { useThemeContext } from "@/app/_context/theme-context";
+import { widgets } from "../_libs/widgets";
 
 export default function Header() {
 
@@ -49,6 +50,16 @@ export default function Header() {
 
     const [isShowNav, setIsShowNav] = useState(false);
 
+    // Find current widget and its tabs based on pathname
+    const currentWidget = useMemo(() => {
+        for (const widget of widgets) {
+            if (pathname.startsWith(widget.href)) {
+                return widget;
+            }
+        }
+        return null;
+    }, [pathname])
+
     const handleNavClick = (e: React.MouseEvent<HTMLButtonElement>) => {
         setIsShowNav(!isShowNav);
     };
@@ -70,7 +81,7 @@ export default function Header() {
             <div className="contents lg:block lg:w-64 lg:px-6 lg:pb-8 lg:pt-4 xl:w-72">
                 {/* Left nav block thats only appear when > lg */}
                 <div className="hidden lg:block">
-                    <nav className="flex">
+                    <nav className="flex gap-5 items-center">
                         {leftNavLinks.map((link) => {
                             return (
                                 <Link key={link.name} className={twMerge("no-underline", (pathname === link.href || pathname === "/") && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>
@@ -104,19 +115,41 @@ export default function Header() {
                                 <CrossIcon className="w-2.5 stroke-zinc-900 dark:stroke-white" />
                             </button>
                         }
-                        <nav>
+                        <nav className="flex items-center gap-4">
                             {leftNavLinks.map((link) => {
                                 return (
-                                    <Link key={link.name} className={twMerge("no-underline", (pathname === link.href || pathname === "/") && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>{link.name}</Link>
+                                    <Link key={link.name} className={twMerge("no-underline", (pathname === link.href || pathname === "/") && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>{link.icon ? link.icon : link.name}</Link>
                                 );
                             })}
+
+                            {/* Divider between Home and Widget */}
+                            {currentWidget && <div className="flex-shrink-0 block h-5 w-px bg-zinc-900 dark:bg-white" />}
+
+                            {/* Dynamically show current widget */}
+                            {currentWidget && <Link key={currentWidget.name} href={currentWidget.href} className={twMerge("no-underline", (pathname === currentWidget.href) && "font-semibold text-purple-500 dark:text-purple-200")}>{currentWidget.name}</Link>}
+
+                            {/* Divider between Widget and Tabs */}
+                            {currentWidget && currentWidget.tabs && currentWidget.tabs.length > 0 && <div className="flex-shrink-0 block h-5 w-px bg-zinc-900 dark:bg-white" />}
+
+                            {/* Dynamic tabs between leftNav and middleNav */}
+                            <div>
+                                {currentWidget && currentWidget.tabs && currentWidget.tabs.length > 0 && (
+                                    <nav className="flex items-center gap-4 overflow-x-auto">
+                                        {currentWidget.tabs.map((tab) => {
+                                            return (
+                                                <Link key={tab.name} href={tab.href} className={twMerge("no-underline", (pathname === tab.href) && "font-semibold text-purple-500 dark:text-purple-200")}>
+                                                    {tab.name}
+                                                </Link>
+                                            )
+                                        })}
+                                    </nav>
+                                )}
+                            </div>
                         </nav>
                     </div>
 
-                    {/* search bar between leftNav and middleNav */}
-                    <div className="hidden lg:block lg:w-full lg:max-w-sm lg: ml-4">
-                        <SearchBar />
-                    </div>
+                    {/* placeholder div to keep left and right spaced apart (can replace this with a SearchBar if needed) */}
+                    <div></div>
 
                     {/* Flexbox for middleNav and rightNav */}
                     <div className="flex items-center gap-5">
@@ -137,14 +170,6 @@ export default function Header() {
 
                         {/* Flexbox for icons between middleNav and rightNav */}
                         <div className="flex gap-4">
-
-                            {/* Search Icon that only appears when < lg */}
-                            <div className="contents lg:hidden">
-                                <button type="button" className="flex h-6 w-6 items-center justify-center rounded-md transition hover:bg-zinc-900/50 ui-not-focus-visible:outline-none dark:hover:bg-white/50 lg:hidden" aria-label="Find something...">
-                                    <SearchIcon className="h-5 w-5 stroke-zinc-900 dark:stroke-white" />
-                                </button>
-                            </div>
-
                             {/* Theme Icon */}  
                             <button type="button" className="flex h-6 w-6 items-center justify-center rounded-md transition hover:bg-zinc-900/50 dark:hover:bg-white/50" aria-label="Toggle theme" onClick={handleThemeClick}>
                                 <LightIcon className="h-5 w-5 stroke-zinc-900 dark:hidden" />
@@ -174,75 +199,49 @@ export default function Header() {
                     : 
                     "hidden lg:block lg:mt-10"
                     }>
-                    <ul role="list">
+
+                    {/* Dynamic sideNavs for current widget */}
+                    {currentWidget && currentWidget.tabs && currentWidget.tabs.length > 0 ? (
                         <li>
-                            <h2>Actions</h2>
+                            <h2>{currentWidget.name}</h2>
                             <div className="relative my-3 pl-2">
                                 <div className="absolute inset-x-0 top-0 h-16 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5 origin-[50%_50%_1px]" />
                                 <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/50 transform-none origin-[50%_50%_1px]" />
                                 <ul role="list">
-                                    {sideNavLinks.map((link) => {
+                                    {currentWidget.tabs.map((link) => {
                                         return (
                                             <li key={link.name} className="relative">
                                                 <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>
-                                                    {link.icon ? link.icon : link.name}
+                                                    {link.name}
                                                 </Link>
                                             </li>
                                         );
                                     })}
                                 </ul>
                             </div>
-
-                            {(session?.user.role === 'admin' || session?.user.role === 'boss') &&
-                            <>
-                                <h2>Protected Actions</h2>
-                                <div className="relative my-3 pl-2">
-                                    <div className="absolute inset-x-0 top-0 h-16 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5 origin-[50%_50%_1px]" />
-                                    <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/50 transform-none origin-[50%_50%_1px]" />
-                                    <ul role="list">
-                                        {sideNavLinksProtected.map((link) => {
-                                            return (
-                                                <li key={link.name} className="relative">
-                                                    <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>
-                                                        {link.icon ? link.icon : link.name}
-                                                    </Link>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                </div>
-                            </>
-                            }
-
-                            {session?.user.role === 'boss' &&
-                            <>
-                                <h2>Restricted Actions</h2>
-                                <div className="relative my-3 pl-2">
-                                    <div className="absolute inset-x-0 top-0 h-16 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5 origin-[50%_50%_1px]" />
-                                    <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/50 transform-none origin-[50%_50%_1px]" />
-                                    <ul role="list">
-                                        {sideNavLinksRestricted.map((link) => {
-                                            return (
-                                                <li key={link.name} className="relative">
-                                                    <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>
-                                                        {link.icon ? link.icon : link.name}
-                                                    </Link>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                </div>
-                            </>
-                            }
                         </li>
+                    ) :
+                    (
+                        // Default to landing page if no widget is selected yet
+                        <li>
+                            <h2>Landing Page</h2>
+                            <div className="relative my-6 pl-2">
+                                <div className="absolute inset-x-0 top-0 h-16 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5 origin-[50%_50%_1px]" />
+                                <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/50 transform-none origin-[50%_50%_1px]" />
+                            </div>
+                        </li>
+                    )}
 
-                        <li className="pt-3 md:hidden">
-                            <h2>Links</h2>
+
+                    <li>
+                        {(session?.user.role === 'admin' || session?.user.role === 'boss') &&
+                        <>
+                            <h2>Protected Actions</h2>
                             <div className="relative my-3 pl-2">
                                 <div className="absolute inset-x-0 top-0 h-16 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5 origin-[50%_50%_1px]" />
                                 <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/50 transform-none origin-[50%_50%_1px]" />
                                 <ul role="list">
-                                    {midNavLinks.map((link) => {
+                                    {sideNavLinksProtected.map((link) => {
                                         return (
                                             <li key={link.name} className="relative">
                                                 <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>
@@ -253,15 +252,17 @@ export default function Header() {
                                     })}
                                 </ul>
                             </div>
-                        </li>
-                            
-                        <li className="pt-3 sm:hidden">
-                            <h2>Auth</h2>
-                            <div className="relative pl-2 my-3 bottom-0">
+                        </>
+                        }
+
+                        {session?.user.role === 'boss' &&
+                        <>
+                            <h2>Restricted Actions</h2>
+                            <div className="relative my-3 pl-2">
                                 <div className="absolute inset-x-0 top-0 h-16 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5 origin-[50%_50%_1px]" />
                                 <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/50 transform-none origin-[50%_50%_1px]" />
                                 <ul role="list">
-                                    {(session ? rightNavLinksA : rightNavLinksB).map((link) => {
+                                    {sideNavLinksRestricted.map((link) => {
                                         return (
                                             <li key={link.name} className="relative">
                                                 <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>
@@ -272,8 +273,47 @@ export default function Header() {
                                     })}
                                 </ul>
                             </div>
-                        </li>
-                    </ul>
+                        </>
+                        }
+                    </li>
+
+                    <li className="pt-3 md:hidden">
+                        <h2>Links</h2>
+                        <div className="relative my-3 pl-2">
+                            <div className="absolute inset-x-0 top-0 h-16 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5 origin-[50%_50%_1px]" />
+                            <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/50 transform-none origin-[50%_50%_1px]" />
+                            <ul role="list">
+                                {midNavLinks.map((link) => {
+                                    return (
+                                        <li key={link.name} className="relative">
+                                            <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>
+                                                {link.icon ? link.icon : link.name}
+                                            </Link>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    </li>
+                        
+                    <li className="pt-3 sm:hidden">
+                        <h2>Auth</h2>
+                        <div className="relative pl-2 my-3 bottom-0">
+                            <div className="absolute inset-x-0 top-0 h-16 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5 origin-[50%_50%_1px]" />
+                            <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/50 transform-none origin-[50%_50%_1px]" />
+                            <ul role="list">
+                                {(session ? rightNavLinksA : rightNavLinksB).map((link) => {
+                                    return (
+                                        <li key={link.name} className="relative">
+                                            <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>
+                                                {link.icon ? link.icon : link.name}
+                                            </Link>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    </li>
                 </nav>
             </div>
         </>
