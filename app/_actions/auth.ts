@@ -44,7 +44,7 @@ export async function readUserTotalPage(itemsPerPage: number | unknown, query?: 
             const result = await pool.query(
                             `SELECT user_uid, username, role, user_created_dt, user_updated_dt
                             FROM "jiajunleeWeb"."user"
-                            WHERE (CAST(u1.user_uid AS TEXT) LIKE $1 OR username LIKE $1;`,
+                            WHERE (CAST(user_uid AS TEXT) LIKE $1 OR username LIKE $1);`,
                             [QUERY]
             );
             parsedForm = readUserWithoutPassSchema.array().safeParse(result.rows);
