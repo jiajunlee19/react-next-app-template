@@ -22,7 +22,7 @@ CREATE TABLE "jiajunleeWeb"."example" (
     example_updated_dt TIMESTAMP NOT NULL,
     example_updated_by UUID NOT NULL,
 
-    CONSTRAINT pk_example_uid PRIMARY KEY CLUSTERED (example_uid),
+    CONSTRAINT pk_example_uid PRIMARY KEY (example_uid),
     CONSTRAINT fk_example_updated_by FOREIGN KEY (example_updated_by)
         REFERENCES "jiajunleeWeb"."user"(user_uid)
         ON UPDATE CASCADE
