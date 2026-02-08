@@ -2,20 +2,25 @@
 import { withAuth, NextRequestWithAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import { parsedEnv } from "@/app/_libs/zod_env";
-import { verifyJwtToken } from "@/app/_libs/jwt";
-
-// export { default } from "next-auth/middleware";
+import { checkWidgetAccess } from "@/app/_libs/widgets";
 
 export default withAuth(
     // `withAuth` augments your `Request` with the user's token.
     function middleware(request: NextRequestWithAuth) {
-        // console.log(request.nextUrl.pathname)
-        // console.log(request.nextauth.token)
 
-        // const jwtToken = request.headers.get("jwtToken");
-        // if (!jwtToken || !verifyJwtToken) {
-        //     return new NextResponse(JSON.stringify({error: "Unauthorized!"}), {status: 401})
-        // }
+        const { hasWidgetOwnerAccess, hasWidgetViewAccess, owners, viewers } = checkWidgetAccess(request.nextUrl.pathname, request.nextauth.token?.username, request.nextauth.token?.role);
+
+        if (!hasWidgetViewAccess) {
+            const deniedUrl = new URL("/denied", request.url);
+            const info = {
+                username: request.nextauth.token?.username,
+                requestedPath: request.nextUrl.pathname,
+                owners,
+                viewers,
+            };
+            deniedUrl.searchParams.set("info", Buffer.from(JSON.stringify(info)).toString('base64'));
+            return NextResponse.redirect(deniedUrl);
+        }
 
         if (request.nextUrl.pathname.startsWith("/authenticated")
             && !request.nextauth.token)
