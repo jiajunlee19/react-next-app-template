@@ -1,3 +1,5 @@
+"use client"
+
 import Page404 from "@/app/_components/page_404";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
