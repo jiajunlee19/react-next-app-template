@@ -4,7 +4,7 @@ import Page404 from "@/app/_components/page_404";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function deniedPage() {
+export default function DeniedPage() {
 
     const searchParams = useSearchParams();
     const [info, setInfo] = useState<{
