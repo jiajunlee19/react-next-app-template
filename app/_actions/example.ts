@@ -14,6 +14,7 @@ import { parsedEnv } from '@/app/_libs/zod_env';
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import { StatePromise, type State } from '@/app/_libs/types';
 import { unstable_noStore as noStore } from 'next/cache';
+import { checkWidgetAccess } from "@/app/_libs/widgets";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
@@ -25,8 +26,21 @@ export async function readExampleTotalPage(itemsPerPage: number | unknown, query
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
+    if (!session) {
         redirect("/denied");
+    }
+
+    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+
+    if (!hasWidgetViewAccess) {
+        const info = {
+            username: session.user.username,
+            requestedPath: "/authenticated/example",
+            owners,
+            viewers,
+        };
+        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
+        redirect(`/denied?info=${encodedInfo}`);
     }
 
     if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
@@ -80,8 +94,21 @@ export async function readExampleByPage(itemsPerPage: number | unknown, currentP
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
+    if (!session) {
         redirect("/denied");
+    }
+
+    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+
+    if (!hasWidgetViewAccess) {
+        const info = {
+            username: session.user.username,
+            requestedPath: "/authenticated/example",
+            owners,
+            viewers,
+        };
+        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
+        redirect(`/denied?info=${encodedInfo}`);
     }
 
     if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
@@ -140,8 +167,21 @@ export async function readExample() {
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
+    if (!session) {
         redirect("/denied");
+    }
+
+    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+
+    if (!hasWidgetViewAccess) {
+        const info = {
+            username: session.user.username,
+            requestedPath: "/authenticated/example",
+            owners,
+            viewers,
+        };
+        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
+        redirect(`/denied?info=${encodedInfo}`);
     }
 
     if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
@@ -196,8 +236,21 @@ export async function readExampleUid(example: string | unknown) {
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
+    if (!session) {
         redirect("/denied");
+    }
+
+    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+
+    if (!hasWidgetViewAccess) {
+        const info = {
+            username: session.user.username,
+            requestedPath: "/authenticated/example",
+            owners,
+            viewers,
+        };
+        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
+        redirect(`/denied?info=${encodedInfo}`);
     }
 
     if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
@@ -256,10 +309,16 @@ export async function createExample(prevState: State | unknown, formData: FormDa
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin' )) {
+    if (!session) {
+        redirect("/denied");
+    }
+
+    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+
+    if (!hasWidgetViewAccess) {
         return { 
-            error: {error: ["Access denied."]},
-            message: "Access denied."
+            error: {error: [`Access denied. You are not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access.`]},
+            message: `Access denied. You are not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access.`
         };
     }
 
@@ -338,10 +397,16 @@ export async function updateExample(prevState: State | unknown, formData: FormDa
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin' )) {
+    if (!session) {
+        redirect("/denied");
+    }
+
+    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+
+    if (!hasWidgetViewAccess) {
         return { 
-            error: {error: ["Access denied."]},
-            message: "Access denied."
+            error: {error: [`Access denied. You are not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access.`]},
+            message: `Access denied. You are not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access.`
         };
     }
 
@@ -415,10 +480,16 @@ export async function deleteExample(example_uid: string): StatePromise {
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin' )) {
+    if (!session) {
+        redirect("/denied");
+    }
+
+    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+
+    if (!hasWidgetViewAccess) {
         return { 
-            error: {error: ["Access denied."]},
-            message: "Access denied."
+            error: {error: [`Access denied. You are not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access.`]},
+            message: `Access denied. You are not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access.`
         };
     }
 
@@ -472,8 +543,21 @@ export async function readExampleById(example_uid: string) {
 
     const session = await getServerSession(options);
 
-    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
+    if (!session) {
         redirect("/denied");
+    }
+
+    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+
+    if (!hasWidgetViewAccess) {
+        const info = {
+            username: session.user.username,
+            requestedPath: "/authenticated/example",
+            owners,
+            viewers,
+        };
+        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
+        redirect(`/denied?info=${encodedInfo}`);
     }
 
     if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
