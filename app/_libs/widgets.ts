@@ -21,7 +21,7 @@ export const widgets: TWidget[] = [
 
 export function checkWidgetAccess(pathname: string | unknown, username: string | unknown, role: TRole | unknown) {
 
-    if (typeof pathname !== "string" || typeof username !== "string" || role) {
+    if (typeof pathname !== "string" || typeof username !== "string" || !role) {
         return {
             hasWidgetOwnerAccess: false,
             hasWidgetViewAccess: false,
@@ -35,8 +35,8 @@ export function checkWidgetAccess(pathname: string | unknown, username: string |
         return {
             hasWidgetOwnerAccess: true,
             hasWidgetViewAccess: true,
-            owners: [],
-            viewers: [],
+            owners: [username],
+            viewers: [username],
         }
     }
 
@@ -45,19 +45,19 @@ export function checkWidgetAccess(pathname: string | unknown, username: string |
         return {
             hasWidgetOwnerAccess: false,
             hasWidgetViewAccess: true,
-            owners: [],
-            viewers: [],
+            owners: [username],
+            viewers: [username],
         }
     }
 
     const widget = widgets.find((widget) => pathname.startsWith(widget.href));
 
-    // Deny if its not a widget
+    // Grant to everyone if its not a widget
     if (!widget) return {
         hasWidgetOwnerAccess: false,
-        hasWidgetViewAccess: false,
+        hasWidgetViewAccess: true,
         owners: [],
-        viewers: [],
+        viewers: ["everyone"],
     };
 
     // If no widget viewers defined, default to everyone

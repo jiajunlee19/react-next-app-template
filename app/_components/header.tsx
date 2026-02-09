@@ -198,7 +198,7 @@ export default function Header() {
                 <nav className={isShowNav ? 
                     "max-lg:fixed max-lg:z-20 max-lg:bg-white max-lg:top-16 max-lg:right-0 max-lg:bottom-0 max-lg:left-4 max-lg:w-56 max-lg:mb-14 max-lg:overflow-y-scroll lg:block lg:mt-10 dark:bg-zinc-900" 
                     : 
-                    "hidden lg:block lg:mt-10"
+                    "hidden list-none lg:block lg:mt-10"
                     }>
 
                     {/* Dynamic sideNavs for current widget */}

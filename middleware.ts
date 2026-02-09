@@ -8,6 +8,22 @@ export default withAuth(
     // `withAuth` augments your `Request` with the user's token.
     function middleware(request: NextRequestWithAuth) {
 
+        if (request.nextUrl.pathname.startsWith("/restricted")
+            && request.nextauth.token?.role !== "boss") {
+            return NextResponse.rewrite(
+                new URL("/denied", request.url)
+            )
+        }
+
+        if (request.nextUrl.pathname.startsWith("/protected")
+            && request.nextauth.token?.role !== "admin"
+            && request.nextauth.token?.role !== "boss")
+        {
+            return NextResponse.rewrite(
+                new URL("/denied", request.url)
+            )
+        }
+
         const { hasWidgetOwnerAccess, hasWidgetViewAccess, owners, viewers } = checkWidgetAccess(request.nextUrl.pathname, request.nextauth.token?.username, request.nextauth.token?.role);
 
         if (!hasWidgetViewAccess) {
@@ -25,22 +41,6 @@ export default withAuth(
         if (request.nextUrl.pathname.startsWith("/authenticated")
             && !request.nextauth.token)
         {
-            return NextResponse.rewrite(
-                new URL("/denied", request.url)
-            )
-        }
-
-        if (request.nextUrl.pathname.startsWith("/protected")
-            && request.nextauth.token?.role !== "admin"
-            && request.nextauth.token?.role !== "boss")
-        {
-            return NextResponse.rewrite(
-                new URL("/denied", request.url)
-            )
-        }
-
-        if (request.nextUrl.pathname.startsWith("/restricted")
-            && request.nextauth.token?.role !== "boss") {
             return NextResponse.rewrite(
                 new URL("/denied", request.url)
             )
