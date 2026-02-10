@@ -572,6 +572,7 @@ This section outlines the important concepts used in this template.
     LDAP_ORGANISATION="scientists"
     LDAP_DOMAIN="example.com"
     LDAP_BASE_DN="dc=example,dc=com"
+    LDAP_GROUP_BASE_DN="dc=example,dc=com"
     LDAP_URL="LDAP://ldap.forumsys.com:389"
 
     // user available are newton, einstein, tesla
@@ -584,6 +585,7 @@ This section outlines the important concepts used in this template.
     LDAP_ORGANISATION="company"
     LDAP_DOMAIN="company.com"
     LDAP_BASE_DN="dc=company,dc=com"
+    LDAP_GROUP_BASE_DN="dc=example,dc=com"
     LDAP_URL="ldap://localhost:389"
     ```
     - Spin up the LDAP server defined in [/dev-db/compose.yaml](dev-db/compose.yaml), then run below commands:
