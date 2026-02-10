@@ -28,6 +28,7 @@ export const envSchema = z.object({
     LDAP_ORGANISATION: z.string().min(1),
     LDAP_DOMAIN: z.string().min(1),
     LDAP_BASE_DN: z.string().min(1),
+    LDAP_GROUP_BASE_DN: z.string().min(1),
     LDAP_URL: z.string().min(1).url(),
 
     // UUID namespace secret
