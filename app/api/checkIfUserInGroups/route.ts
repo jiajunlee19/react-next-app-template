@@ -22,10 +22,10 @@ export async function POST(request: NextRequest) {
         }
 
         if (await rateLimitByIP(5, 1000*60)) {
-            return { 
-                error: {error: ["Too many requests, try again later."]},
+            return NextResponse.json({
+                error: { error: ["Too many requests, try again later."] },
                 message: "Too many requests, try again later."
-            };
+            }, { status: 429 });
         }
 
         const results = await Promise.all(parsedForm.data.groups.map(async (group) => {
