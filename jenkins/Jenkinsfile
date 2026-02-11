@@ -7,6 +7,7 @@ pipeline {
     }
 
     parameters {
+        string(name: 'APP_NAME', defaultValue: 'react-next-app-template', description: 'App name used for pm2 config')
         string(name: 'email_from', defaultValue: 'no-reply-jenkins@email.com', description: 'Jenkins Notifications E-mail From')
         string(name: 'email_to', defaultValue: 'email@email.com', description: 'Jenkins Notifications E-mail To')
         string(name: 'email_bcc', defaultValue: '', description: 'Jenkins Notifications E-mail Bcc')
@@ -69,7 +70,7 @@ pipeline {
             }
             steps {
                 sh 'chmod +x ./jenkins/scripts/kill.sh'
-                sh './jenkins/scripts/kill.sh'
+                sh "./jenkins/scripts/kill.sh ${APP_NAME}"
             }
         }
 
@@ -98,7 +99,7 @@ pipeline {
             }
             steps {
                 sh 'chmod +x ./jenkins/scripts/deploy.sh'
-                sh 'JENKINS_NODE_COOKIE=dontKillMe ./jenkins/scripts/deploy.sh'
+                sh "JENKINS_NODE_COOKIE=dontKillMe ./jenkins/scripts/deploy.sh ${APP_NAME}"
             }
         }
 

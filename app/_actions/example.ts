@@ -30,7 +30,7 @@ export async function readExampleTotalPage(itemsPerPage: number | unknown, query
         redirect("/denied");
     }
 
-    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+    const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
 
     if (!hasWidgetViewAccess) {
         const info = {
@@ -98,7 +98,7 @@ export async function readExampleByPage(itemsPerPage: number | unknown, currentP
         redirect("/denied");
     }
 
-    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+    const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
 
     if (!hasWidgetViewAccess) {
         const info = {
@@ -171,7 +171,7 @@ export async function readExample() {
         redirect("/denied");
     }
 
-    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+    const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
 
     if (!hasWidgetViewAccess) {
         const info = {
@@ -240,7 +240,7 @@ export async function readExampleUid(example: string | unknown) {
         redirect("/denied");
     }
 
-    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+    const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
 
     if (!hasWidgetViewAccess) {
         const info = {
@@ -313,7 +313,7 @@ export async function createExample(prevState: State | unknown, formData: FormDa
         redirect("/denied");
     }
 
-    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+    const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
 
     if (!hasWidgetViewAccess) {
         return { 
@@ -401,7 +401,7 @@ export async function updateExample(prevState: State | unknown, formData: FormDa
         redirect("/denied");
     }
 
-    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+    const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
 
     if (!hasWidgetViewAccess) {
         return { 
@@ -484,7 +484,7 @@ export async function deleteExample(example_uid: string): StatePromise {
         redirect("/denied");
     }
 
-    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+    const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
 
     if (!hasWidgetViewAccess) {
         return { 
@@ -547,7 +547,7 @@ export async function readExampleById(example_uid: string) {
         redirect("/denied");
     }
 
-    const { hasWidgetViewAccess, owners, viewers } = checkWidgetAccess("/authenticated/example", session.user.username, session.user.role);
+    const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
 
     if (!hasWidgetViewAccess) {
         const info = {

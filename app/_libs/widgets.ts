@@ -19,9 +19,9 @@ export const widgets: TWidget[] = [
     }
 ];
 
-export function checkWidgetAccess(pathname: string | unknown, username: string | unknown, role: TRole | unknown) {
+export async function checkWidgetAccess(base_url: string | unknown, pathname: string | unknown, username: string | unknown, role: TRole | unknown) {
 
-    if (typeof pathname !== "string" || typeof username !== "string" || !role) {
+    if (typeof base_url !== "string" || typeof pathname !== "string" || typeof username !== "string" || !role) {
         return {
             hasWidgetOwnerAccess: false,
             hasWidgetViewAccess: false,
@@ -79,7 +79,16 @@ export function checkWidgetAccess(pathname: string | unknown, username: string |
     }
 
     // Widget owners
-    if (owners.includes("everyone") || owners.includes(username)) {
+    const resCheckIfUserInOwnerGroups = await fetch(`${base_url}/api/checkIfUserInGroups`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ groups: owners, username: username }),
+    });
+    const checkIfUserInOwnerGroups = await resCheckIfUserInOwnerGroups.json();
+    const isUserInOwnerGroups = "isUserInGroups" in checkIfUserInOwnerGroups ? checkIfUserInOwnerGroups.isUserInGroups : false;
+    if (owners.includes("everyone") || owners.includes(username) || isUserInOwnerGroups) {
         return {
             hasWidgetOwnerAccess: true,
             hasWidgetViewAccess: true,
@@ -89,7 +98,16 @@ export function checkWidgetAccess(pathname: string | unknown, username: string |
     }
 
     // Widget viewers
-    if (viewers.includes("everone") || viewers.includes(username)) {
+    const resCheckIfUserInViewerGroups = await fetch(`${base_url}/api/checkIfUserInGroups`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ groups: viewers, username: username }),
+    });
+    const checkIfUserInViewerGroups = await resCheckIfUserInViewerGroups.json();
+    const isUserInViewerGroups = "isUserInGroups" in checkIfUserInViewerGroups ? checkIfUserInViewerGroups.isUserInGroups : false;
+    if (viewers.includes("everone") || viewers.includes(username) || isUserInViewerGroups) {
         return {
             hasWidgetOwnerAccess: false,
             hasWidgetViewAccess: true,

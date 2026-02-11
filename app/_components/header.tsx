@@ -2,7 +2,7 @@
 
 import { HomeIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline"
 import { useSession } from "next-auth/react"
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation"
 import { twMerge } from "tailwind-merge";
@@ -10,14 +10,29 @@ import { CrossIcon, DarkIcon, HamburgerIcon, LightIcon, SearchIcon } from "@/app
 import { useThemeContext } from "@/app/_context/theme-context";
 import { checkWidgetAccess, widgets } from "@/app/_libs/widgets";
 
-export default function Header() {
+export default function Header({ baseUrl }: { baseUrl: string }  ) {
 
     const pathname = usePathname();
 
     const { data: session } = useSession();
 
-    const { hasWidgetOwnerAccess, hasWidgetViewAccess, owners, viewers } = checkWidgetAccess(pathname, session?.user.username, session?.user.role);
-
+    const [access, setAccess] = useState<{
+        hasWidgetOwnerAccess?: boolean;
+        hasWidgetViewAccess?: boolean;
+        owners?: string[];
+        viewers?: string[];
+    }>({});
+    
+    useEffect(() => {
+        const fetchAccess = async () => {
+            if (session?.user) {
+                const result = await checkWidgetAccess(baseUrl, pathname, session?.user.username, session?.user.role);
+                setAccess(result);
+            }
+        };
+        fetchAccess();
+      }, [baseUrl, pathname, session]);
+    
     const leftNavLinks = [
         { name: "Home", href: "/", icon: <HomeIcon className="h-6" /> },
     ];
@@ -27,7 +42,7 @@ export default function Header() {
     ];
 
     const rightNavLinksA = [
-        { name: (!hasWidgetOwnerAccess && session?.user.role === "user") ? session?.user.username : session?.user.username + " (Admin)", href: "/auth/user/" + session?.user.user_uid, icon: "" },
+        { name: (!access.hasWidgetOwnerAccess && session?.user.role === "user") ? session?.user.username : session?.user.username + " (Admin)", href: "/auth/user/" + session?.user.user_uid, icon: "" },
         { name: "Sign Out", href: "/auth/signOut", icon: "" },
     ];
 
