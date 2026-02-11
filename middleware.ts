@@ -6,7 +6,7 @@ import { checkWidgetAccess } from "@/app/_libs/widgets";
 
 export default withAuth(
     // `withAuth` augments your `Request` with the user's token.
-    function middleware(request: NextRequestWithAuth) {
+    async function middleware(request: NextRequestWithAuth) {
 
         if (request.nextUrl.pathname.startsWith("/restricted")
             && request.nextauth.token?.role !== "boss") {
@@ -24,7 +24,7 @@ export default withAuth(
             )
         }
 
-        const { hasWidgetOwnerAccess, hasWidgetViewAccess, owners, viewers } = checkWidgetAccess(request.nextUrl.pathname, request.nextauth.token?.username, request.nextauth.token?.role);
+        const { hasWidgetOwnerAccess, hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, request.nextUrl.pathname, request.nextauth.token?.username, request.nextauth.token?.role);
 
         if (!hasWidgetViewAccess) {
             const deniedUrl = new URL("/denied", request.url);

@@ -12,6 +12,9 @@ export const roleSchema = z.enum(["user", "admin", "boss"]);
 export type TRoleWithoutBossSchema = z.infer<typeof roleWithoutBossSchema>;
 export const roleWithoutBossSchema = z.enum(["user", "admin"]);
 
+export type TGroupSchema = z.infer<typeof groupSchema>;
+export const groupSchema = z.string().toLowerCase().min(1).max(100);
+
 
 export type TSignUpSchema = z.infer<typeof signUpSchema>;
 
@@ -96,4 +99,9 @@ export const updateRoleAdminSchema = signUpSchema.pick({
     user_updated_by: true,
 }).extend({
     role: roleWithoutBossSchema,
+});
+
+export const groupsUserSchema = z.object({
+    groups: groupSchema.array(),
+    username: usernameSchema,
 });

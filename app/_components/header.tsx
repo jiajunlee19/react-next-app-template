@@ -10,13 +10,13 @@ import { CrossIcon, DarkIcon, HamburgerIcon, LightIcon, SearchIcon } from "@/app
 import { useThemeContext } from "@/app/_context/theme-context";
 import { checkWidgetAccess, widgets } from "@/app/_libs/widgets";
 
-export default function Header() {
+export default async function Header({ baseUrl }: { baseUrl: string }  ) {
 
     const pathname = usePathname();
 
     const { data: session } = useSession();
 
-    const { hasWidgetOwnerAccess, hasWidgetViewAccess, owners, viewers } = checkWidgetAccess(pathname, session?.user.username, session?.user.role);
+    const { hasWidgetOwnerAccess, hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(baseUrl, pathname, session?.user.username, session?.user.role);
 
     const leftNavLinks = [
         { name: "Home", href: "/", icon: <HomeIcon className="h-6" /> },
