@@ -26,6 +26,7 @@
   - [Deploy on Vercel](#deploy-on-vercel)
   - [Containerize with Docker](#containerize-with-docker)
   - [CI/CD with Jenkins](#cicd-with-jenkins)
+  - [Process Management](#process-management)
   - [Others](#others)
 
 <br>
@@ -676,8 +677,10 @@ Jenkins is a DevOps tool. Jenkins pipeline can be designed to automate the insta
 
 ![Jenkins Workflow.png](Misc/Jenkins%20Workflow.PNG)
 
-
-For details, check out the [jenkins-template](https://github.com/jiajunlee19/jenkins-template).
+## Process Management
+PM2 is used to manage our Node application. Think of it as a tool that keeps your apps alive, helps them restart automatically if they crash, and provides useful monitoring features.
+<br>
+Run `npm install pm2 -g` to install pm2 globally. Refer to [react-next-app-template.config.js](react-next-app-template.config.js) for pm2 config.
 
 <br>
 

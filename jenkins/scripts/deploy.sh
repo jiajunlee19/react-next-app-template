@@ -2,10 +2,16 @@
 
 set -e
 
-echo '[info] Deploying ...'
+APP_NAME=$1
 
-echo '[info] npm run start'
+if [ -z "$APP_NAME" ]; then
+    echo "[error] Missing arguments. Usage: ./kill.sh <app_name>"
+    exit 1
+fi
 
-npm run start &
+echo "[info] Deploying ..."
 
-echo '[info] Deploy Completed !'
+echo "[info] pm2 start ${APP_NAME}.config.js --only ${APP_NAME} || pm2 restart ${APP_NAME}"
+pm2 start "${APP_NAME}".config.js --only "${APP_NAME}" || pm2 restart "${APP_NAME}"
+
+echo "[info] Deploy Completed !"

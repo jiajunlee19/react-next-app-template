@@ -2,18 +2,16 @@
 
 set -e
 
-echo '[info] Killing existing listening port process ...'
+APP_NAME=$1
 
-source ./.env || echo '[warn] Failed to read .env, fallback to default.'
-
-echo '[info] Finding localhost 0.0.0.0 TCP listening PORT =' ${PORT:-3000}
-portPID=$(netstat -ano | grep "LISTENING" | grep "TCP" | awk '{print $2,$NF}' | grep "0.0.0.0" | grep ":${PORT:-3000}" | awk '{print $NF}' | sort -u)
-
-if [[ -z "${portPID}" ]]; then 
-    echo '[info] No existing listening port process found !'
-else 
-    echo '[info] Found existing listening port process:' ${portPID}
-    taskkill -F -PID ${portPID} || echo '[warn] Failed to kill process, might be due to the process is not running.'
+if [ -z "$APP_NAME" ]; then
+    echo "[error] Missing arguments. Usage: ./kill.sh <app_name>"
+    exit 1
 fi
 
-echo 'Kill Completed !'
+echo "[info] Killing existing listening port process ..."
+
+echo "[info] pm2 stop ${APP_NAME}"
+pm2 stop "${APP_NAME}" || echo "[warn] Failed to stop ${APP_NAME}!"
+
+echo "Kill Completed !"
