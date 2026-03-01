@@ -5,19 +5,19 @@
 @layer base {
 
   h1 {
-    @apply text-3xl font-extrabold my-[3%] text-black dark:text-white
+    @apply text-3xl font-extrabold my-[3%] max-md:my-8 text-black dark:text-white
   }
 
   h2 {
-    @apply text-2xl font-bold my-[2%] text-black dark:text-white
+    @apply text-2xl font-bold my-[2%] max-md:my-6 text-black dark:text-white
   }
 
   h3 {
-    @apply text-xl font-bold my-[1%] text-black dark:text-white
+    @apply text-xl font-bold my-[1%] max-md:my-4 text-black dark:text-white
   }
 
   h4 {
-    @apply text-lg font-semibold my-[1%] text-black dark:text-white
+    @apply text-lg font-semibold my-[1%] max-md:my-4 text-black dark:text-white
   }
 
   p, span, .text {
@@ -36,7 +36,7 @@
   }
 
   button, .btn {
-    @apply p-[1%] border-2 rounded-xl whitespace-nowrap
+    @apply p-[1%] max-md:p-2 border-2 rounded-xl whitespace-nowrap
             hover:transition hover:duration-300 hover:opacity-80 hover:font-semibold
             hover:active:font-bold
             disabled:opacity-50 disabled:hover:opacity-50 disabled:hover:font-normal
@@ -65,17 +65,17 @@
   }
 
   label {
-    @apply block py-[1%] font-medium text-black dark:text-white
+    @apply block py-[1%] max-md:py-4 font-medium text-black dark:text-white
   }
 
   input, select, textarea {
-    @apply block w-full border rounded-sm p-[1%] mb-[0%] placeholder:italic
+    @apply block w-full border rounded-sm p-[1%] max-md:p-4 mb-[0%] placeholder:italic
           border-black bg-white text-black
           dark:border-white dark:bg-zinc-900 dark:text-white
   }
 
   table {
-    @apply my-[2%] bg-white text-black whitespace-nowrap
+    @apply my-[2%] max-md:my-6 bg-white text-black whitespace-nowrap
             dark:bg-zinc-900 dark:text-white
   }
 
