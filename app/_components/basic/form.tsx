@@ -83,7 +83,7 @@ export default function Form( {formTitle, inputType, rowData, selectOptionData, 
                         <label className="label" htmlFor={key}>{key}: </label>
                         <input name={key} aria-describedby={key+"-error"} className="input" type="text" placeholder="placeholder" defaultValue={getString(rowData?.[key])} required readOnly formNoValidate />
                         {state.error?.[key] && 
-                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] font-semibold text-red-500 dark:text-red-500">
+                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] max-md:mb-2 font-semibold text-red-500 dark:text-red-500">
                             {state.error[key][0]}
                         </p>
                         }
@@ -100,7 +100,7 @@ export default function Form( {formTitle, inputType, rowData, selectOptionData, 
                             {generateSelectOption(key, selectOptionData)}
                         </select>
                         {state.error?.[key] && 
-                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] font-semibold text-red-500 dark:text-red-500">
+                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] max-md:mb-2 font-semibold text-red-500 dark:text-red-500">
                             {state.error[key][0]}
                         </p>
                         }
@@ -114,7 +114,7 @@ export default function Form( {formTitle, inputType, rowData, selectOptionData, 
                         <label className="label" htmlFor={key}>{key}: </label>
                         <input name={key} aria-describedby={key+"-error"} className="input" type="text" placeholder="placeholder" defaultValue={getString(rowData?.[key])} required readOnly formNoValidate />
                         {state.error?.[key] && 
-                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] font-semibold text-red-500 dark:text-red-500">
+                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] max-md:mb-2 font-semibold text-red-500 dark:text-red-500">
                             {state.error[key][0]}
                         </p>
                         }
@@ -128,7 +128,7 @@ export default function Form( {formTitle, inputType, rowData, selectOptionData, 
                         <label className="label" htmlFor={key}>{key}: </label>
                         <input name={key} aria-describedby={key+"-error"} className="input" type="number" step="any" required formNoValidate />
                         {state.error?.[key] && 
-                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] font-semibold text-red-500 dark:text-red-500">
+                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] max-md:mb-2 font-semibold text-red-500 dark:text-red-500">
                             {state.error[key][0]}
                         </p>
                         }
@@ -142,7 +142,7 @@ export default function Form( {formTitle, inputType, rowData, selectOptionData, 
                         <label className="label" htmlFor={key}>{key}: </label>
                         <input name={key} aria-describedby={key+"-error"} className="input" type={inputType[key]} required formNoValidate />
                         {state.error?.[key] && 
-                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] font-semibold text-red-500 dark:text-red-500">
+                        <p id={key+"-error"} aria-live="polite" className="mb-[2%] max-md:mb-2 font-semibold text-red-500 dark:text-red-500">
                             {state.error[key][0]}
                         </p>
                         }
@@ -165,7 +165,7 @@ export default function Form( {formTitle, inputType, rowData, selectOptionData, 
     }
 
     return (
-        <form ref={formRef} className="my-[2%] mx-[2%]" action={dispatch}>
+        <form ref={formRef} className="my-[2%] mx-[2%] max-md:my-2 max-md:mx-2" action={dispatch}>
             <h2>{formTitle}</h2>
             {generateFormInput(inputType, rowData, selectOptionData)}
             <SubmitButton buttonClass="btn-ok mr-4 mt-10" buttonTitle="Submit" onButtonClick={handleSubmitClick(action)} submitingButtonTitle="Submitting" />

@@ -19,7 +19,7 @@ export default function Intro() {
                 </div>
             </div>
 
-            <p className="my-[2%] leading-[1.5] text-balance">
+            <p className="my-[2%] max-md:my-2 leading-[1.5] text-balance">
                 <span>
                     Hello, I am <b>Jia Jun Lee</b>, a complex problem-solver with automation and analytical mindset, capable of self-learn and adapts to new technology/industry skills, posses various technical skillsets and ability to apply them in solution of business problems.
                 </span>
