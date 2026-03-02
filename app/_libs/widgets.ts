@@ -107,7 +107,7 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
     });
     const checkIfUserInViewerGroups = await resCheckIfUserInViewerGroups.json();
     const isUserInViewerGroups = "isUserInGroups" in checkIfUserInViewerGroups ? checkIfUserInViewerGroups.isUserInGroups : false;
-    if (viewers.includes("everone") || viewers.includes(username) || isUserInViewerGroups) {
+    if (viewers.includes("everyone") || viewers.includes(username) || isUserInViewerGroups) {
         return {
             hasWidgetOwnerAccess: false,
             hasWidgetViewAccess: true,
