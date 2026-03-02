@@ -15,9 +15,7 @@ export const roleWithoutBossSchema = z.enum(["user", "admin"]);
 export type TGroupSchema = z.infer<typeof groupSchema>;
 export const groupSchema = z.string().toLowerCase().min(1).max(100);
 
-
 export type TSignUpSchema = z.infer<typeof signUpSchema>;
-
 export const signUpSchema = z.object({
     user_uid: z.string().toLowerCase().min(1).uuid(),
     username: usernameSchema,
@@ -28,33 +26,23 @@ export const signUpSchema = z.object({
     user_updated_by: z.string().toLowerCase().min(1).uuid().optional(),
 });
 
-
 export type TSignInSchema = z.infer<typeof signInSchema>;
-
 export const signInSchema = signUpSchema.pick({
     username: true,
     password: true,
 });
 
-
-
 export type TReadUserSchema = z.infer<typeof readUserSchema>;
-
 export const readUserSchema = signUpSchema.extend({
     user_updated_by: usernameSchema,
 }).partial();
 
-
-
 export type TReadUserWithoutPassSchema = z.infer<typeof readUserWithoutPassSchema>;
-
 export const readUserWithoutPassSchema = readUserSchema.omit({
     password: true,
 });
 
-
 export type TReadUserWithoutPassAdminSchema = z.infer<typeof readUserWithoutPassAdminSchema>;
-
 export const readUserWithoutPassAdminSchema = readUserSchema.omit({
     password: true,
     role: true,
@@ -62,9 +50,7 @@ export const readUserWithoutPassAdminSchema = readUserSchema.omit({
     role: roleWithoutBossSchema,
 });
 
-
 export type TUpdateUserSchema = z.infer<typeof updateUserSchema>;
-
 export const updateUserSchema = signUpSchema.pick({
     user_uid: true,
     password: true,
@@ -72,18 +58,12 @@ export const updateUserSchema = signUpSchema.pick({
     user_updated_by: true,
 });
 
-
-
 export type TDeleteUserSchema = z.infer<typeof deleteUserSchema>;
-
 export const deleteUserSchema = signUpSchema.pick({
     user_uid: true,
 });
 
-
-
 export type TUpdateRoleSchema = z.infer<typeof updateRoleSchema>;
-
 export const updateRoleSchema = signUpSchema.pick({
     user_uid: true,
     role: true,
@@ -92,7 +72,6 @@ export const updateRoleSchema = signUpSchema.pick({
 });
 
 export type TUpdateRoleAdminSchema = z.infer<typeof updateRoleAdminSchema>;
-
 export const updateRoleAdminSchema = signUpSchema.pick({
     user_uid: true,
     user_updated_dt: true,

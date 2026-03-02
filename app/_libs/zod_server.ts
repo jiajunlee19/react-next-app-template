@@ -15,15 +15,13 @@ export const createExampleSchema = z.object({
 });
 
 export type TReadExampleSchema = z.infer<typeof readExampleSchema>;
-
 export const readExampleSchema = createExampleSchema.extend({
     example_updated_by: z.string().toLowerCase().min(1).max(100),
 }).partial();
 
-export const updateExampleSchema = createExampleSchema.pick({
-    example_uid: true,
-    example_updated_dt: true,
-    example_updated_by: true,
+export const updateExampleSchema = createExampleSchema.omit({
+    example: true,
+    example_created_dt: true,
 });
 
 export const deleteExampleSchema = createExampleSchema.pick({
