@@ -36,7 +36,7 @@
   }
 
   button, .btn {
-    @apply p-[1%] max-md:p-2 border-2 rounded-xl whitespace-nowrap
+    @apply p-[1%] border-2 rounded-xl whitespace-nowrap
             hover:transition hover:duration-300 hover:opacity-80 hover:font-semibold
             hover:active:font-bold
             disabled:opacity-50 disabled:hover:opacity-50 disabled:hover:font-normal
