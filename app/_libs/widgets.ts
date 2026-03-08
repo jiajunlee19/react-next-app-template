@@ -1,21 +1,16 @@
-import { TRole } from "@/app/_libs/types";
+import { type TRole } from "@/app/_libs/types";
+import { type TCreateWidgetSchema } from "@/app/_libs/zod_server";
 
-type TWidget = {
-    name: string,
-    description: string,
-    group: string,
-    href: string,
-    tabs: { name: string, href: string }[],
-    owners: string[],
-    viewers: string[],
-};
-
-export const widgets: TWidget[] = [
+export const widgets: TCreateWidgetSchema[] = [
     {
-        name: "Example", description: "A demo example", group: "GROUP1", href: "/authenticated/example",
-        tabs: [{name: "tab1", href: "/authenticated/example/tab1"}, {name: "tab2", href: "/authenticated/example/tab2"}],
-        owners: ['jiajunlee'],
-        viewers: ['jiajunlee'],
+        widget_uid: "BC0C0BBC-FCBE-5D85-8A5C-5F603AECBEB2",
+        widget_name: "Example", widget_description: "A demo example", widget_group: "GROUP1", widget_href: "/authenticated/example",
+        widget_tabs: JSON.stringify([{name: "tab1", href: "/authenticated/example/tab1"}, {name: "tab2", href: "/authenticated/example/tab2"}]),
+        widget_owners: "jiajunlee",
+        widget_viewers: "jiajunlee",
+        widget_created_dt: new Date(),
+        widget_updated_dt: new Date(),
+        widget_updated_by: "BC0C0BBC-FCBE-5D85-8A5C-5F603AECBEB2",
     }
 ];
 
@@ -50,7 +45,7 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
         }
     }
 
-    const widget = widgets.find((widget) => pathname.startsWith(widget.href));
+    const widget = widgets.find((widget) => pathname.startsWith(widget.widget_href));
 
     // Grant to everyone if its not a widget
     if (!widget) return {
@@ -62,20 +57,20 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
 
     // If no widget viewers defined, default to everyone
     let viewers: string[];
-    if (!widget.viewers || widget.viewers.length <= 0) {
+    if (!widget.widget_viewers || widget.widget_viewers.length <= 0) {
         viewers = ["everyone"];
     }
     else {
-        viewers = widget.viewers;
+        viewers = widget.widget_viewers.split(",");
     }
 
     // If no widget owners defined, default to viewers
     let owners: string[];
-    if (!widget.owners || widget.owners.length <= 0) {
+    if (!widget.widget_owners || widget.widget_owners.length <= 0) {
         owners = viewers;
     }
     else {
-        owners = widget.owners
+        owners = widget.widget_owners.split(",");
     }
 
     // Widget owners

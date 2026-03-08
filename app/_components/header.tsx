@@ -9,6 +9,7 @@ import { twMerge } from "tailwind-merge";
 import { CrossIcon, DarkIcon, HamburgerIcon, LightIcon, SearchIcon } from "@/app/_components/basic/icons";
 import { useThemeContext } from "@/app/_context/theme-context";
 import { checkWidgetAccess, widgets } from "@/app/_libs/widgets";
+import { type TWidgetTabSchema } from "@/app/_libs/zod_server";
 
 export default function Header({ baseUrl }: { baseUrl: string }  ) {
 
@@ -69,8 +70,11 @@ export default function Header({ baseUrl }: { baseUrl: string }  ) {
     // Find current widget and its tabs based on pathname
     const currentWidget = useMemo(() => {
         for (const widget of widgets) {
-            if (pathname.startsWith(widget.href)) {
-                return widget;
+            if (pathname.startsWith(widget.widget_href)) {
+                return {
+                    ...widget,
+                    widget_tabs: widget.widget_tabs ? JSON.parse(widget.widget_tabs) as TWidgetTabSchema[] : [],
+                };
             }
         }
         return null;
@@ -142,16 +146,16 @@ export default function Header({ baseUrl }: { baseUrl: string }  ) {
                             {currentWidget && <div className="flex-shrink-0 block h-5 w-px bg-zinc-900 dark:bg-white" />}
 
                             {/* Dynamically show current widget */}
-                            {currentWidget && <Link key={currentWidget.name} href={currentWidget.href} className={twMerge("no-underline", (pathname === currentWidget.href) && "font-semibold text-purple-500 dark:text-purple-200")}>{currentWidget.name}</Link>}
+                            {currentWidget && <Link key={currentWidget.widget_name} href={currentWidget.widget_href} className={twMerge("no-underline", (pathname === currentWidget.widget_href) && "font-semibold text-purple-500 dark:text-purple-200")}>{currentWidget.widget_name}</Link>}
 
                             {/* Divider between Widget and Tabs */}
-                            {currentWidget && currentWidget.tabs && currentWidget.tabs.length > 0 && <div className="flex-shrink-0 block h-5 w-px bg-zinc-900 dark:bg-white" />}
+                            {currentWidget && currentWidget.widget_tabs && currentWidget.widget_tabs.length > 0 && <div className="flex-shrink-0 block h-5 w-px bg-zinc-900 dark:bg-white" />}
 
                             {/* Dynamic tabs between leftNav and middleNav */}
                             <div>
-                                {currentWidget && currentWidget.tabs && currentWidget.tabs.length > 0 && (
+                                {currentWidget && currentWidget.widget_tabs && currentWidget.widget_tabs.length > 0 && (
                                     <nav className="flex items-center gap-4 overflow-x-auto">
-                                        {currentWidget.tabs.map((tab) => {
+                                        {currentWidget.widget_tabs.map((tab) => {
                                             return (
                                                 <Link key={tab.name} href={tab.href} className={twMerge("no-underline", (pathname === tab.href) && "font-semibold text-purple-500 dark:text-purple-200")}>
                                                     {tab.name}
@@ -217,14 +221,14 @@ export default function Header({ baseUrl }: { baseUrl: string }  ) {
                     }>
 
                     {/* Dynamic sideNavs for current widget */}
-                    {currentWidget && currentWidget.tabs && currentWidget.tabs.length > 0 ? (
+                    {currentWidget && currentWidget.widget_tabs && currentWidget.widget_tabs.length > 0 ? (
                         <li>
-                            <h2>{currentWidget.name}</h2>
+                            <h2>{currentWidget.widget_name}</h2>
                             <div className="relative my-3 pl-2">
                                 <div className="absolute inset-x-0 top-0 h-16 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5 origin-[50%_50%_1px]" />
                                 <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/50 transform-none origin-[50%_50%_1px]" />
                                 <ul role="list">
-                                    {currentWidget.tabs.map((link) => {
+                                    {currentWidget.widget_tabs.map((link) => {
                                         return (
                                             <li key={link.name} className="relative">
                                                 <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>

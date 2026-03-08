@@ -11,7 +11,7 @@ export function HomeComponent() {
 
     // Get unique groups from widgets: ["GROUP1", "GROUP2", ...]
     const uniqueGroups = useMemo(() => {
-        const groups = widgets.map(widget => widget.group);
+        const groups = widgets.map(widget => widget.widget_group);
         return [...new Set(groups)];
     }, []);
 
@@ -19,10 +19,10 @@ export function HomeComponent() {
     const groupedWidgets = useMemo(() => {
         const grouped: {[key: string]: typeof widgets} = {};
         widgets.forEach(widget => {
-            if (!grouped[widget.group]) {
-                grouped[widget.group] = [];
+            if (!grouped[widget.widget_group]) {
+                grouped[widget.widget_group] = [];
             }
-            grouped[widget.group].push(widget);
+            grouped[widget.widget_group].push(widget);
         })
         return grouped;
     }, []);
@@ -56,10 +56,10 @@ export function HomeComponent() {
                     <details open>
                         <summary className="text">{group}</summary>
                         <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4">
-                            {groupWidgets.filter((widget) => widget.name.toLowerCase().includes(search.toLowerCase()) || widget.description.toLowerCase().includes(search.toLowerCase())).map((widget) => (
-                                <Link key={widget.href} href={widget.href} className="no-underline border rounded-lg border-black dark:border-white px-2 pb-2">
-                                    <h3>{widget.name}</h3>
-                                    <p>{widget.description}</p>
+                            {groupWidgets.filter((widget) => widget.widget_name.toLowerCase().includes(search.toLowerCase()) || widget.widget_description.toLowerCase().includes(search.toLowerCase())).map((widget) => (
+                                <Link key={widget.widget_href} href={widget.widget_href} className="no-underline border rounded-lg border-black dark:border-white px-2 pb-2">
+                                    <h3>{widget.widget_name}</h3>
+                                    <p>{widget.widget_description}</p>
                                 </Link>
                             ))}
                         </div>
