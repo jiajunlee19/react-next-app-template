@@ -15,6 +15,26 @@ CREATE TABLE "jiajunleeWeb"."user" (
         REFERENCES "jiajunleeWeb"."user"(user_uid)
 )
 
+CREATE TABLE "jiajunleeWeb"."widget" (
+    widget_uid UUID NOT NULL,
+    widget_name VARCHAR(100) NOT NULL,
+    widget_description VARCHAR(100) NOT NULL,
+    widget_group VARCHAR(100) NOT NULL,
+    widget_href VARCHAR(100) NOT NULL,
+    widget_tabs JSONB,
+    widget_owners TEXT,
+    widget_viewers TEXT,
+    widget_created_dt TIMESTAMP NOT NULL,
+    widget_updated_dt TIMESTAMP NOT NULL,
+    widget_updated_by UUID NOT NULL,
+
+    CONSTRAINT pk_widget_uid PRIMARY KEY (widget_uid),
+    CONSTRAINT fk_widget_updated_by FOREIGN KEY (widget_updated_by)
+        REFERENCES "jiajunleeWeb"."user"(user_uid)
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION
+)
+
 CREATE TABLE "jiajunleeWeb"."example" (
     example_uid UUID NOT NULL,
     example VARCHAR(100) NOT NULL,
