@@ -30,19 +30,6 @@ export async function readWidgetTotalPage(itemsPerPage: number | unknown, query?
         redirect("/denied");
     }
 
-    const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/widget", session.user.username, session.user.role);
-
-    if (!hasWidgetViewAccess) {
-        const info = {
-            username: session.user.username,
-            requestedPath: "/authenticated/widget",
-            owners,
-            viewers,
-        };
-        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
-        redirect(`/denied?info=${encodedInfo}`);
-    }
-
     if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
         redirect("/tooManyRequests");
     }
@@ -89,7 +76,12 @@ export async function readWidgetTotalPage(itemsPerPage: number | unknown, query?
         throw new Error(getErrorMessage(err))
     }
     
-    const totalPage = Math.ceil(parsedForm.data.length / parsedItemsPerPage);
+    // User can only read those widgets with hasWidgetOwnerAccess
+    const accessChecks = await Promise.all(
+        parsedForm.data.map(widget => checkWidgetAccess(parsedEnv.BASE_URL, widget.widget_href, session.user.username, session.user.role))
+    )
+    const ownedWidgets = parsedForm.data.filter((_, i) => accessChecks[i].hasWidgetOwnerAccess);
+    const totalPage = Math.ceil(ownedWidgets.length / parsedItemsPerPage);
     return totalPage
 };
 
@@ -135,8 +127,8 @@ export async function readWidgetByPage(itemsPerPage: number | unknown, currentPa
                             LEFT JOIN "jiajunleeWeb"."user" u ON w.widget_updated_by = u.user_uid
                             WHERE (CAST(w.widget_uid AS TEXT) LIKE $1 OR w.widget LIKE $1)
                             ORDER BY w.widget ASC
-                            OFFSET $2 LIMIT $3;`,
-                            [QUERY, OFFSET, parsedItemsPerPage]
+                            `,
+                            [QUERY]
             );
             parsedForm = readWidgetSchema.array().safeParse(result.rows.map(row => ({
                 ...row,
@@ -149,16 +141,13 @@ export async function readWidgetByPage(itemsPerPage: number | unknown, currentPa
         else {
             let pool = await sql.connect(msSqlConfig);
             const result = await pool.request()
-                            .input('offset', sql.Int, OFFSET)
-                            .input('limit', sql.Int, parsedItemsPerPage)
                             .input('query', sql.VarChar, QUERY)
                             .query`SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') as widget_updated_by
                                     FROM [jiajunleeWeb].[widget] w
                                     left join [jiajunleeWeb].[user] u ON w.widget_updated_by = u.user_uid
                                     WHERE (w.widget_uid like @query OR w.widget like @query)
                                     ORDER BY w.widget asc
-                                    OFFSET @offset ROWS
-                                    FETCH NEXT @limit ROWS ONLY;
+                                    ;
                             `;
             parsedForm = readWidgetSchema.array().safeParse(result.recordset.map(row => ({
                 ...row,
@@ -175,7 +164,13 @@ export async function readWidgetByPage(itemsPerPage: number | unknown, currentPa
         throw new Error(getErrorMessage(err))
     }
 
-    return parsedForm.data
+    // User can only read those widgets with hasWidgetOwnerAccess
+    const accessChecks = await Promise.all(
+        parsedForm.data.map(widget => checkWidgetAccess(parsedEnv.BASE_URL, widget.widget_href, session.user.username, session.user.role))
+    )
+    const ownedWidgets = parsedForm.data.filter((_, i) => accessChecks[i].hasWidgetOwnerAccess);
+
+    return ownedWidgets.slice(OFFSET, OFFSET + parsedItemsPerPage)
 };
 
 export async function readWidget() {
@@ -185,19 +180,6 @@ export async function readWidget() {
 
     if (!session) {
         redirect("/denied");
-    }
-
-    const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/widget", session.user.username, session.user.role);
-
-    if (!hasWidgetViewAccess) {
-        const info = {
-            username: session.user.username,
-            requestedPath: "/authenticated/widget",
-            owners,
-            viewers,
-        };
-        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
-        redirect(`/denied?info=${encodedInfo}`);
     }
 
     if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
@@ -262,19 +244,6 @@ export async function readWidgetUid(widget: string | unknown) {
 
     if (!session) {
         redirect("/denied");
-    }
-
-    const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/widget", session.user.username, session.user.role);
-
-    if (!hasWidgetViewAccess) {
-        const info = {
-            username: session.user.username,
-            requestedPath: "/authenticated/widget",
-            owners,
-            viewers,
-        };
-        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
-        redirect(`/denied?info=${encodedInfo}`);
     }
 
     if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
@@ -343,17 +312,8 @@ export async function createWidget(prevState: State | unknown, formData: FormDat
 
     const session = await getServerSession(options);
 
-    if (!session) {
+    if (!session || (session.user.role !== 'boss' && session.user.role !== 'admin')) {
         redirect("/denied");
-    }
-
-    const { hasWidgetOwnerAccess, owners } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/widget", session.user.username, session.user.role);
-
-    if (!hasWidgetOwnerAccess) {
-        return { 
-            error: {error: [`Access denied. Kindly contact owners (${owners}) to manage the widget.`]},
-            message: `Access denied. Kindly contact owners (${owners}) to manage the widget.`
-        };
     }
 
     if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
@@ -381,7 +341,10 @@ export async function createWidget(prevState: State | unknown, formData: FormDat
     if (!parsedForm.success) {
         return { 
             error: parsedForm.error.flatten().fieldErrors,
-            message: "Invalid input provided, failed to create widget!"
+            message: "Invalid input provided, failed to create widget!",
+            data: Object.fromEntries(
+                Object.entries(Object.fromEntries(formData.entries())).map(([k, v]) => [k, v.toString()])
+            ),
         };
     };
 
@@ -494,15 +457,6 @@ export async function updateWidget(prevState: State | unknown, formData: FormDat
         redirect("/denied");
     }
 
-    const { hasWidgetOwnerAccess, owners} = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/widget", session.user.username, session.user.role);
-
-    if (!hasWidgetOwnerAccess) {
-        return { 
-            error: {error: [`Access denied. Kindly contact owners (${owners}) to manage the widget.`]},
-            message: `Access denied. Kindly contact owners (${owners}) to manage the widget.`
-        };
-    }
-
     if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
         return { 
             error: {error: ["Too many requests, try again later."]},
@@ -525,9 +479,32 @@ export async function updateWidget(prevState: State | unknown, formData: FormDat
     if (!parsedForm.success) {
         return { 
             error: parsedForm.error.flatten().fieldErrors,
-            message: "Invalid input provided, failed to update widget!"
+            message: "Invalid input provided, failed to update widget!",
+            data: Object.fromEntries(
+                Object.entries(Object.fromEntries(formData.entries())).map(([k, v]) => [k, v.toString()])
+            ),
         };
     };
+
+    let widgetHref: string | undefined;
+    try {
+        const widgetData = await readWidgetByUid(parsedForm.data.widget_uid);
+        widgetHref = widgetData?.widget_href ?? undefined;
+    } catch {
+        return {
+            error: { error: ["Widget not found, failed to update widget!"]},
+            message: "Widget not found, failed to update widget!",
+        };
+    }
+
+    const { hasWidgetOwnerAccess, owners } = await checkWidgetAccess(parsedEnv.BASE_URL, widgetHref, session.user.username, session.user.role);
+
+    if (!hasWidgetOwnerAccess) {
+        return {
+            error: { error: [`Access denied. You are not part of the owners (${owners}).`]},
+            message: `Access denied. You are not part of the owners (${owners}).`,
+        };
+    }
 
     try {
         if (parsedEnv.DB_TYPE === "PG") {
@@ -615,19 +592,30 @@ export async function deleteWidget(widget_uid: string): StatePromise {
         redirect("/denied");
     }
 
-    const { hasWidgetOwnerAccess, owners } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/widget", session.user.username, session.user.role);
-
-    if (!hasWidgetOwnerAccess) {
-        return { 
-            error: {error: [`Access denied. Kindly contact owners (${owners}) to manage the widget.`]},
-            message: `Access denied. Kindly contact owners (${owners}) to manage the widget.`
-        };
-    }
-
     if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
         return { 
             error: {error: ["Too many requests, try again later."]},
             message: "Too many requests, try again later."
+        };
+    }
+
+    let widgetHref: string | undefined;
+    try {
+        const widgetData = await readWidgetByUid(parsedForm.data.widget_uid);
+        widgetHref = widgetData?.widget_href ?? undefined;
+    } catch {
+        return {
+            error: { error: ["Widget not found, failed to delete widget!"]},
+            message: "Widget not found, failed to delete widget!",
+        };
+    }
+
+    const { hasWidgetOwnerAccess, owners } = await checkWidgetAccess(parsedEnv.BASE_URL, widgetHref, session.user.username, session.user.role);
+
+    if (!hasWidgetOwnerAccess) {
+        return {
+            error: { error: [`Access denied. You are not part of the owners (${owners}).`]},
+            message: `Access denied. You are not part of the owners (${owners}).`,
         };
     }
 
@@ -676,19 +664,6 @@ export async function readWidgetByUid(widget_uid: string) {
 
     if (!session) {
         redirect("/denied");
-    }
-
-    const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/widget", session.user.username, session.user.role);
-
-    if (!hasWidgetViewAccess) {
-        const info = {
-            username: session.user.username,
-            requestedPath: "/authenticated/widget",
-            owners,
-            viewers,
-        };
-        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
-        redirect(`/denied?info=${encodedInfo}`);
     }
 
     if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {

@@ -8,10 +8,10 @@ import { usePathname } from "next/navigation"
 import { twMerge } from "tailwind-merge";
 import { CrossIcon, DarkIcon, HamburgerIcon, LightIcon, SearchIcon } from "@/app/_components/basic/icons";
 import { useThemeContext } from "@/app/_context/theme-context";
-import { checkWidgetAccess, widgets } from "@/app/_libs/widgets";
-import { type TWidgetTabSchema } from "@/app/_libs/zod_server";
+import { checkWidgetAccess } from "@/app/_libs/widgets";
+import { type TReadWidgetSchema } from "@/app/_libs/zod_server";
 
-export default function Header({ baseUrl }: { baseUrl: string }  ) {
+export default function Header({ baseUrl }: { baseUrl: string }) {
 
     const pathname = usePathname();
 
@@ -24,6 +24,20 @@ export default function Header({ baseUrl }: { baseUrl: string }  ) {
         viewers?: string[];
     }>({});
     
+    const [widgets, setWidgets] = useState<TReadWidgetSchema[]>([]);
+    useEffect(() => {
+        const fetchWidgets = async () => {
+            try {
+                const res = await fetch(`${baseUrl}/api/readWidgets`);
+                const data = await res.json();
+                setWidgets(data.widgets ?? []);
+            } catch {
+                setWidgets([]);
+            }
+        };
+        fetchWidgets();
+    }, [baseUrl]);
+
     useEffect(() => {
         const fetchAccess = async () => {
             if (session?.user) {
@@ -34,12 +48,22 @@ export default function Header({ baseUrl }: { baseUrl: string }  ) {
         fetchAccess();
       }, [baseUrl, pathname, session]);
     
+    // Find current widget and its tabs based on pathname
+    const currentWidget = useMemo(() => {
+        for (const widget of widgets) {
+            if (pathname.startsWith(widget.widget_href ?? "")) {
+                return widget;
+            }
+        }
+        return null;
+    }, [pathname, widgets])
+
     const leftNavLinks = [
         { name: "Home", href: "/", icon: <HomeIcon className="h-6" /> },
     ];
 
     const midNavLinks = [
-        { name: "Help", href: "/help", icon: <QuestionMarkCircleIcon className="h-6" /> },
+        { name: "widget", href: "/authenticated/widget", icon: <QuestionMarkCircleIcon className="h-6" /> },
     ];
 
     const rightNavLinksA = [
@@ -66,19 +90,6 @@ export default function Header({ baseUrl }: { baseUrl: string }  ) {
     ];
 
     const [isShowNav, setIsShowNav] = useState(false);
-
-    // Find current widget and its tabs based on pathname
-    const currentWidget = useMemo(() => {
-        for (const widget of widgets) {
-            if (pathname.startsWith(widget.widget_href)) {
-                return {
-                    ...widget,
-                    widget_tabs: widget.widget_tabs ? JSON.parse(widget.widget_tabs) as TWidgetTabSchema[] : [],
-                };
-            }
-        }
-        return null;
-    }, [pathname])
 
     const handleNavClick = (e: React.MouseEvent<HTMLButtonElement>) => {
         setIsShowNav(!isShowNav);
@@ -146,7 +157,7 @@ export default function Header({ baseUrl }: { baseUrl: string }  ) {
                             {currentWidget && <div className="flex-shrink-0 block h-5 w-px bg-zinc-900 dark:bg-white" />}
 
                             {/* Dynamically show current widget */}
-                            {currentWidget && <Link key={currentWidget.widget_name} href={currentWidget.widget_href} className={twMerge("no-underline", (pathname === currentWidget.widget_href) && "font-semibold text-purple-500 dark:text-purple-200")}>{currentWidget.widget_name}</Link>}
+                            {currentWidget && currentWidget.widget_href && <Link key={currentWidget.widget_name} href={currentWidget.widget_href} className={twMerge("no-underline", (pathname === currentWidget.widget_href) && "font-semibold text-purple-500 dark:text-purple-200")}>{currentWidget.widget_name}</Link>}
 
                             {/* Divider between Widget and Tabs */}
                             {currentWidget && currentWidget.widget_tabs && currentWidget.widget_tabs.length > 0 && <div className="flex-shrink-0 block h-5 w-px bg-zinc-900 dark:bg-white" />}

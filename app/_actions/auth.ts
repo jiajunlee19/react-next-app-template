@@ -237,7 +237,7 @@ export async function readUserByPageAdmin(itemsPerPage: number | unknown, curren
                             .input('limit', sql.Int, parsedItemsPerPage)
                             .input('query', sql.VarChar, QUERY)
                             .query`SELECT u1.user_uid, u1.username, u1.role, COALESCE(u.username, 'system') as user_updated_by
-                                    FROM [jiajunleeWeb].[user]
+                                    FROM [jiajunleeWeb].[user] u1
                                     left join [jiajunleeWeb].[user] u ON u1.user_updated_by = u.user_uid
                                     WHERE u1.role != 'boss' AND (u1.user_uid like @query OR u1.username like @query)
                                     ORDER BY u1.username asc

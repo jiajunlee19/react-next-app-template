@@ -17,7 +17,7 @@ export default function CreateExample() {
                 {label: "Create", href: "/authenticated/example/create", active: true}
             ]} />
             <Form 
-                formTitle="Create Box Example"
+                formTitle="Create Example"
                 inputType={{
                     'example': 'text',
                 }}

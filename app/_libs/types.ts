@@ -11,7 +11,7 @@ export type TFormMode = "create" | "update" | null;
 export type TRole = "user" | "admin" | "boss";
 
 export type TRowData = {
-    [key: string]: string | number | Date,
+    [key: string]: string | number | Date | Object,
 };
 
 export type TInputType = {
@@ -23,6 +23,9 @@ export type State = {
         [key: string]: string[]
     } |  null,
     message: string | null,
+    data?: {
+        [key: string]: string
+    } | null,
 };
 
 export type StatePromise = Promise<State>;

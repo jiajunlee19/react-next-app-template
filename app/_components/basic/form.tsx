@@ -72,7 +72,7 @@ export default function Form( {formTitle, inputType, rowData, selectOptionData, 
             if (inputType[key] === 'hidden') {
                 return (
                     <React.Fragment key={key}>
-                        <input name={key} aria-describedby={key+"-error"} className="input" type="text" placeholder="placeholder" defaultValue={getString(rowData?.[key])} required readOnly hidden formNoValidate />
+                        <input name={key} aria-describedby={key+"-error"} className="input" type="text" placeholder="placeholder" defaultValue={state.data?.[key] ?? getString(rowData?.[key])} readOnly hidden formNoValidate />
                     </React.Fragment>
                 );
             }
@@ -81,7 +81,7 @@ export default function Form( {formTitle, inputType, rowData, selectOptionData, 
                 return (
                     <React.Fragment key={key}>
                         <label className="label" htmlFor={key}>{key}: </label>
-                        <input name={key} aria-describedby={key+"-error"} className="input" type="text" placeholder="placeholder" defaultValue={getString(rowData?.[key])} required readOnly formNoValidate />
+                        <input name={key} aria-describedby={key+"-error"} className="input" type="text" placeholder="placeholder" defaultValue={state.data?.[key] ?? getString(rowData?.[key])} readOnly formNoValidate />
                         {state.error?.[key] && 
                         <p id={key+"-error"} aria-live="polite" className="mb-[2%] max-md:mb-2 font-semibold text-red-500 dark:text-red-500">
                             {state.error[key][0]}
@@ -95,7 +95,7 @@ export default function Form( {formTitle, inputType, rowData, selectOptionData, 
                 return (
                     <React.Fragment key={key}>
                         <label className="label" htmlFor={key}>{key}: </label>
-                        <select name={key} aria-describedby={key+"-error"} className="input" defaultValue={getString(rowData?.[key]) || ""} required>
+                        <select name={key} aria-describedby={key+"-error"} className="input" defaultValue={state.data?.[key] ?? getString(rowData?.[key]) ?? ""}>
                             <option value="" disabled></option>
                             {generateSelectOption(key, selectOptionData)}
                         </select>
@@ -112,7 +112,7 @@ export default function Form( {formTitle, inputType, rowData, selectOptionData, 
                 return (
                     <React.Fragment key={key}>
                         <label className="label" htmlFor={key}>{key}: </label>
-                        <input name={key} aria-describedby={key+"-error"} className="input" type="text" placeholder="placeholder" defaultValue={getString(rowData?.[key])} required readOnly formNoValidate />
+                        <input name={key} aria-describedby={key+"-error"} className="input" type="text" placeholder="placeholder" defaultValue={state.data?.[key] ?? getString(rowData?.[key])} readOnly formNoValidate />
                         {state.error?.[key] && 
                         <p id={key+"-error"} aria-live="polite" className="mb-[2%] max-md:mb-2 font-semibold text-red-500 dark:text-red-500">
                             {state.error[key][0]}
@@ -126,7 +126,7 @@ export default function Form( {formTitle, inputType, rowData, selectOptionData, 
                 return (
                     <React.Fragment key={key}>
                         <label className="label" htmlFor={key}>{key}: </label>
-                        <input name={key} aria-describedby={key+"-error"} className="input" type="number" step="any" required formNoValidate />
+                        <input name={key} aria-describedby={key+"-error"} className="input" type="number" step="any" defaultValue={state.data?.[key] ?? getString(rowData?.[key])} formNoValidate />
                         {state.error?.[key] && 
                         <p id={key+"-error"} aria-live="polite" className="mb-[2%] max-md:mb-2 font-semibold text-red-500 dark:text-red-500">
                             {state.error[key][0]}
@@ -140,7 +140,7 @@ export default function Form( {formTitle, inputType, rowData, selectOptionData, 
                 return (
                     <React.Fragment key={key}>
                         <label className="label" htmlFor={key}>{key}: </label>
-                        <input name={key} aria-describedby={key+"-error"} className="input" type={inputType[key]} required formNoValidate />
+                        <input name={key} aria-describedby={key+"-error"} className="input" type={inputType[key]} defaultValue={state.data?.[key] ?? getString(rowData?.[key])} formNoValidate />
                         {state.error?.[key] && 
                         <p id={key+"-error"} aria-live="polite" className="mb-[2%] max-md:mb-2 font-semibold text-red-500 dark:text-red-500">
                             {state.error[key][0]}

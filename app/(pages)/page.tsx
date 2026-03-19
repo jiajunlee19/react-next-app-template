@@ -1,6 +1,7 @@
 import { HomeComponent } from "@/app/(pages)/component"
 import { getServerSession } from "next-auth/next";
 import { options } from "@/app/_libs/nextAuth_options";
+import { parsedEnv } from "@/app/_libs/zod_env";
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -14,7 +15,7 @@ export default async function Home() {
 
     return (
         <>
-            <HomeComponent />
+            <HomeComponent baseUrl={parsedEnv.BASE_URL} />
         </>
     )
 };

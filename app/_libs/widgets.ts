@@ -1,5 +1,5 @@
 import { type TRole } from "@/app/_libs/types";
-import { type TCreateWidgetSchema } from "@/app/_libs/zod_server";
+import { type TReadWidgetSchema, TCreateWidgetSchema } from "@/app/_libs/zod_server";
 
 export const widgets: TCreateWidgetSchema[] = [
     {
@@ -45,7 +45,10 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
         }
     }
 
-    const widget = widgets.find((widget) => pathname.startsWith(widget.widget_href));
+    const resReadWidgets = await fetch(`${base_url}/api/readWidgets`);
+    const dataWidgets = await resReadWidgets.json();
+    const widgets = dataWidgets.widgets as TReadWidgetSchema[];
+    const widget = widgets.find((widget) => pathname.startsWith(widget.widget_href ?? ""));
 
     // Grant to everyone if its not a widget
     if (!widget) return {
@@ -61,7 +64,7 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
         viewers = ["everyone"];
     }
     else {
-        viewers = widget.widget_viewers.split(",");
+        viewers = widget.widget_viewers;
     }
 
     // If no widget owners defined, default to viewers
@@ -70,7 +73,7 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
         owners = viewers;
     }
     else {
-        owners = widget.widget_owners.split(",");
+        owners = widget.widget_owners;
     }
 
     // Widget owners

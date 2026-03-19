@@ -341,7 +341,10 @@ export async function createExample(prevState: State | unknown, formData: FormDa
     if (!parsedForm.success) {
         return { 
             error: parsedForm.error.flatten().fieldErrors,
-            message: "Invalid input provided, failed to create example!"
+            message: "Invalid input provided, failed to create example!",
+            data: Object.fromEntries(
+                Object.entries(Object.fromEntries(formData.entries())).map(([k, v]) => [k, v.toString()])
+            ),
         };
     };
 
@@ -426,7 +429,10 @@ export async function updateExample(prevState: State | unknown, formData: FormDa
     if (!parsedForm.success) {
         return { 
             error: parsedForm.error.flatten().fieldErrors,
-            message: "Invalid input provided, failed to update example!"
+            message: "Invalid input provided, failed to update example!",
+            data: Object.fromEntries(
+                Object.entries(Object.fromEntries(formData.entries())).map(([k, v]) => [k, v.toString()])
+            ),
         };
     };
 
