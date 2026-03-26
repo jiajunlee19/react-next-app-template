@@ -1,7 +1,7 @@
 import { TRowData } from "@/app/_libs/types";
 
 type NestedObject = {
-    [key: string]: NestedObject | TRowData | string | number | Date,
+    [key: string]: NestedObject | string | number | Date | string[] | number[] | TRowData | TRowData[] | null | undefined,
 };
 
 // convert nested object
@@ -15,11 +15,11 @@ type NestedObject = {
 //     box_part_number: '503-500168', 
 //     box_max_tray: 5
 // }
-export function flattenNestedObject(obj: NestedObject | TRowData | null) {
+export function flattenNestedObject(obj: NestedObject) {
     let result: TRowData = {};
 
     // if obj is null, return it
-    if (!obj) {
+    if (!obj || typeof obj === "undefined") {
         return null
     }
 

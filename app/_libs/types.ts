@@ -11,7 +11,7 @@ export type TFormMode = "create" | "update" | null;
 export type TRole = "user" | "admin" | "boss";
 
 export type TRowData = {
-    [key: string]: string | number | Date | Object,
+    [key: string]: string | number | Date | string[] | number[] | TRowData | TRowData[] | null | undefined,
 };
 
 export type TInputType = {
