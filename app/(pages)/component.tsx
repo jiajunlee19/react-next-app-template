@@ -2,9 +2,24 @@
 
 import Link from "next/link";
 import { widgets } from "@/app/_libs/widgets";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { type TReadWidgetSchema } from "@/app/_libs/zod_server";
 
-export function HomeComponent() {
+export function HomeComponent({ baseUrl }: { baseUrl: string }) {
+
+    const [widgets, setWidgets] = useState<TReadWidgetSchema[]>([]);
+    useEffect(() => {
+        const fetchWidgets = async () => {
+            try {
+                const res = await fetch(`${baseUrl}/api/readWidgets`);
+                const data = await res.json();
+                setWidgets(data.widgets ?? []);
+            } catch {
+                setWidgets([]);
+            }
+        };
+        fetchWidgets();
+    }, [baseUrl]);
 
     const [groupFilter, setGroupFilter] = useState("all");
     const [search, setSearch] = useState("");
@@ -13,19 +28,20 @@ export function HomeComponent() {
     const uniqueGroups = useMemo(() => {
         const groups = widgets.map(widget => widget.widget_group);
         return [...new Set(groups)];
-    }, []);
+    }, [widgets]);
 
     // Group widgets into {"GROUP1": [{name: "Example", group: "GROUP1"}]}
     const groupedWidgets = useMemo(() => {
         const grouped: {[key: string]: typeof widgets} = {};
         widgets.forEach(widget => {
+            if (!widget.widget_group) return;
             if (!grouped[widget.widget_group]) {
                 grouped[widget.widget_group] = [];
             }
             grouped[widget.widget_group].push(widget);
         })
         return grouped;
-    }, []);
+    }, [widgets]);
     
     return (
         <>
@@ -56,8 +72,8 @@ export function HomeComponent() {
                     <details open>
                         <summary className="text">{group}</summary>
                         <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4">
-                            {groupWidgets.filter((widget) => widget.widget_name.toLowerCase().includes(search.toLowerCase()) || widget.widget_description.toLowerCase().includes(search.toLowerCase())).map((widget) => (
-                                <Link key={widget.widget_href} href={widget.widget_href} className="no-underline border rounded-lg border-black dark:border-white px-2 pb-2">
+                            {groupWidgets.filter((widget) => (widget.widget_name ?? "").toLowerCase().includes(search.toLowerCase()) || (widget.widget_description ?? "").toLowerCase().includes(search.toLowerCase())).map((widget) => (
+                                <Link key={widget.widget_href} href={widget.widget_href ?? "#"} className="no-underline border rounded-lg border-black dark:border-white px-2 pb-2">
                                     <h3>{widget.widget_name}</h3>
                                     <p>{widget.widget_description}</p>
                                 </Link>

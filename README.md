@@ -1,6 +1,7 @@
 # Table of Contents
 - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
+  - [Why react-next-app-template exists?](#why-react-next-app-template-exists)
   - [Getting Started](#getting-started)
     - [Installing and Setting Up the Project](#installing-and-setting-up-the-project)
     - [Starting a Local Database for Development Usage](#starting-a-local-database-for-development-usage)
@@ -22,6 +23,7 @@
     - [Search Query](#search-query)
     - [Authentication \& Authorization](#authentication--authorization)
     - [Authentication with LDAP server](#authentication-with-ldap-server)
+  - [Deploying Changes to an Existing Instance](#deploying-changes-to-an-existing-instance)
   - [Learn More](#learn-more)
   - [Deploy on Vercel](#deploy-on-vercel)
   - [Containerize with Docker](#containerize-with-docker)
@@ -36,6 +38,15 @@
 - For quick start guide, navigate to the [Getting Started](#getting-started) section.
 - Most important concepts used in this project are described in [Important Concepts](#important-concepts) section.
 - Take a look on the sample production-deployed website: [https://react-next-app-template.vercel.app/](https://react-next-app-template.vercel.app/)
+
+<br>
+
+## Why react-next-app-template exists?
+`react-next-app-template` is written in React and Typescript, well suited for beginner to advance developers. Its designed to be a reuseable framework for creating web applications, leveraging most of the best practices that I know, such that the new developers can just follow the same structure and focus on the feature enablement without worrying the scaling or hosting part. The core features are outlined below:
+1. **Full-Stack Capabilities**: The framework consists of 4 main parts, including Front-End, Authentication/Middleware Layer, Back-End and CI/CD. Everything are hosted in single place, you don't have the manage things elsewhere.
+2. **One Instance for All**: The framework is designed such that only one instance is needed to be hosted. The instance is hosted by instance-admin. The developers can submit pull-request to make changes to the instance, without worrying the hosting part.
+3. **Widget as Sub-Instance**: Once instance supports multiple widgets. Think of widget as a sub-instance. Typically, widgets will be grouped by Team Name, that means multiple team can manage their own widgets in the same hosted instance without needing to redeploy an entire new instance. Widgets with the same group will be grouped together in the Landing Page.
+4. **No Code Change on Widget Management**: In any scenario that the widget owners need to modify the widget config (eg: granting widget access), there's no code changes required, the config can be updated in the UI and will persist in database.
 
 <br>
 
@@ -92,7 +103,7 @@ This section outlined the quick start guide on how to install and use the templa
     ```bash
     # Spin up the dev-db server
     cd dev-db
-    docker compose --env-file=...env up -d
+    docker compose --env-file=../.env up -d
 
     # Local database data is persisted in the dev-db/postgres_data/ folder
     ```
@@ -563,6 +574,9 @@ This section outlines the important concepts used in this template.
 9. User with `role="admin"` can update any user's role to `user` or `admin` in [/protected/auth/updateRoleByUsername/page.tsx](app/\(pages\)/protected/auth/updateRoleByUsername/page.tsx).
 10. User with `role="boss"` can view all users in [/restricted/auth/user/page.tsx](app/\(pages\)/restricted/auth/user/page.tsx).
 11. User with `role="boss"` can update any user's role in [/restricted/auth/user/[user_uid]/updateRole/page.tsx](app/\(pages\)/restricted/auth/user/[user_uid]/updateRole/page.tsx) or [/restricted/auth/updateRoleByUsername/page.tsx](app/\(pages\)/restricted/auth/updateRoleByUsername/page.tsx).
+12. User with `role="admin"` or `role="boss"` can create/update/delete/view widgets in [/authenticated/widget/page.tsx](app/\(pages\)/authenticated/widget/page.tsx).
+13. User with `hasWidgetOwnerAccess` can update/delete widgets in [/authenticated/widget/page.tsx](app/\(pages\)/authenticated/widget/page.tsx).
+14. User with `hasWidgetViewAccess` can view widgets they have access to in [/authenticated/widget/page.tsx](app/\(pages\)/authenticated/widget/page.tsx).
 
 <br>
 
@@ -638,6 +652,13 @@ This section outlines the important concepts used in this template.
 
     ...
     ```
+
+<br>
+
+## Deploying Changes to an Existing Instance
+Whenever a developer designed some pages and waited to push it to production, the developer will raise a pull-request citing the widget_name, widget_description, widget_group, widget_href, widget_tabs, widget_owners, widget_viewers. Instance-admins will create the widget and widget_owners will be able to take over the ownership to maintain it.
+
+<br>
 
 ## Learn More
 To learn more about Next.js, take a look at the following resources:

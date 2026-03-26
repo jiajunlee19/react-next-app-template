@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        if (await rateLimitByIP(5, 1000*60)) {
+        if (await rateLimitByIP(500, 1000*60)) {
             return NextResponse.json({
                 error: { error: ["Too many requests, try again later."] },
                 message: "Too many requests, try again later."

@@ -24,7 +24,7 @@ export default withAuth(
             )
         }
 
-        const { hasWidgetOwnerAccess, hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, request.nextUrl.pathname, request.nextauth.token?.username, request.nextauth.token?.role);
+        const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, request.nextUrl.pathname, request.nextauth.token?.username, request.nextauth.token?.role);
 
         if (!hasWidgetViewAccess) {
             const deniedUrl = new URL("/denied", request.url);
