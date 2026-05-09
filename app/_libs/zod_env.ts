@@ -31,6 +31,11 @@ export const envSchema = z.object({
     LDAP_GROUP_BASE_DN: z.string().min(1),
     LDAP_URL: z.string().min(1).url(),
 
+    // Azure AD
+    AZURE_TENANT_ID: z.string().min(1),
+    AZURE_CLIENT_ID: z.string().min(1),
+    AZURE_CLIENT_SECRET: z.string().min(1),
+
     // UUID namespace secret
     UUID5_NAMESPACE: z.string().min(1),
     UUID5_DELIMITER: z.string().min(1),

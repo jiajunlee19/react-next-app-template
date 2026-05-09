@@ -11,6 +11,7 @@ declare module "next-auth" {
             // password: string,
             role: "user" | "admin" | "boss",
             jwtToken: string,
+            picture?: string,
         } 
         // & DefaultSession
     }
@@ -23,6 +24,7 @@ declare module "next-auth" {
         // password: string,
         role: "user" | "admin" | "boss",
         jwtToken: string,
+        picture?: string,
     }
 }
 
@@ -35,5 +37,6 @@ declare module "next-auth/jwt" {
         // password: string,
         role: "user" | "admin" | "boss",
         jwtToken: string,
+        picture?: string,
     }
 }

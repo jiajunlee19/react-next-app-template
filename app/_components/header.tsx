@@ -10,12 +10,15 @@ import { CrossIcon, DarkIcon, HamburgerIcon, LightIcon, SearchIcon } from "@/app
 import { useThemeContext } from "@/app/_context/theme-context";
 import { checkWidgetAccess } from "@/app/_libs/widgets";
 import { type TReadWidgetSchema } from "@/app/_libs/zod_server";
+import Image from "next/image";
 
 export default function Header({ baseUrl }: { baseUrl: string }) {
 
     const pathname = usePathname();
 
     const { data: session } = useSession();
+
+    const [userDisplayName, setUserDisplayName] = useState<string | undefined>(undefined);
 
     const [access, setAccess] = useState<{
         hasWidgetOwnerAccess?: boolean;
@@ -43,6 +46,9 @@ export default function Header({ baseUrl }: { baseUrl: string }) {
             if (session?.user) {
                 const result = await checkWidgetAccess(baseUrl, pathname, session?.user.username, session?.user.role);
                 setAccess(result);
+                setUserDisplayName(
+                    session?.user.username + (result.hasWidgetOwnerAccess ? " (Admin)" : "")
+                )
             }
         };
         fetchAccess();
@@ -66,8 +72,22 @@ export default function Header({ baseUrl }: { baseUrl: string }) {
         { name: "widget", href: "/authenticated/widget", icon: <QuestionMarkCircleIcon className="h-6" /> },
     ];
 
+    const UserDisplay = () => (
+        session?.user.picture ? (
+            <Image
+                src={session.user.picture}
+                alt={userDisplayName ?? ""}
+                title={userDisplayName ?? ""}
+                width={28}
+                height={28}
+                className={twMerge("rounded-full object-cover", access.hasWidgetOwnerAccess ? "ring-2 ring-red-400" : "")}
+                referrerPolicy="no-referrer" 
+            />
+        ) : <span>{userDisplayName}</span>
+    );
+
     const rightNavLinksA = [
-        { name: (!access.hasWidgetOwnerAccess && session?.user.role === "user") ? session?.user.username : session?.user.username + " (Admin)", href: "/auth/user/" + session?.user.user_uid, icon: "" },
+        // { name: (!access.hasWidgetOwnerAccess && session?.user.role === "user") ? session?.user.username : session?.user.username + " (Admin)", href: "/auth/user/" + session?.user.user_uid, icon: "" },
         { name: "Sign Out", href: "/auth/signOut", icon: "" },
     ];
 
@@ -211,6 +231,7 @@ export default function Header({ baseUrl }: { baseUrl: string }) {
                         {/* rightNav that only appears when > sm */}
                         <div className="hidden sm:contents">
                             <>
+                                {session && <UserDisplay />}
                                 {(session ? rightNavLinksA : rightNavLinksB).map((link) => {
                                     return (
                                         <Link key={link.name} className={twMerge("no-underline", pathname === link.href && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>
@@ -333,6 +354,11 @@ export default function Header({ baseUrl }: { baseUrl: string }) {
                             <div className="absolute inset-x-0 top-0 h-16 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5 origin-[50%_50%_1px]" />
                             <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/50 transform-none origin-[50%_50%_1px]" />
                             <ul role="list">
+                                {session &&
+                                    <li className="relative py-1 pl-4 pr-3 flex items-center gap-2">
+                                        <UserDisplay />
+                                    </li>
+                                }
                                 {(session ? rightNavLinksA : rightNavLinksB).map((link) => {
                                     return (
                                         <li key={link.name} className="relative">

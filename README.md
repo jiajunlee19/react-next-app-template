@@ -23,6 +23,7 @@
     - [Search Query](#search-query)
     - [Authentication \& Authorization](#authentication--authorization)
     - [Authentication with LDAP server](#authentication-with-ldap-server)
+    - [Authentication with Azure Active Directory](#authentication-with-azure-active-directory)
   - [Deploying Changes to an Existing Instance](#deploying-changes-to-an-existing-instance)
   - [Learn More](#learn-more)
   - [Deploy on Vercel](#deploy-on-vercel)
@@ -651,6 +652,50 @@ This section outlines the important concepts used in this template.
     await ldap_client.bind(dn, parsedForm.data.password);
 
     ...
+    ```
+
+<br>
+
+### Authentication with Azure Active Directory
+1. For every unauthenticated session, middleware can be configured to redirect to a default sign-in method. In this case, we use Azure AD as the default.
+    ```ts
+    // If no token, redirect to Azure AD sign-in automatically
+    if (!request.nextauth.token) {
+        const signInUrl = new URL("/auth/signIn", request.url);
+        signInUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
+        return NextResponse.redirect(signInUrl);
+    }
+    ```
+2. The sign-in page can be configured to automatically sign in on page loads. User do not have to manually sign-in.
+    ```ts
+    // Auto-trigger Azure AD sign-in when page loads and user if not authenticated
+    useEffect(() => {
+        if (status === "unauthenticated") {
+            signIn("azure-ad", { callbackUr: callBackUrl });
+        }
+    }, [status, callBackUrl])
+    ```
+3. Since Azure-AD returns a profile picture, we can return that as part of the token for profile picture display in headers.
+    ```ts
+    async jwt({ token, user, account }) {
+
+        if (account?.provider === "azure-ad") {
+            const username = user.email?.split("@")[0].toLowerCase();
+            const result = await signInAzureAD(username);
+
+            if (!result || "error" in result) {
+                throw new Error(JSON.stringify(result.error))
+            }
+
+            if (user?.image) {
+                token.picture = user.image;
+            }
+
+            return {...token, ...result}
+        }
+
+        return {...token, ...user}
+    },
     ```
 
 <br>
