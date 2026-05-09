@@ -9,7 +9,7 @@ import bcrypt from 'bcryptjs';
 import sql from 'mssql';
 import { Pool } from 'pg';
 import { pgSqlConfig, msSqlConfig } from "@/app/_libs/sql_config";
-import { type TUsernameSchema, type TPasswordSchema, usernameSchema, signInSchema, signUpSchema, readUserSchema, readUserWithoutPassSchema, updateUserSchema, deleteUserSchema, updateRoleSchema, updateRoleAdminSchema, readUserWithoutPassAdminSchema } from "@/app/_libs/zod_auth";
+import { type TUsernameSchema, type TPasswordSchema, usernameSchema, signInSchema, signInWithoutPassSchema, signUpSchema, readUserSchema, readUserWithoutPassSchema, updateUserSchema, deleteUserSchema, updateRoleSchema, updateRoleAdminSchema, readUserWithoutPassAdminSchema } from "@/app/_libs/zod_auth";
 import { itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/zod_server';
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import { signJwtToken } from '@/app/_libs/jwt';
@@ -437,6 +437,93 @@ export async function updateUserLDAP(username: TUsernameSchema | unknown, passwo
     }
 
     return { message: `Successfully updated user ${parsedForm.data.user_uid}` }
+};
+
+export async function signInAzureAD(username: TUsernameSchema | unknown): StatePromise {
+
+    const now = new Date();
+
+    const parsedForm = signInWithoutPassSchema.safeParse({
+        username: username,
+    });
+
+    if (!parsedForm.success) {
+        return { 
+            error: parsedForm.error.flatten().fieldErrors,
+            message: "Invalid input provided, failed to sign in!"
+        };
+    };
+
+    if (await rateLimitByIP(5, 1000*60)) {
+        return { 
+            error: {error: ["Too many requests, try again later."]},
+            message: "Too many requests, try again later."
+        };
+    }
+
+    let parsedResult;
+    try {
+        if (parsedEnv.DB_TYPE === "PG") {
+            const pool = new Pool(pgSqlConfig);
+            const result = await pool.query(
+                            `INSERT INTO "jiajunleeWeb"."user" (user_uid, username, password, role, user_created_dt, user_updated_dt)
+                            VALUES ($1, $2, $3, $4, $5, $6)
+                            ON CONFLICT (username) DO UPDATE
+                            SET user_updated_dt = EXCLUDED.user_updated_dt
+                            RETURNING user_uid, username, role;`,
+                            [uuidv5(parsedForm.data.username, UUID5_SECRET), parsedForm.data.username, await bcrypt.hash(uuidv5(parsedForm.data.username, UUID5_SECRET), 10), 'user', now, now]
+            );
+            await pool.end();
+
+            if (result.rows.length === 0) {
+                return {
+                    error: {error: ["Failed to sign in with Azure AD!"]},
+                    message: "Failed to sign in with Azure AD!"
+                };
+            }
+
+            return result.rows[0];
+        }
+        
+        else {
+            let pool = await sql.connect(msSqlConfig);
+            const result = await pool.request()
+                            .input('user_uid', sql.UniqueIdentifier, uuidv5(parsedForm.data.username, UUID5_SECRET))
+                            .input('username', sql.VarChar, username)
+                            .input('password', sql.VarChar, await bcrypt.hash(uuidv5(parsedForm.data.username, UUID5_SECRET), 10))
+                            .input('role', sql.VarChar, 'user')
+                            .input('user_created_dt', sql.DateTime, now)
+                            .input('user_updated_dt', sql.DateTime, now)
+                            .input('username', sql.VarChar, parsedForm.data.username)
+                            .query`MERGE [jiajunleeWeb].[user] AS target
+                                    USING (VALUES (@user_uid, @username, @password, @role, @user_created_dt, @user_updated_dt))
+                                        AS source (user_uid, username, password, role, user_created_dt, user_updated_dt)
+                                    ON target.username = source.username
+                                    WHEN NOT MATCHED THEN
+                                        INSERT (user_uid, username, password, role, user_created_dt, user_updated_dt)
+                                        VALUES (source.user_uid, source.username, source.password, source.role, source.user_created_dt, source.user_updated_dt)
+                                    WHEN MATCHED THEN
+                                        UPDATE SET target.user_updated_dt = source.user_updated_dt
+                                    OUTPUT inserted.user_uid, inserted.username, inserted.role;`;
+
+            if (!result.recordset || result.recordset.length === 0) {
+                return {
+                    error: {error: ["Failed to sign in with Azure AD!"]},
+                    message: "Failed to sign in with Azure AD!"
+                };
+            }
+
+            return result.recordset[0];
+        }
+    
+    } 
+    catch (err) {
+        return { 
+            error: {error: ["Invalid user provided, failed to sign in!"]},
+            message: "Invalid user provided, failed to sign in!"
+        };
+    }
+
 };
 
 export async function signUp(username: TUsernameSchema | unknown, password: TPasswordSchema | unknown): StatePromise {

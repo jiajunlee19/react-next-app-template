@@ -1,12 +1,24 @@
 import "server-only";
 
-import type {  NextAuthOptions, User } from 'next-auth';
+import type { NextAuthOptions, User } from 'next-auth';
+import AzureADProvider from 'next-auth/providers/azure-ad';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { parsedEnv } from '@/app/_libs/zod_env';
-import { signIn, signInLDAP } from '@/app/_actions/auth';
+import { signIn, signInAzureAD, signInLDAP } from '@/app/_actions/auth';
 
 export const options: NextAuthOptions = {
     providers: [
+        AzureADProvider({
+            clientId: parsedEnv.AZURE_CLIENT_ID,
+            clientSecret: parsedEnv.AZURE_CLIENT_SECRET,
+            tenantId: parsedEnv.AZURE_TENANT_ID,
+            checks: ["pkce"],
+            authorization: {
+                params: {
+                    scope: "openid profile email User.Read",
+                },
+            },
+        }),
         CredentialsProvider({
             id: "LDAP",
             name: "LDAP",
@@ -93,7 +105,23 @@ export const options: NextAuthOptions = {
 
     callbacks: {
         // Ref: https://authjs.dev/guides/basics/role-based-access-control#persisting-the-role
-        async jwt({ token, user }) {
+        async jwt({ token, user, account }) {
+
+            if (account?.provider === "azure-ad") {
+                const username = user.email?.split("@")[0].toLowerCase();
+                const result = await signInAzureAD(username);
+
+                if (!result || "error" in result) {
+                    throw new Error(JSON.stringify(result.error))
+                }
+
+                if (user?.image) {
+                    token.picture = user.image;
+                }
+
+                return {...token, ...result}
+            }
+
             return {...token, ...user}
         },
         // If you want to use the role in client components

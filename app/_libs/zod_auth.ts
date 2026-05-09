@@ -32,6 +32,10 @@ export const signInSchema = signUpSchema.pick({
     password: true,
 });
 
+export const signInWithoutPassSchema = signUpSchema.pick({
+    username: true,
+})
+
 export type TReadUserSchema = z.infer<typeof readUserSchema>;
 export const readUserSchema = signUpSchema.extend({
     user_updated_by: usernameSchema,
