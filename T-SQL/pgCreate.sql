@@ -1,6 +1,3 @@
-DROP TABLE iF EXISTS "jiajunleeWeb"."example";
-DROP TABLE iF EXISTS "jiajunleeWeb"."user";
-
 CREATE TABLE "jiajunleeWeb"."user" (
     user_uid UUID NOT NULL,
     username VARCHAR(100) NOT NULL,
@@ -30,6 +27,21 @@ CREATE TABLE "jiajunleeWeb"."widget" (
 
     CONSTRAINT pk_widget_uid PRIMARY KEY (widget_uid),
     CONSTRAINT fk_widget_updated_by FOREIGN KEY (widget_updated_by)
+        REFERENCES "jiajunleeWeb"."user"(user_uid)
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION
+)
+
+CREATE TABLE "jiajunleeWeb"."analytics" (
+    event_uid UUID NOT NULL,
+    event_name VARCHAR(100) NOT NULL,
+    duration_ms INTEGER NOT NULL DEFAULT 0,
+    path VARCHAR(1000) NOT NULL,
+    event_created_dt TIMESTAMP NOT NULL,
+    event_created_by UUID NULL,
+
+    CONSTRAINT pk_event_uid PRIMARY KEY (event_uid),
+    CONSTRAINT fk_event_created_by FOREIGN KEY (event_created_by)
         REFERENCES "jiajunleeWeb"."user"(user_uid)
         ON UPDATE CASCADE
         ON DELETE NO ACTION
