@@ -105,3 +105,19 @@ export const deleteExampleSchema = createExampleSchema.pick({
 export const ExampleSchema = createExampleSchema.pick({
     example: true,
 });
+
+export const inputTypeSchema = z.enum(['xxx']);
+export const inputTypeList = inputTypeSchema.options;
+
+export const inputValuesSchema = z.array(
+    z.string()
+        .transform((val) => val.toUpperCase())
+        .refine((val) => val.length > 0), {
+            message: 'Each input value must be more than 1 character'
+        }
+).min(1);
+
+export const reportSchema = z.enum([
+    'xxx',
+])
+export const selectedReportsSchema = z.array(reportSchema).min(1);
