@@ -20,6 +20,13 @@ export const envSchema = z.object({
     DB_PASSWORD: z.string().min(1),
     DB_DATABASE: z.string().min(1),
 
+    // Snowflake connections
+    SNOWFLAKE_ACCOUNT: z.string().min(1),
+    SNOWFLAKE_HOST: z.string().min(1),
+    SNOWFLAKE_USERNAME: z.string().min(1),
+    SNOWFLAKE_PASSWORD: z.string().min(1),
+    SNOWFLAKE_WAREHOUSE: z.string().min(1),
+
     // Next Auth
     NEXTAUTH_URL: z.string().min(1).url(),
     NEXTAUTH_SECRET: z.string().min(1),

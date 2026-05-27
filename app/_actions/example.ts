@@ -15,8 +15,66 @@ import { getErrorMessage } from '@/app/_libs/error_handler';
 import { StatePromise, type State } from '@/app/_libs/types';
 import { unstable_noStore as noStore } from 'next/cache';
 import { checkWidgetAccess } from "@/app/_libs/widgets";
+import { snowflakePool } from "@/app/_libs/snowflake_config";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
+
+export async function readSnowflake() {
+    noStore();
+
+    const session = await getServerSession(options);
+
+    if (!session) {
+        return { error: ["Unauthorized access. No session found."] }
+    }
+
+    const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
+
+    if (!hasWidgetViewAccess) {
+        return { error: [`Access denied. You ae not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access for /authenticated/example.`] }
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        return { error: ["Too many requests. Please try again later."] }
+    }
+
+    let parsedForm;
+    try {
+        const result = await snowflakePool.use(conn => new Promise((resolve, reject) => {
+            conn.execute({
+                sqlText: `
+                    select * from table where col in ${['dataRow1'].map(() => '?').join(', ')};
+                `,
+                binds: [],
+                complete: (err, stmt, rows) => {
+                    if (err) {
+                        reject(err);
+                    }
+                    else {
+                        resolve(rows);
+                    }
+                },
+            })
+        }))
+
+        parsedForm = readExampleSchema.array().safeParse(result);
+
+        if (!parsedForm.success) {
+            return {
+                error: parsedForm.error.errors.map(e => ({
+                    field: e.path.join('.'),
+                    message: e.message,
+                }))
+            };
+        };
+
+    } catch (err) {
+        return { error: [getErrorMessage(err)] };
+    }
+
+    return { data: parsedForm.data }
+
+};
 
 export async function readExampleTotalPage(itemsPerPage: number | unknown, query?: string | unknown) {
     noStore();
