@@ -1,8 +1,8 @@
 "use client"
 
 import { getErrorMessage } from "@/app/_libs/error_handler";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type ReportOption = {
     id: string,
@@ -24,9 +24,10 @@ export default function ReportsComponent( { inputTypeList, reportOptions }: Repo
     const [inputValues, setInputValues] = useState<string>('');
     const [selectedReports, setSelectedReports] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
-    const isMounted = useRef(false);
+    const [isMounted, setIsMounted] = useState(false);
 
     // Update url params on load
+    const router = useRouter();
     const searchParams = useSearchParams();
     useEffect(() => {
         const paramsInputType = searchParams.get('inputType');
@@ -42,26 +43,32 @@ export default function ReportsComponent( { inputTypeList, reportOptions }: Repo
             }
         });
         setSelectedReports(validSelectedReports);
-    }, [searchParams]);
+
+        setIsMounted(true);
+    }, [searchParams.toString()]);
 
     // Sync states with url params
     useEffect(() => {
+        if (!isMounted) return;
+
         const params = new URLSearchParams();
         if (inputType) params.set('inputType', inputType);
         selectedReports.forEach(report => {
             params.set(report, 'true');
         });
-        window.history.replaceState({}, '', `?${params.toString()}`);
-    }, [inputType, selectedReports]);
-
-    // Reset invalid selected reports when inputType changes
-    useEffect(() => {
-        if (!isMounted.current) {
-            return;
+        
+        const newQuery = params.toString();
+        if (`?${newQuery}` !== window.location.search) {
+            router.replace(`?${newQuery}`, { scroll: false })
         }
-        const validReports = (reportOptions[inputType] ?? []).map(report => report.id);
+    }, [inputType, selectedReports, router]);
+
+    // On inputType change, filter out reports that doesn't belong to new inputType
+    const handleInputTypeChange = (newInputType: string) => {
+        const validReports = (reportOptions[newInputType] ?? []).map(report => report.id);
+        setInputType(newInputType);
         setSelectedReports(prev => prev.filter(report => validReports.includes(report)));
-    }, [inputType]);
+    };
 
     const currentReportOptions = reportOptions[inputType] ?? [];
     const currentInputTypeList = getValidInputTypes().length > 0 ? getValidInputTypes() : inputTypeList;
@@ -107,7 +114,7 @@ export default function ReportsComponent( { inputTypeList, reportOptions }: Repo
             <h2 className="mb-8">Generate Reports</h2>
 
             <label className="mb-2">Input Type:</label>
-            <select value={inputType} onChange={e => setInputType(e.target.value)} className="mmb-4 p-2">
+            <select value={inputType} onChange={e => handleInputTypeChange(e.target.value)} className="mb-4 p-2">
                 {currentInputTypeList.map(id => (
                     <option key={id} value={id}>{id}</option>
                 ))}
