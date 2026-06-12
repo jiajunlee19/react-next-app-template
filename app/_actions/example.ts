@@ -13,14 +13,34 @@ import { itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/
 import { parsedEnv } from '@/app/_libs/zod_env';
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import { StatePromise, type State } from '@/app/_libs/types';
-import { unstable_noStore as noStore } from 'next/cache';
+import { unstable_noStore as noStore, unstable_cache as cache, revalidateTag } from 'next/cache';
 import { checkWidgetAccess } from "@/app/_libs/widgets";
 import { snowflakePool } from "@/app/_libs/snowflake_config";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
-export async function readSnowflake() {
-    noStore();
+export async function revalidateSnowflakeCache() {
+
+    const session = await getServerSession(options);
+
+    if (!session) {
+        return { error: ["Unauthorized access. No session found."] }
+    }
+
+    const { hasWidgetOwnerAccess, owners } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
+
+    if (!hasWidgetOwnerAccess) {
+        return { error: [`Access denied. Kindly contact owners (${owners}) to get access for /authenticated/example.`] }
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        return { error: ["Too many requests. Please try again later."] }
+    }
+    
+    revalidateTag("snowflake");
+};
+
+export async function readSnowflake(inputList: string[]) {
 
     const session = await getServerSession(options);
 
@@ -38,25 +58,33 @@ export async function readSnowflake() {
         return { error: ["Too many requests. Please try again later."] }
     }
 
+    const placeholders = inputList.map(() => '?').join(', ');
     let parsedForm;
     try {
-        const result = await snowflakePool.use(conn => new Promise((resolve, reject) => {
-            conn.execute({
-                sqlText: `
-                    select * from table where col in ${['dataRow1'].map(() => '?').join(', ')};
-                `,
-                binds: [],
-                complete: (err, stmt, rows) => {
-                    if (err) {
-                        reject(err);
-                    }
-                    else {
-                        resolve(rows);
-                    }
-                },
-            })
-        }))
+        const cached = cache(
+            async (inputList: string[]) => {
+                return await snowflakePool.use(conn => new Promise((resolve, reject) => {
+                    conn.execute({
+                        sqlText: `
+                            select * from table where col in ${placeholders};
+                        `,
+                        binds: [...inputList],
+                        complete: (err, stmt, rows) => {
+                            if (err) {
+                                reject(err);
+                            }
+                            else {
+                                resolve(rows);
+                            }
+                        },
+                    })
+                }))
+            },
+            ["readSnowflake"],
+            { revalidate: 60*60*24, tags: ["snowflake", "readSnowflake"] },
+        )
 
+        const result = await cached(inputList);
         parsedForm = readExampleSchema.array().safeParse(result);
 
         if (!parsedForm.success) {
