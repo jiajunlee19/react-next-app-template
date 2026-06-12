@@ -86,7 +86,7 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
     });
     const checkIfUserInOwnerGroups = await resCheckIfUserInOwnerGroups.json();
     const isUserInOwnerGroups = "isUserInGroups" in checkIfUserInOwnerGroups ? checkIfUserInOwnerGroups.isUserInGroups : false;
-    if (owners.includes("everyone") || owners.includes(username) || isUserInOwnerGroups) {
+    if (owners.includes("everyone") || owners.map(o => o.toLowerCase()).includes(username.toLowerCase()) || isUserInOwnerGroups) {
         return {
             hasWidgetOwnerAccess: true,
             hasWidgetViewAccess: true,
@@ -105,7 +105,7 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
     });
     const checkIfUserInViewerGroups = await resCheckIfUserInViewerGroups.json();
     const isUserInViewerGroups = "isUserInGroups" in checkIfUserInViewerGroups ? checkIfUserInViewerGroups.isUserInGroups : false;
-    if (viewers.includes("everyone") || viewers.includes(username) || isUserInViewerGroups) {
+    if (viewers.includes("everyone") || viewers.map(v => v.toLowerCase()).includes(username.toLowerCase()) || isUserInViewerGroups) {
         return {
             hasWidgetOwnerAccess: false,
             hasWidgetViewAccess: true,

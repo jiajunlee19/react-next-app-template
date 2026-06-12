@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
                     return uidMatch ? uidMatch[1].toLowerCase() : null
                 }).filter(uid => uid !== null);
 
-                return { group: group, isMember: memberUids.includes(parsedForm.data.username) };
+                return { group: group, isMember: memberUids.includes(parsedForm.data.username.toLowerCase()) };
 
             } catch (error) {
                 return { group: group, isMember: false };
