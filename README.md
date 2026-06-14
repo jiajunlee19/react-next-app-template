@@ -15,6 +15,7 @@
     - [Improving Accessibility](#improving-accessibility)
     - [Navigating between pages](#navigating-between-pages)
     - [Data fetching with Server Action](#data-fetching-with-server-action)
+    - [Caching on Server Actions](#caching-on-server-actions)
     - [Server Action Form \& Error Handling](#server-action-form--error-handling)
     - [State Management with SearchParams](#state-management-with-searchparams)
     - [Debouncing Technique](#debouncing-technique)
@@ -292,17 +293,7 @@ This section outlines the important concepts used in this template.
 1. No API layer is required, server actions can directly query database from server-side.
 2. See example on one of the server action [/_actions/example.ts](app/_actions/example.ts).
     - CRUD async/await functions are used to execute CRUD operations on database
-3. For actions requiring dynamic rendering, `await connection()` is specified to prevent the response from being cached.
-    ```ts
-    import { connection } from 'next/server';
-
-    export async function fetch() {
-        // This is equivalent to in fetch(..., {cache: 'no-store'}).
-        await connection();
-        ...
-    }
-    ```
-4. As Server Actions are directly communicating to database, they need to be carefully designed to prevent data leakage and avoid malicious attack.
+3. As Server Actions are directly communicating to database, they need to be carefully designed to prevent data leakage and avoid malicious attack.
     - Always treat the input arguments as `unknown` type, they must be sanitized to ensure only those with expected formats are used downstream.
         ```ts
             export async function updateUser(formData: FormData | unknown): StatePromise {
@@ -341,6 +332,26 @@ This section outlines the important concepts used in this template.
             };
         ```
 
+<br>
+
+### Caching on Server Actions
+1. Caching allows us to cache the results of expensive operations, like database queries, and reuse them across multiple requests.
+2. Cache-ids are used as identification to the cache and cache-tags can be used to control cache invalidation.
+    ```ts
+        const cached = cache(
+            async () => {
+                return await getData(cache-id)
+            },
+            ["your-cache-id"],
+            { revalidate: 60*60*24*30, tags: ["your-cache-tag"] },
+    );
+    const result = await cached();
+    ```
+3. For every possible change to the underlying data, the cache should be invalidated and force a new read.
+   ```ts
+   // invalidate the cache by tags
+   revalidateTag("readExample");
+   ```
 <br>
 
 ### Server Action Form & Error Handling
