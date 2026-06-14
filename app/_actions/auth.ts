@@ -50,7 +50,7 @@ export async function readUserTotalPage(itemsPerPage: number | unknown, query?: 
                     );
                 },
                 ["readUserTotalPage", QUERY],
-                { revalidate: 60*60*24, tags: ["readUser", "readUserTotalPage"] },
+                { revalidate: 60*60*24*30, tags: ["readUser", "readUserTotalPage"] },
             );
             const result = await cached();
             parsedForm = readUserWithoutPassSchema.array().safeParse(result.rows);
@@ -69,7 +69,7 @@ export async function readUserTotalPage(itemsPerPage: number | unknown, query?: 
                     `;
                 },
                 ["readUserTotalPage", QUERY],
-                { revalidate: 60*60*24, tags: ["readUser", "readUserTotalPage"] },
+                { revalidate: 60*60*24*30, tags: ["readUser", "readUserTotalPage"] },
             );
             const result = await cached();
             parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
@@ -123,7 +123,7 @@ export async function readUserByPage(itemsPerPage: number | unknown, currentPage
                     );
                 },
                 ["readUserByPage", QUERY, OFFSET.toString(), parsedItemsPerPage.toString()],
-                { revalidate: 60*60*24, tags: ["readUser", "readUserByPage"] },
+                { revalidate: 60*60*24*30, tags: ["readUser", "readUserByPage"] },
             );
             const result = await cached();
             parsedForm = readUserWithoutPassSchema.array().safeParse(result.rows);    
@@ -148,7 +148,7 @@ export async function readUserByPage(itemsPerPage: number | unknown, currentPage
                     `;
                 },
                 ["readUserByPage", QUERY, OFFSET.toString(), parsedItemsPerPage.toString()],
-                { revalidate: 60*60*24, tags: ["readUser", "readUserByPage"] },
+                { revalidate: 60*60*24*30, tags: ["readUser", "readUserByPage"] },
             );
             const result = await cached();
             parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
@@ -195,7 +195,7 @@ export async function readUserTotalPageAdmin(itemsPerPage: number | unknown, que
                     );
                 },
                 ["readUserTotalPageAdmin", QUERY],
-                { revalidate: 60*60*24, tags: ["readUser", "readUserTotalPageAdmin"] },
+                { revalidate: 60*60*24*30, tags: ["readUser", "readUserTotalPageAdmin"] },
             );
             const result = await cached();
             parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.rows);
@@ -214,7 +214,7 @@ export async function readUserTotalPageAdmin(itemsPerPage: number | unknown, que
                     `;
                 },
                 ["readUserTotalPageAdmin", QUERY],
-                { revalidate: 60*60*24, tags: ["readUser", "readUserTotalPageAdmin"] },
+                { revalidate: 60*60*24*30, tags: ["readUser", "readUserTotalPageAdmin"] },
             );
             const result = await cached();
             parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.recordset);
@@ -268,7 +268,7 @@ export async function readUserByPageAdmin(itemsPerPage: number | unknown, curren
                     );
                 },
                 ["readUserByPageAdmin", QUERY, OFFSET.toString(), parsedItemsPerPage.toString()],
-                { revalidate: 60*60*24, tags: ["readUser", "readUserByPageAdmin"] },
+                { revalidate: 60*60*24*30, tags: ["readUser", "readUserByPageAdmin"] },
             );
             const result = await cached();
             parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.rows);
@@ -293,7 +293,7 @@ export async function readUserByPageAdmin(itemsPerPage: number | unknown, curren
                     `;
                 },
                 ["readUserByPageAdmin", QUERY, OFFSET.toString(), parsedItemsPerPage.toString()],
-                { revalidate: 60*60*24, tags: ["readUser", "readUserByPageAdmin"] },
+                { revalidate: 60*60*24*30, tags: ["readUser", "readUserByPageAdmin"] },
             );
             const result = await cached();
             parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.recordset);
@@ -823,7 +823,7 @@ export async function readUserById(user_uid: string | unknown) {
                     );
                 },
                 ["readUserById", parsedInput.data.user_uid],
-                { revalidate: 60*60*24, tags: ["readUser", "readUserById"] },
+                { revalidate: 60*60*24*30, tags: ["readUser", "readUserById"] },
             );
             const result = await cached();
             parsedForm = readUserWithoutPassSchema.safeParse(result.rows[0]);
@@ -843,7 +843,7 @@ export async function readUserById(user_uid: string | unknown) {
                     `;
                 },
                 ["readUserById", parsedInput.data.user_uid],
-                { revalidate: 60*60*24, tags: ["readUser", "readUserById"] },
+                { revalidate: 60*60*24*30, tags: ["readUser", "readUserById"] },
             );
             const result = await cached();
             parsedForm = readUserWithoutPassSchema.safeParse(result.recordset[0]);

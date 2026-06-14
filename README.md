@@ -343,7 +343,7 @@ This section outlines the important concepts used in this template.
                 return await getData(cache-id)
             },
             ["your-cache-id"],
-            { revalidate: 60*60*24, tags: ["your-cache-tag"] },
+            { revalidate: 60*60*24*30, tags: ["your-cache-tag"] },
     );
     const result = await cached();
     ```

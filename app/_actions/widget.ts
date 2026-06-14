@@ -48,7 +48,7 @@ export async function readWidgetTotalPage(itemsPerPage: number | unknown, query?
                     );
                 },
                 ["readWidgetTotalPage", QUERY],
-                { revalidate: 60*60*24, tags: ["readWidget", "readWidgetTotalPage"] },
+                { revalidate: 60*60*24*30, tags: ["readWidget", "readWidgetTotalPage"] },
             );
             const result = await cached();
             parsedForm = readWidgetSchema.array().safeParse(result.rows.map(row => ({
@@ -71,7 +71,7 @@ export async function readWidgetTotalPage(itemsPerPage: number | unknown, query?
                     `;
                 },
                 ["readWidgetTotalPage", QUERY],
-                { revalidate: 60*60*24, tags: ["readWidget", "readWidgetTotalPage"] },
+                { revalidate: 60*60*24*30, tags: ["readWidget", "readWidgetTotalPage"] },
             );
             const result = await cached();
             parsedForm = readWidgetSchema.array().safeParse(result.recordset.map(row => ({
@@ -146,7 +146,7 @@ export async function readWidgetByPage(itemsPerPage: number | unknown, currentPa
                     );
                 },
                 ["readWidgetByPage", QUERY],
-                { revalidate: 60*60*24, tags: ["readWidget", "readWidgetByPage"] },
+                { revalidate: 60*60*24*30, tags: ["readWidget", "readWidgetByPage"] },
             );
             const result = await cached();
             parsedForm = readWidgetSchema.array().safeParse(result.rows.map(row => ({
@@ -172,7 +172,7 @@ export async function readWidgetByPage(itemsPerPage: number | unknown, currentPa
                     `;
                 },
                 ["readWidgetByPage", QUERY],
-                { revalidate: 60*60*24, tags: ["readWidget", "readWidgetByPage"] },
+                { revalidate: 60*60*24*30, tags: ["readWidget", "readWidgetByPage"] },
             );
             const result = await cached();
             parsedForm = readWidgetSchema.array().safeParse(result.recordset.map(row => ({
@@ -224,7 +224,7 @@ export async function readAllWidget() {
                     );
                 },
                 ["readAllWidget"],
-                { revalidate: 60*60*24, tags: ["readWidget", "readAllWidget"] },
+                { revalidate: 60*60*24*30, tags: ["readWidget", "readAllWidget"] },
             );
             const result = await cached();
             parsedForm = readWidgetSchema.array().safeParse(result.rows.map(row => ({
@@ -247,7 +247,7 @@ export async function readAllWidget() {
                             `;
                 },
                 ["readAllWidget"],
-                { revalidate: 60*60*24, tags: ["readWidget", "readAllWidget"] },
+                { revalidate: 60*60*24*30, tags: ["readWidget", "readAllWidget"] },
             );
             const result = await cached();
             parsedForm = readWidgetSchema.array().safeParse(result.recordset.map(row => ({
@@ -303,7 +303,7 @@ export async function readWidgetUid(widget: string | unknown) {
                     );
                 },
                 ["readWidgetUid", parsedInput.data.widget_href],
-                { revalidate: 60*60*24, tags: ["readWidget", "readWidgetUid"] },
+                { revalidate: 60*60*24*30, tags: ["readWidget", "readWidgetUid"] },
             );
             const result = await cached();
             const row = result.rows[0];
@@ -328,7 +328,7 @@ export async function readWidgetUid(widget: string | unknown) {
                     `;
                 },
                 ["readWidgetUid", parsedInput.data.widget_href],
-                { revalidate: 60*60*24, tags: ["readWidget", "readWidgetUid"] },
+                { revalidate: 60*60*24*30, tags: ["readWidget", "readWidgetUid"] },
             );
             const result = await cached();
             const row = result.recordset[0];
@@ -743,7 +743,7 @@ export async function readWidgetByUid(widget_uid: string) {
                     );
                 },
                 ["readWidgetByUid", parsedInput.data.widget_uid],
-                { revalidate: 60*60*24, tags: ["readWidget", "readWidgetByUid"] },
+                { revalidate: 60*60*24*30, tags: ["readWidget", "readWidgetByUid"] },
             );
             const result = await cached();
             const row = result.rows[0];
@@ -769,7 +769,7 @@ export async function readWidgetByUid(widget_uid: string) {
                     `;
                 },
                 ["readWidgetByUid", parsedInput.data.widget_uid],
-                { revalidate: 60*60*24, tags: ["readWidget", "readWidgetByUid"] },
+                { revalidate: 60*60*24*30, tags: ["readWidget", "readWidgetByUid"] },
             );
             const result = await cached();
             const row = result.recordset[0];

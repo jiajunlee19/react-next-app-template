@@ -147,7 +147,7 @@ export async function readExampleTotalPage(itemsPerPage: number | unknown, query
                     );
                 },
                 ["readExampleTotalPage", QUERY],
-                { revalidate: 60*60*24, tags: ["readExample", "readExampleTotalPage"] },
+                { revalidate: 60*60*24*30, tags: ["readExample", "readExampleTotalPage"] },
             );
             const result = await cached();
             parsedForm = readExampleSchema.array().safeParse(result.rows);
@@ -166,7 +166,7 @@ export async function readExampleTotalPage(itemsPerPage: number | unknown, query
                     `;
                 },
                 ["readExampleTotalPage", QUERY],
-                { revalidate: 60*60*24, tags: ["readExample", "readExampleTotalPage"] },
+                { revalidate: 60*60*24*30, tags: ["readExample", "readExampleTotalPage"] },
             );
             const result = await cached();
             parsedForm = readExampleSchema.array().safeParse(result.recordset);
@@ -232,7 +232,7 @@ export async function readExampleByPage(itemsPerPage: number | unknown, currentP
                     );
                 },
                 ["readExampleByPage", QUERY, OFFSET.toString(), parsedItemsPerPage.toString()],
-                { revalidate: 60*60*24, tags: ["readExample", "readExampleByPage"] },
+                { revalidate: 60*60*24*30, tags: ["readExample", "readExampleByPage"] },
             );
             const result = await cached();
             parsedForm = readExampleSchema.array().safeParse(result.rows);
@@ -257,7 +257,7 @@ export async function readExampleByPage(itemsPerPage: number | unknown, currentP
                     `;
                 },
                 ["readExampleByPage", QUERY, OFFSET.toString(), parsedItemsPerPage.toString()],
-                { revalidate: 60*60*24, tags: ["readExample", "readExampleByPage"] },
+                { revalidate: 60*60*24*30, tags: ["readExample", "readExampleByPage"] },
             );
             const result = await cached();
             parsedForm = readExampleSchema.array().safeParse(result.recordset);
@@ -312,7 +312,7 @@ export async function readAllExample() {
                     );
                 },
                 ["readAllExample"],
-                { revalidate: 60*60*24, tags: ["readExample", "readAllExample"] },
+                { revalidate: 60*60*24*30, tags: ["readExample", "readAllExample"] },
             );
             const result = await cached();
             parsedForm = readExampleSchema.array().safeParse(result.rows);
@@ -331,7 +331,7 @@ export async function readAllExample() {
                     `;
                 },
                 ["readAllExample"],
-                { revalidate: 60*60*24, tags: ["readExample", "readAllExample"] },
+                { revalidate: 60*60*24*30, tags: ["readExample", "readAllExample"] },
             );
             const result = await cached();
             parsedForm = readExampleSchema.array().safeParse(result.recordset);
@@ -396,7 +396,7 @@ export async function readExampleUid(example: string | unknown) {
                     );
                 },
                 ["readExampleUid", parsedInput.data.example],
-                { revalidate: 60*60*24, tags: ["readExample", "readExampleUid"] },
+                { revalidate: 60*60*24*30, tags: ["readExample", "readExampleUid"] },
             );
             const result = await cached();
             parsedForm = readExampleSchema.safeParse(result.rows[0]);
@@ -416,7 +416,7 @@ export async function readExampleUid(example: string | unknown) {
                     `;
                 },
                 ["readExampleUid", parsedInput.data.example],
-                { revalidate: 60*60*24, tags: ["readExample", "readExampleUid"] },
+                { revalidate: 60*60*24*30, tags: ["readExample", "readExampleUid"] },
             );
             const result = await cached();
             parsedForm = readExampleSchema.safeParse(result.recordset[0]);
@@ -729,7 +729,7 @@ export async function readExampleById(example_uid: string) {
                     );
                 },
                 ["readExampleById", parsedInput.data.example_uid],
-                { revalidate: 60*60*24, tags: ["readExample", "readExampleById"] },
+                { revalidate: 60*60*24*30, tags: ["readExample", "readExampleById"] },
             );
             const result = await cached();
             parsedForm = readExampleSchema.safeParse(result.rows[0]);
@@ -749,7 +749,7 @@ export async function readExampleById(example_uid: string) {
                     `;
                 },
                 ["readExampleById", parsedInput.data.example_uid],
-                { revalidate: 60*60*24, tags: ["readExample", "readExampleById"] },
+                { revalidate: 60*60*24*30, tags: ["readExample", "readExampleById"] },
             );
             const result = await cached();
             parsedForm = readExampleSchema.safeParse(result.recordset[0]);
