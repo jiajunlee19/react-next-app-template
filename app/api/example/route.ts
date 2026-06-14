@@ -57,7 +57,7 @@ export async function POST(req: Request) {
             switch (report) {
                 case 'xxx':
                     sheetName = 'xxx';
-                    result = await readSnowflake();
+                    result = await readSnowflake([]);
                     break;
                 
                 default:
