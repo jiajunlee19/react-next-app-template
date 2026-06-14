@@ -14,14 +14,14 @@ import { itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import { signJwtToken } from '@/app/_libs/jwt';
 import { parsedEnv } from '@/app/_libs/zod_env';
-import { unstable_noStore as noStore } from 'next/cache';
+import { connection } from 'next/server';
 import { type StatePromise } from '@/app/_libs/types';
 import ldap_client from "@/app/_libs/ldap";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
 export async function readUserTotalPage(itemsPerPage: number | unknown, query?: string | unknown) {
-    noStore();
+    await connection();
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedQuery = querySchema.parse(query);
@@ -75,7 +75,7 @@ export async function readUserTotalPage(itemsPerPage: number | unknown, query?: 
 };
 
 export async function readUserByPage(itemsPerPage: number | unknown, currentPage: number | unknown, query?: string | unknown) {
-    noStore();
+    await connection();
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedCurrentPage = currentPageSchema.parse(currentPage);
@@ -140,7 +140,7 @@ export async function readUserByPage(itemsPerPage: number | unknown, currentPage
 };
 
 export async function readUserTotalPageAdmin(itemsPerPage: number | unknown, query?: string | unknown) {
-    noStore();
+    await connection();
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedQuery = querySchema.parse(query);
@@ -194,7 +194,7 @@ export async function readUserTotalPageAdmin(itemsPerPage: number | unknown, que
 };
 
 export async function readUserByPageAdmin(itemsPerPage: number | unknown, currentPage: number | unknown, query?: string | unknown) {
-    noStore();
+    await connection();
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedCurrentPage = currentPageSchema.parse(currentPage);
@@ -728,7 +728,7 @@ export async function deleteUser(user_uid: string | unknown): StatePromise {
 };
 
 export async function readUserById(user_uid: string | unknown) {
-    noStore();
+    await connection();
     
     const parsedInput = deleteUserSchema.safeParse({
         user_uid: user_uid,

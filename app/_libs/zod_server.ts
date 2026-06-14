@@ -69,6 +69,15 @@ export const WidgetSchema = createWidgetSchema.pick({
     widget_href: true,
 });
 
+// For Analytics
+export const createAnalyticsSchema = z.object({
+    event_uid: z.string().toLowerCase().min(1).uuid(),
+    event_name: z.string().toUpperCase().min(1),
+    duration_ms: z.number().int().nonnegative().default(0),
+    path: z.string().min(1),
+    event_created_dt: z.coerce.date(),
+    event_created_by: z.string().toLowerCase().min(1).uuid().nullish(),
+});
 
 // For Example
 export const createExampleSchema = z.object({
@@ -96,3 +105,19 @@ export const deleteExampleSchema = createExampleSchema.pick({
 export const ExampleSchema = createExampleSchema.pick({
     example: true,
 });
+
+export const inputTypeSchema = z.enum(['xxx']);
+export const inputTypeList = inputTypeSchema.options;
+
+export const inputValuesSchema = z.array(
+    z.string()
+        .transform((val) => val.toUpperCase())
+        .refine((val) => val.length > 0), {
+            message: 'Each input value must be more than 1 character'
+        }
+).min(1);
+
+export const reportSchema = z.enum([
+    'xxx',
+])
+export const selectedReportsSchema = z.array(reportSchema).min(1);

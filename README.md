@@ -292,13 +292,13 @@ This section outlines the important concepts used in this template.
 1. No API layer is required, server actions can directly query database from server-side.
 2. See example on one of the server action [/_actions/example.ts](app/_actions/example.ts).
     - CRUD async/await functions are used to execute CRUD operations on database
-3. For actions requiring dynamic rendering, `noStore()` is specified to prevent the response from being cached.
+3. For actions requiring dynamic rendering, `await connection()` is specified to prevent the response from being cached.
     ```ts
-    import { unstable_noStore as noStore } from 'next/cache';
+    import { connection } from 'next/server';
 
     export async function fetch() {
         // This is equivalent to in fetch(..., {cache: 'no-store'}).
-        noStore();
+        await connection();
         ...
     }
     ```

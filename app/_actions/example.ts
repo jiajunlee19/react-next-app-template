@@ -13,13 +13,100 @@ import { itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/
 import { parsedEnv } from '@/app/_libs/zod_env';
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import { StatePromise, type State } from '@/app/_libs/types';
-import { unstable_noStore as noStore } from 'next/cache';
+import { connection } from 'next/server';
+import { unstable_cache as cache, revalidateTag } from 'next/cache';
 import { checkWidgetAccess } from "@/app/_libs/widgets";
+import { snowflakePool } from "@/app/_libs/snowflake_config";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
+export async function revalidateSnowflakeCache() {
+    
+    const session = await getServerSession(options);
+
+    if (!session) {
+        return { error: ["Unauthorized access. No session found."] }
+    }
+
+    const { hasWidgetOwnerAccess, owners } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
+
+    if (!hasWidgetOwnerAccess) {
+        return { error: [`Access denied. Kindly contact owners (${owners}) to get access for /authenticated/example.`] }
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        return { error: ["Too many requests. Please try again later."] }
+    }
+    
+    revalidateTag("snowflake");
+};
+
+export async function readSnowflake(inputList: string[]) {
+
+    const session = await getServerSession(options);
+
+    if (!session) {
+        return { error: ["Unauthorized access. No session found."] }
+    }
+
+    const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
+
+    if (!hasWidgetViewAccess) {
+        return { error: [`Access denied. You ae not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access for /authenticated/example.`] }
+    }
+
+    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+        return { error: ["Too many requests. Please try again later."] }
+    }
+
+    const placeholders = inputList.map(() => '?').join(', ');
+    let parsedForm;
+    try {
+        const cached = cache(
+            async (inputList: string[]) => {
+                return await snowflakePool.use(conn => new Promise((resolve, reject) => {
+                    conn.execute({
+                        sqlText: `
+                            select * from table where col in ${placeholders};
+                        `,
+                        binds: [...inputList],
+                        complete: (err, stmt, rows) => {
+                            if (err) {
+                                reject(err);
+                            }
+                            else {
+                                resolve(rows);
+                            }
+                        },
+                    })
+                }))
+            },
+            ["readSnowflake"],
+            { revalidate: 60*60*24, tags: ["snowflake", "readSnowflake"] },
+        )
+
+        const result = await cached(inputList);
+        parsedForm = readExampleSchema.array().safeParse(result);
+
+        if (!parsedForm.success) {
+            return {
+                error: parsedForm.error.errors.map(e => ({
+                    field: e.path.join('.'),
+                    message: e.message,
+                }))
+            };
+        };
+
+    } catch (err) {
+        return { error: [getErrorMessage(err)] };
+    }
+
+    return { data: parsedForm.data }
+
+};
+
 export async function readExampleTotalPage(itemsPerPage: number | unknown, query?: string | unknown) {
-    noStore();
+    await connection();
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedQuery = querySchema.parse(query);
@@ -86,7 +173,7 @@ export async function readExampleTotalPage(itemsPerPage: number | unknown, query
 };
 
 export async function readExampleByPage(itemsPerPage: number | unknown, currentPage: number | unknown, query?: string | unknown) {
-    noStore();
+    await connection();
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedCurrentPage = currentPageSchema.parse(currentPage);
@@ -163,7 +250,7 @@ export async function readExampleByPage(itemsPerPage: number | unknown, currentP
 };
 
 export async function readExample() {
-    noStore();
+    await connection();
 
     const session = await getServerSession(options);
 
@@ -224,7 +311,7 @@ export async function readExample() {
 };
 
 export async function readExampleUid(example: string | unknown) {
-    noStore();
+    await connection();
 
     const parsedInput = ExampleSchema.safeParse({
         example: example,
@@ -537,7 +624,7 @@ export async function deleteExample(example_uid: string): StatePromise {
 };
 
 export async function readExampleById(example_uid: string) {
-    noStore();
+    await connection();
 
     const parsedInput = deleteExampleSchema.safeParse({
         example_uid: example_uid,

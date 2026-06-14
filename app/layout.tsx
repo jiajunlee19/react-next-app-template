@@ -9,6 +9,7 @@ import { options } from '@/app/_libs/nextAuth_options'
 import { twMerge } from 'tailwind-merge'
 import ThemeContextProvider from '@/app/_context/theme-context'
 import { parsedEnv } from '@/app/_libs/zod_env'
+import { Analytics } from '@/app/_components/analytics'
 // import { Inter } from 'next/font/google'
 
 // const inter = Inter({ subsets: ['latin'] })
@@ -36,7 +37,7 @@ export default async function RootLayout({
         <AuthProvider session={session}>
           {/* <body className={`${inter.className} antialiased`}> */}
           <body>
-
+            <Analytics />
             <div className="w-full bg-white dark:bg-zinc-900">
               <div className="flex flex-col h-screen lg:ml-64 xl:ml-72">
                 <header className="fixed top-0 z-20 lg:flex lg:fixed lg:inset-0 lg:w-64 xl:w-72">

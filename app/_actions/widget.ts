@@ -13,13 +13,13 @@ import { itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/
 import { parsedEnv } from '@/app/_libs/zod_env';
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import { StatePromise, type State } from '@/app/_libs/types';
-import { unstable_noStore as noStore } from 'next/cache';
+import { connection } from 'next/server';
 import { checkWidgetAccess } from "@/app/_libs/widgets";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
 export async function readWidgetTotalPage(itemsPerPage: number | unknown, query?: string | unknown) {
-    noStore();
+    await connection();
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedQuery = querySchema.parse(query);
@@ -86,7 +86,7 @@ export async function readWidgetTotalPage(itemsPerPage: number | unknown, query?
 };
 
 export async function readWidgetByPage(itemsPerPage: number | unknown, currentPage: number | unknown, query?: string | unknown) {
-    noStore();
+    await connection();
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedCurrentPage = currentPageSchema.parse(currentPage);
@@ -174,7 +174,7 @@ export async function readWidgetByPage(itemsPerPage: number | unknown, currentPa
 };
 
 export async function readWidget() {
-    noStore();
+    await connection();
 
     const session = await getServerSession(options);
 
@@ -230,7 +230,7 @@ export async function readWidget() {
 };
 
 export async function readWidgetUid(widget: string | unknown) {
-    noStore();
+    await connection();
 
     const parsedInput = WidgetSchema.safeParse({
         widget: widget,
@@ -650,7 +650,7 @@ export async function deleteWidget(widget_uid: string): StatePromise {
 };
 
 export async function readWidgetByUid(widget_uid: string) {
-    noStore();
+    await connection();
 
     const parsedInput = deleteWidgetSchema.safeParse({
         widget_uid: widget_uid,
