@@ -8,12 +8,12 @@ export default withAuth(
     // `withAuth` augments your `Request` with the user's token.
     async function middleware(request: NextRequestWithAuth) {
 
-        // If no token, redirect to Azure AD sign-in automatically
-        // if (!request.nextauth.token) {
-        //     const signInUrl = new URL("/auth/signIn", request.url);
-        //     signInUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
-        //     return NextResponse.redirect(signInUrl);
-        // }
+        // If no token, redirect to sign-in page
+        if (!request.nextauth.token) {
+            const signInUrl = new URL("/auth/signIn", request.url);
+            signInUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
+            return NextResponse.redirect(signInUrl);
+        }
 
         if (request.nextUrl.pathname.startsWith("/restricted")
             && request.nextauth.token?.role !== "boss") {
