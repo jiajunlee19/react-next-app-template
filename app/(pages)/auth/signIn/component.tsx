@@ -46,13 +46,13 @@ export default function SignInComponent() {
     }
 
     // Show loading state while redirecting to Azure AD
-    if (status === "unauthenticated" || status === "loading") {
-        return (
-            <div className="flex flex-col items-center gap-4 mt-8">
-                <p className="text-gray-500 dark:text-gray-400">One moment, signing you in ...</p>
-            </div>
-        );
-    }
+    // if (status === "unauthenticated" || status === "loading") {
+    //     return (
+    //         <div className="flex flex-col items-center gap-4 mt-8">
+    //             <p className="text-gray-500 dark:text-gray-400">One moment, signing you in ...</p>
+    //         </div>
+    //     );
+    // }
 
     return (
         <>
