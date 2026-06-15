@@ -44,13 +44,14 @@ export async function readWidgetTotalPage(itemsPerPage: number | unknown, query?
             const result = await pool.query(
                 `SELECT widget_uid, widget_name, widget_description, widget_group, widget_href, widget_tabs, widget_owners, widget_viewers, widget_created_dt, widget_updated_dt, widget_updated_by
                 FROM "jiajunleeWeb"."widget"
-                WHERE (CAST(widget_uid AS TEXT) LIKE $1 OR widget LIKE $1);`,
+                WHERE (CAST(widget_uid AS TEXT) LIKE $1 OR widget_name LIKE $1 OR widget_group LIKE $1 OR widget_href LIKE $1);`,
                 [QUERY]
             );
             parsedForm = readWidgetSchema.array().safeParse(result.rows.map(row => ({
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
+                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             })));
             await pool.end();
         }
@@ -61,12 +62,13 @@ export async function readWidgetTotalPage(itemsPerPage: number | unknown, query?
                 .input('query', sql.VarChar, QUERY)
                 .query`SELECT widget_uid, widget_name, widget_description, widget_group, widget_href, widget_tabs, widget_owners, widget_viewers, widget_created_dt, widget_updated_dt, widget_updated_by
                         FROM [jiajunleeWeb].[widget]
-                        WHERE (widget_uid like @query OR widget like @query);
+                        WHERE (widget_uid like @query OR widget_name like @query OR widget_group like @query OR widget_href like @query);
             `;
             parsedForm = readWidgetSchema.array().safeParse(result.recordset.map(row => ({
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
+                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             })));
         }
 
@@ -129,8 +131,8 @@ export async function readWidgetByPage(itemsPerPage: number | unknown, currentPa
                 `SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') AS widget_updated_by
                 FROM "jiajunleeWeb"."widget" w
                 LEFT JOIN "jiajunleeWeb"."user" u ON w.widget_updated_by = u.user_uid
-                WHERE (CAST(w.widget_uid AS TEXT) LIKE $1 OR w.widget LIKE $1)
-                ORDER BY w.widget ASC
+                WHERE (CAST(w.widget_uid AS TEXT) LIKE $1 OR w.widget_name LIKE $1 OR w.widget_group LIKE $1 OR w.widget_href LIKE $1)
+                ORDER BY w.widget_group ASC
                 `,
                 [QUERY]
             );
@@ -138,6 +140,7 @@ export async function readWidgetByPage(itemsPerPage: number | unknown, currentPa
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
+                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             })));
             await pool.end();
         }
@@ -149,14 +152,15 @@ export async function readWidgetByPage(itemsPerPage: number | unknown, currentPa
                 .query`SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') as widget_updated_by
                         FROM [jiajunleeWeb].[widget] w
                         left join [jiajunleeWeb].[user] u ON w.widget_updated_by = u.user_uid
-                        WHERE (w.widget_uid like @query OR w.widget like @query)
-                        ORDER BY w.widget asc
+                        WHERE (w.widget_uid like @query OR w.widget_name like @query OR w.widget_group like @query OR w.widget_href like @query)
+                        ORDER BY w.widget_group asc
                         ;
             `;
             parsedForm = readWidgetSchema.array().safeParse(result.recordset.map(row => ({
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
+                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             })));
         }
 
@@ -205,6 +209,7 @@ export async function readAllWidget() {
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
+                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             })));
             await pool.end();
         }
@@ -221,6 +226,7 @@ export async function readAllWidget() {
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
+                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             })));
         }
 
@@ -235,13 +241,13 @@ export async function readAllWidget() {
     return parsedForm.data
 };
 
-export async function readWidgetUid(widget: string | unknown) {
+export async function readWidgetUid(widget_href: string | unknown) {
     "use cache"
     cacheLife("max");
     cacheTag("readWidget", "readWidgetUid");
 
     const parsedInput = WidgetSchema.safeParse({
-        widget: widget,
+        widget_href: widget_href,
     });
 
     if (!parsedInput.success) {
@@ -266,7 +272,7 @@ export async function readWidgetUid(widget: string | unknown) {
                 `SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') AS widget_updated_by
                 FROM "jiajunleeWeb"."widget" w
                 LEFT JOIN "jiajunleeWeb"."user" u ON w.widget_updated_by = u.user_uid
-                WHERE w.widget = $1;`,
+                WHERE w.widget_href = $1;`,
                 [parsedInput.data.widget_href]
             );
             const row = result.rows[0];
@@ -274,6 +280,7 @@ export async function readWidgetUid(widget: string | unknown) {
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
+                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             });
             await pool.end();
         }
@@ -292,6 +299,7 @@ export async function readWidgetUid(widget: string | unknown) {
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
+                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             });
         }
 
@@ -363,6 +371,7 @@ export async function createWidget(prevState: State | unknown, formData: FormDat
                             `INSERT INTO "jiajunleeWeb"."widget"
                             (
                                 widget_uid, 
+                                widget_name,
                                 widget_description,
                                 widget_group,
                                 widget_href,
@@ -552,7 +561,7 @@ export async function updateWidget(prevState: State | unknown, formData: FormDat
                             .input('widget_uid', sql.UniqueIdentifier, parsedForm.data.widget_uid)
                             .input('widget_name', sql.VarChar, parsedForm.data.widget_name)
                             .input('widget_description', sql.VarChar, parsedForm.data.widget_description)
-                            .input('widget_group ', sql.VarChar, parsedForm.data.widget_group )
+                            .input('widget_group', sql.VarChar, parsedForm.data.widget_group )
                             .input('widget_tabs', sql.VarChar, parsedForm.data.widget_tabs)
                             .input('widget_owners', sql.VarChar, parsedForm.data.widget_owners)
                             .input('widget_viewers', sql.VarChar, parsedForm.data.widget_viewers)
@@ -703,6 +712,7 @@ export async function readWidgetByUid(widget_uid: string) {
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
+                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             });
             await pool.end();
         }
@@ -722,6 +732,7 @@ export async function readWidgetByUid(widget_uid: string) {
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
+                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             });
         }
 
