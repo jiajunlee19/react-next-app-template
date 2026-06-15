@@ -499,12 +499,11 @@ export async function signInAzureAD(username: TUsernameSchema | unknown): StateP
             let pool = await sql.connect(msSqlConfig);
             const result = await pool.request()
                             .input('user_uid', sql.UniqueIdentifier, uuidv5(parsedForm.data.username, UUID5_SECRET))
-                            .input('username', sql.VarChar, username)
+                            .input('username', sql.VarChar, parsedForm.data.username)
                             .input('password', sql.VarChar, await bcrypt.hash(uuidv5(parsedForm.data.username, UUID5_SECRET), 10))
                             .input('role', sql.VarChar, 'user')
                             .input('user_created_dt', sql.DateTime, now)
                             .input('user_updated_dt', sql.DateTime, now)
-                            .input('username', sql.VarChar, parsedForm.data.username)
                             .query`MERGE [jiajunleeWeb].[user] AS target
                                     USING (VALUES (@user_uid, @username, @password, @role, @user_created_dt, @user_updated_dt))
                                         AS source (user_uid, username, password, role, user_created_dt, user_updated_dt)
