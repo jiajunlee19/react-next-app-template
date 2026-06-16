@@ -40,10 +40,32 @@ export async function revalidateSnowflakeCache() {
     revalidateTag("snowflake");
 };
 
-export async function readSnowflake(inputList: string[]) {
+export async function getSnowflake(inputList: string[], placeholders: string) {
     "use cache"
     cacheLife("days");
     cacheTag("snowflake", "readSnowflake");
+
+    const result = await snowflakePool.use(conn => new Promise((resolve, reject) => {
+        conn.execute({
+            sqlText: `
+                select * from table where col in ${placeholders};
+            `,
+            binds: [...inputList],
+            complete: (err, stmt, rows) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(rows);
+                }
+            },
+        })
+    }));
+
+    return result;
+};
+
+export async function readSnowflake(inputList: string[]) {
 
     const session = await getServerSession(options);
 
@@ -64,22 +86,7 @@ export async function readSnowflake(inputList: string[]) {
     const placeholders = inputList.map(() => '?').join(', ');
     let parsedForm;
     try {
-        const result = await snowflakePool.use(conn => new Promise((resolve, reject) => {
-            conn.execute({
-                sqlText: `
-                    select * from table where col in ${placeholders};
-                `,
-                binds: [...inputList],
-                complete: (err, stmt, rows) => {
-                    if (err) {
-                        reject(err);
-                    }
-                    else {
-                        resolve(rows);
-                    }
-                },
-            })
-        }))
+        const result = await getSnowflake(inputList, placeholders);
 
         parsedForm = readExampleSchema.array().safeParse(result);
 
@@ -100,10 +107,38 @@ export async function readSnowflake(inputList: string[]) {
 
 };
 
-export async function readExampleTotalPage(itemsPerPage: number | unknown, query?: string | unknown) {
+export async function getExampleTotalPagePG(pool: Pool, QUERY: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readExample", "readExampleTotalPage");
+
+    const result = await pool.query(
+        `SELECT example_uid, example, example_created_dt, example_updated_dt, example_updated_by
+        FROM "jiajunleeWeb"."example"
+        WHERE (CAST(example_uid AS TEXT) LIKE $1 OR example LIKE $1);`,
+        [QUERY]
+    );
+
+    return result;
+};
+
+export async function getExampleTotalPageMSSQL(pool: sql.ConnectionPool, QUERY: string) {
+    "use cache"
+    cacheLife("max");
+    cacheTag("readExample", "readExampleTotalPage");
+
+    const result = await pool.request()
+        .input('query', sql.VarChar, QUERY)
+        .query`SELECT example_uid, example, example_created_dt, example_updated_dt, example_updated_by
+                FROM [jiajunleeWeb].[example]
+                WHERE (example_uid like @query OR example like @query);
+    `;
+
+    return result;
+};
+
+
+export async function readExampleTotalPage(itemsPerPage: number | unknown, query?: string | unknown) {
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedQuery = querySchema.parse(query);
@@ -136,24 +171,14 @@ export async function readExampleTotalPage(itemsPerPage: number | unknown, query
     try {
         if (parsedEnv.DB_TYPE === "PG") {
             const pool = new Pool(pgSqlConfig);
-            const result = await pool.query(
-                `SELECT example_uid, example, example_created_dt, example_updated_dt, example_updated_by
-                FROM "jiajunleeWeb"."example"
-                WHERE (CAST(example_uid AS TEXT) LIKE $1 OR example LIKE $1);`,
-                [QUERY]
-            );
+            const result = await getExampleTotalPagePG(pool, QUERY);
             parsedForm = readExampleSchema.array().safeParse(result.rows);
             await pool.end();
         }
 
         else {
             let pool = await sql.connect(msSqlConfig);
-            const result = await pool.request()
-                .input('query', sql.VarChar, QUERY)
-                .query`SELECT example_uid, example, example_created_dt, example_updated_dt, example_updated_by
-                        FROM [jiajunleeWeb].[example]
-                        WHERE (example_uid like @query OR example like @query);
-            `;
+            const result = await getExampleTotalPageMSSQL(pool, QUERY);
             parsedForm = readExampleSchema.array().safeParse(result.recordset);
         }
 
@@ -169,10 +194,46 @@ export async function readExampleTotalPage(itemsPerPage: number | unknown, query
     return totalPage
 };
 
-export async function readExampleByPage(itemsPerPage: number | unknown, currentPage: number | unknown, query?: string | unknown) {
+export async function getExampleByPagePG(pool: Pool, QUERY: string, OFFSET: number, parsedItemsPerPage: number) {
     "use cache"
     cacheLife("max");
     cacheTag("readExample", "readExampleByPage");
+
+    const result = await pool.query(
+        `SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') AS example_updated_by
+        FROM "jiajunleeWeb"."example" e
+        LEFT JOIN "jiajunleeWeb"."user" u ON e.example_updated_by = u.user_uid
+        WHERE (CAST(e.example_uid AS TEXT) LIKE $1 OR e.example LIKE $1)
+        ORDER BY e.example ASC
+        OFFSET $2 LIMIT $3;`,
+        [QUERY, OFFSET, parsedItemsPerPage]
+    );
+
+    return result;
+};
+
+export async function getExampleByPageMSSQL(pool: sql.ConnectionPool, QUERY: string, OFFSET: number, parsedItemsPerPage: number) {
+    "use cache"
+    cacheLife("max");
+    cacheTag("readExample", "readExampleByPage");
+
+    const result = await pool.request()
+        .input('offset', sql.Int, OFFSET)
+        .input('limit', sql.Int, parsedItemsPerPage)
+        .input('query', sql.VarChar, QUERY)
+        .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
+                FROM [jiajunleeWeb].[example] e
+                left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
+                WHERE (e.example_uid like @query OR e.example like @query)
+                ORDER BY e.example asc
+                OFFSET @offset ROWS
+                FETCH NEXT @limit ROWS ONLY;
+    `;
+
+    return result;
+};
+
+export async function readExampleByPage(itemsPerPage: number | unknown, currentPage: number | unknown, query?: string | unknown) {
 
     const parsedItemsPerPage = itemsPerPageSchema.parse(itemsPerPage);
     const parsedCurrentPage = currentPageSchema.parse(currentPage);
@@ -207,33 +268,14 @@ export async function readExampleByPage(itemsPerPage: number | unknown, currentP
     try {
         if (parsedEnv.DB_TYPE === "PG") {
             const pool = new Pool(pgSqlConfig);
-            const result = await pool.query(
-                `SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') AS example_updated_by
-                FROM "jiajunleeWeb"."example" e
-                LEFT JOIN "jiajunleeWeb"."user" u ON e.example_updated_by = u.user_uid
-                WHERE (CAST(e.example_uid AS TEXT) LIKE $1 OR e.example LIKE $1)
-                ORDER BY e.example ASC
-                OFFSET $2 LIMIT $3;`,
-                [QUERY, OFFSET, parsedItemsPerPage]
-            );
+            const result = await getExampleByPagePG(pool, QUERY, OFFSET, parsedItemsPerPage);
             parsedForm = readExampleSchema.array().safeParse(result.rows);
             await pool.end();
         }
         
         else {
             let pool = await sql.connect(msSqlConfig);
-            const result = await pool.request()
-                .input('offset', sql.Int, OFFSET)
-                .input('limit', sql.Int, parsedItemsPerPage)
-                .input('query', sql.VarChar, QUERY)
-                .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
-                        FROM [jiajunleeWeb].[example] e
-                        left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
-                        WHERE (e.example_uid like @query OR e.example like @query)
-                        ORDER BY e.example asc
-                        OFFSET @offset ROWS
-                        FETCH NEXT @limit ROWS ONLY;
-            `;
+            const result = await getExampleByPageMSSQL(pool, QUERY, OFFSET, parsedItemsPerPage);
             parsedForm = readExampleSchema.array().safeParse(result.recordset);
         }
 
@@ -248,10 +290,36 @@ export async function readExampleByPage(itemsPerPage: number | unknown, currentP
     return parsedForm.data
 };
 
-export async function readAllExample() {
+export async function getAllExamplePG(pool: Pool) {
     "use cache"
     cacheLife("max");
     cacheTag("readExample", "readAllExample");
+
+    const result = await pool.query(
+        `SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') AS example_updated_by
+        FROM "jiajunleeWeb"."example" e
+        LEFT JOIN "jiajunleeWeb"."user" u ON e.example_updated_by = u.user_uid;`
+    );
+
+    return result;
+};
+
+export async function getAllExampleMSSQL(pool: sql.ConnectionPool) {
+    "use cache"
+    cacheLife("max");
+    cacheTag("readExample", "readAllExample");
+
+    const result = await pool.request()
+        .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
+                FROM [jiajunleeWeb].[example] e
+                left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
+                ;
+    `;
+
+    return result;
+};
+
+export async function readAllExample() {
 
     const session = await getServerSession(options);
 
@@ -280,23 +348,14 @@ export async function readAllExample() {
     try {
         if (parsedEnv.DB_TYPE === "PG") {
             const pool = new Pool(pgSqlConfig);
-            const result = await pool.query(
-                `SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') AS example_updated_by
-                FROM "jiajunleeWeb"."example" e
-                LEFT JOIN "jiajunleeWeb"."user" u ON e.example_updated_by = u.user_uid;`
-            );
+            const result = await getAllExamplePG(pool);
             parsedForm = readExampleSchema.array().safeParse(result.rows);
             await pool.end();
         }
         
         else {
             let pool = await sql.connect(msSqlConfig);
-            const result = await pool.request()
-                .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
-                        FROM [jiajunleeWeb].[example] e
-                        left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
-                        ;
-            `;
+            const result = await getAllExampleMSSQL(pool);
             parsedForm = readExampleSchema.array().safeParse(result.recordset);
         }
 
@@ -311,10 +370,39 @@ export async function readAllExample() {
     return parsedForm.data
 };
 
-export async function readExampleUid(example: string | unknown) {
+export async function getExampleUidPG(pool: Pool, example: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readExample", "readExampleUid");
+
+    const result = await pool.query(
+        `SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') AS example_updated_by
+        FROM "jiajunleeWeb"."example" e
+        LEFT JOIN "jiajunleeWeb"."user" u ON e.example_updated_by = u.user_uid
+        WHERE e.example = $1;`,
+        [example]
+    );
+
+    return result;
+};
+
+export async function getExampleUidMSSQL(pool: sql.ConnectionPool, example: string) {
+    "use cache"
+    cacheLife("max");
+    cacheTag("readExample", "readExampleUid");
+
+    const result = await pool.request()
+        .input('example', sql.VarChar, example)
+        .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
+                FROM [jiajunleeWeb].[example] e
+                left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
+                WHERE e.example = @example;
+    `;
+
+    return result;
+};
+
+export async function readExampleUid(example: string | unknown) {
 
     const parsedInput = ExampleSchema.safeParse({
         example: example,
@@ -351,26 +439,14 @@ export async function readExampleUid(example: string | unknown) {
     try {
         if (parsedEnv.DB_TYPE === "PG") {
             const pool = new Pool(pgSqlConfig);
-            const result = await pool.query(
-                `SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') AS example_updated_by
-                FROM "jiajunleeWeb"."example" e
-                LEFT JOIN "jiajunleeWeb"."user" u ON e.example_updated_by = u.user_uid
-                WHERE e.example = $1;`,
-                [parsedInput.data.example]
-            );
+            const result = await getExampleUidPG(pool, parsedInput.data.example);
             parsedForm = readExampleSchema.safeParse(result.rows[0]);
             await pool.end();
         }
         
         else {
             let pool = await sql.connect(msSqlConfig);
-            const result = await pool.request()
-                .input('example', sql.VarChar, parsedInput.data.example)
-                .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
-                        FROM [jiajunleeWeb].[example] e
-                        left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
-                        WHERE e.example = @example;
-            `;
+            const result = await getExampleUidMSSQL(pool, parsedInput.data.example);
             parsedForm = readExampleSchema.safeParse(result.recordset[0]);
         }
 
@@ -632,10 +708,40 @@ export async function deleteExample(example_uid: string): StatePromise {
     return { message: `Successfully deleted example ${parsedForm.data.example_uid}` }
 };
 
-export async function readExampleById(example_uid: string) {
+export async function getExampleByIdPG(pool: Pool, example_uid: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readExample", "readExampleById");
+
+    const result = await pool.query(
+        `SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt,
+                COALESCE(u.username, 'system') AS example_updated_by
+        FROM "jiajunleeWeb"."example" e
+        LEFT JOIN "jiajunleeWeb"."user" u ON e.example_updated_by = u.user_uid
+        WHERE e.example_uid = $1;`,
+        [example_uid]
+    );
+
+    return result;
+};
+
+export async function getExampleByIdMSSQL(pool: sql.ConnectionPool, example_uid: string) {
+    "use cache"
+    cacheLife("max");
+    cacheTag("readExample", "readExampleById");
+
+    const result = await pool.request()
+        .input('example_uid', sql.VarChar, example_uid)
+        .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
+                FROM [jiajunleeWeb].[example] e
+                left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
+                WHERE e.example_uid = @example_uid;
+    `;
+
+    return result;
+};
+
+export async function readExampleById(example_uid: string) {
 
     const parsedInput = deleteExampleSchema.safeParse({
         example_uid: example_uid,
@@ -672,27 +778,14 @@ export async function readExampleById(example_uid: string) {
     try {
         if (parsedEnv.DB_TYPE === "PG") {
             const pool = new Pool(pgSqlConfig);
-            const result = await pool.query(
-                `SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt,
-                        COALESCE(u.username, 'system') AS example_updated_by
-                FROM "jiajunleeWeb"."example" e
-                LEFT JOIN "jiajunleeWeb"."user" u ON e.example_updated_by = u.user_uid
-                WHERE e.example_uid = $1;`,
-                [parsedInput.data.example_uid]
-            );
+            const result = await getExampleByIdPG(pool, parsedInput.data.example_uid);
             parsedForm = readExampleSchema.safeParse(result.rows[0]);
             await pool.end();
         }
         
         else {
             let pool = await sql.connect(msSqlConfig);
-            const result = await pool.request()
-                .input('example_uid', sql.VarChar, parsedInput.data.example_uid)
-                .query`SELECT e.example_uid, e.example, e.example_created_dt, e.example_updated_dt, COALESCE(u.username, 'system') as example_updated_by
-                        FROM [jiajunleeWeb].[example] e
-                        left join [jiajunleeWeb].[user] u ON e.example_updated_by = u.user_uid
-                        WHERE e.example_uid = @example_uid;
-                `;
+            const result = await getExampleByIdMSSQL(pool, parsedInput.data.example_uid);
             parsedForm = readExampleSchema.safeParse(result.recordset[0]);
         }
 
