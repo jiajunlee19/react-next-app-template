@@ -1,25 +1,10 @@
 "use client"
 
 import Link from "next/link";
-import { widgets } from "@/app/_libs/widgets";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { type TReadWidgetSchema } from "@/app/_libs/zod_server";
 
-export function HomeComponent({ baseUrl }: { baseUrl: string }) {
-
-    const [widgets, setWidgets] = useState<TReadWidgetSchema[]>([]);
-    useEffect(() => {
-        const fetchWidgets = async () => {
-            try {
-                const res = await fetch(`${baseUrl}/api/readWidgets`);
-                const data = await res.json();
-                setWidgets(data.widgets ?? []);
-            } catch {
-                setWidgets([]);
-            }
-        };
-        fetchWidgets();
-    }, [baseUrl]);
+export function HomeComponent({ widgets }: { widgets: TReadWidgetSchema[] }) {
 
     const [groupFilter, setGroupFilter] = useState("all");
     const [search, setSearch] = useState("");

@@ -10,6 +10,9 @@ import { twMerge } from 'tailwind-merge'
 import ThemeContextProvider from '@/app/_context/theme-context'
 import { parsedEnv } from '@/app/_libs/zod_env'
 import { Analytics } from '@/app/_components/analytics'
+import { readAllWidget } from "@/app/_actions/widget"
+import { TReadWidgetSchema } from "@/app/_libs/zod_server"
+import { checkWidgetAccess } from '@/app/_libs/widgets'
 // import { Inter } from 'next/font/google'
 
 // const inter = Inter({ subsets: ['latin'] })
@@ -23,13 +26,24 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({
-  children,
+  children, params
 }: {
-  children: React.ReactNode
+  children: React.ReactNode, params: { slug?: string }
 }) {
 
     const session = await getServerSession(options);
     // console.log(session?.user)
+
+    const pathname = params?.slug ?? "";
+    const access = session?.user ? await checkWidgetAccess(parsedEnv.BASE_URL, pathname, session.user.username, session.user.role): null;
+    const userDisplayName = session?.user?.username + (access?.hasWidgetOwnerAccess ? " (Admin)" : "");
+
+    let widgets: TReadWidgetSchema[];
+    try {
+        widgets = await readAllWidget();
+    } catch {
+        widgets = [];
+    }
 
   return (
     <html lang="en" className={twMerge("scroll-smooth", typeof window !== "undefined" && localStorage.getItem("darkMode") === "true" ? "dark": "light")}>
@@ -41,7 +55,7 @@ export default async function RootLayout({
             <div className="w-full bg-white dark:bg-zinc-900">
               <div className="flex flex-col h-screen lg:ml-64 xl:ml-72">
                 <header className="fixed top-0 z-20 lg:flex lg:fixed lg:inset-0 lg:w-64 xl:w-72">
-                  <Header baseUrl={parsedEnv.BASE_URL} />
+                  <Header access={access} userDisplayName={userDisplayName} widgets={widgets} />
                 </header>
 
                 <main className="z-0 block h-[calc(100dvh-56px-56px)] w-full my-[calc(56px+4px)] px-4 overflow-y-scroll sm:px-6 lg:px-8">

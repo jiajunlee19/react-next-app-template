@@ -2,57 +2,27 @@
 
 import { HomeIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline"
 import { useSession } from "next-auth/react"
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation"
 import { twMerge } from "tailwind-merge";
 import { CrossIcon, DarkIcon, HamburgerIcon, LightIcon, SearchIcon } from "@/app/_components/basic/icons";
 import { useThemeContext } from "@/app/_context/theme-context";
-import { checkWidgetAccess } from "@/app/_libs/widgets";
 import { type TReadWidgetSchema } from "@/app/_libs/zod_server";
 import Image from "next/image";
 
-export default function Header({ baseUrl }: { baseUrl: string }) {
+type TAccess = {
+    hasWidgetOwnerAccess?: boolean;
+    hasWidgetViewAccess?: boolean;
+    owners?: string[];
+    viewers?: string[];
+} | null;
+
+export default function Header({ access, userDisplayName, widgets }: { access: TAccess, userDisplayName: string, widgets: TReadWidgetSchema[] }) {
 
     const pathname = usePathname();
 
     const { data: session } = useSession();
-
-    const [userDisplayName, setUserDisplayName] = useState<string | undefined>(undefined);
-
-    const [access, setAccess] = useState<{
-        hasWidgetOwnerAccess?: boolean;
-        hasWidgetViewAccess?: boolean;
-        owners?: string[];
-        viewers?: string[];
-    }>({});
-    
-    const [widgets, setWidgets] = useState<TReadWidgetSchema[]>([]);
-    useEffect(() => {
-        const fetchWidgets = async () => {
-            try {
-                const res = await fetch(`${baseUrl}/api/readWidgets`);
-                const data = await res.json();
-                setWidgets(data.widgets ?? []);
-            } catch {
-                setWidgets([]);
-            }
-        };
-        fetchWidgets();
-    }, [baseUrl]);
-
-    useEffect(() => {
-        const fetchAccess = async () => {
-            if (session?.user) {
-                const result = await checkWidgetAccess(baseUrl, pathname, session?.user.username, session?.user.role);
-                setAccess(result);
-                setUserDisplayName(
-                    session?.user.username + (result.hasWidgetOwnerAccess ? " (Admin)" : "")
-                )
-            }
-        };
-        fetchAccess();
-      }, [baseUrl, pathname, session]);
     
     // Find current widget and its tabs based on pathname
     const currentWidget = useMemo(() => {
@@ -80,7 +50,7 @@ export default function Header({ baseUrl }: { baseUrl: string }) {
                 title={userDisplayName ?? ""}
                 width={28}
                 height={28}
-                className={twMerge("rounded-full object-cover", access.hasWidgetOwnerAccess ? "ring-2 ring-red-400" : "")}
+                className={twMerge("rounded-full object-cover", access?.hasWidgetOwnerAccess ? "ring-2 ring-red-400" : "")}
                 referrerPolicy="no-referrer" 
             />
         ) : <span>{userDisplayName}</span>
