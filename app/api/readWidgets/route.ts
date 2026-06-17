@@ -1,30 +1,17 @@
 import { NextResponse } from "next/server";
-import { pgSqlConfig, msSqlConfig } from "@/app/_libs/sql_config";
 import { parsedEnv } from "@/app/_libs/zod_env";
 import { getErrorMessage } from "@/app/_libs/error_handler";
-import { Pool } from "pg";
-import sql from "mssql";
+import { getWidgetsMSSQL, getWidgetsPG } from "@/app/_actions/api";
 
 export async function GET() {
     try {
         let rows: any[];
 
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
-            const result = await pool.query(
-                `SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers
-                FROm "jiajunleeWeb"."widget" w
-                ORDER BY w.widget_group asc;`
-            );
+            const result = await getWidgetsPG();
             rows = result.rows;
-            await pool.end();
         } else {
-            const pool = await sql.connect(msSqlConfig);
-            const result = await pool.query(
-                `SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers
-                FROm [jiajunleeWeb].[widget] w
-                ORDER BY w.widget_group asc;`
-            );
+            const result = await getWidgetsMSSQL();
             rows = result.recordset;
         }
 

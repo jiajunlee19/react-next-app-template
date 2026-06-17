@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimitByIP } from "@/app/_libs/rate_limit";
-import { parsedEnv } from '@/app/_libs/zod_env';
 import { groupsUserSchema } from '@/app/_libs/zod_auth';
 import ldap_client from '@/app/_libs/ldap';
 import { getErrorMessage } from '@/app/_libs/error_handler';
+import { getGroupsLDAP } from '@/app/_actions/api';
 
 export async function POST(request: NextRequest) {
     try {
@@ -30,12 +30,7 @@ export async function POST(request: NextRequest) {
 
         const results = await Promise.all(parsedForm.data.groups.map(async (group) => {
             try {
-                const searchResult = await ldap_client.search(parsedEnv.LDAP_GROUP_BASE_DN, {
-                    scope: 'sub',
-                    filter: `cn=${group}`,
-                    attributes: ["dn", "cn", "uniqueMember", "owner", "contactusername"],
-                    sizeLimit: 1,
-                });
+                const searchResult = await getGroupsLDAP(group);
 
                 // Return false if group is not found
                 if (searchResult.searchEntries.length <= 0 || !("uniqueMember" in searchResult.searchEntries[0])) {
