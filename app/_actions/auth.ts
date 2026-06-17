@@ -20,32 +20,36 @@ import ldap_client from "@/app/_libs/ldap";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
-export async function getUserTotalPagePG(pool: Pool, QUERY: string) {
+export async function getUserTotalPagePG(QUERY: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readUser", "readUserTotalPage");
 
+    const pool = new Pool(pgSqlConfig);
     const result = await pool.query(
         `SELECT user_uid, username, role, user_created_dt, user_updated_dt
         FROM "jiajunleeWeb"."user"
         WHERE (CAST(user_uid AS TEXT) LIKE $1 OR username LIKE $1);`,
         [QUERY]
     );
+    await pool.end();
 
     return result;
 };
 
-export async function getUserTotalPageMSSQL(pool: sql.ConnectionPool, QUERY: string) {
+export async function getUserTotalPageMSSQL(QUERY: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readUser", "readUserTotalPage");
 
+    let pool = await sql.connect(msSqlConfig);
     const result = await pool.request()
         .input('query', sql.VarChar, QUERY)
         .query`SELECT user_uid, username, role, user_created_dt, user_updated_dt
                 FROM [jiajunleeWeb].[user]
                 WHERE (user_uid like @query OR username like @query);
     `;
+    await pool.close();
 
     return result;
 };
@@ -69,15 +73,12 @@ export async function readUserTotalPage(itemsPerPage: number | unknown, query?: 
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
-            const result = await getUserTotalPagePG(pool, QUERY);
+            const result = await getUserTotalPagePG(QUERY);
             parsedForm = readUserWithoutPassSchema.array().safeParse(result.rows);
-            await pool.end();
         } 
         
         else {
-            let pool = await sql.connect(msSqlConfig);
-            const result = await getUserTotalPageMSSQL(pool, QUERY);
+            const result = await getUserTotalPageMSSQL(QUERY);
             parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
         }
 
@@ -93,11 +94,12 @@ export async function readUserTotalPage(itemsPerPage: number | unknown, query?: 
     return totalPage
 };
 
-export async function getUserByPagePG(pool: Pool, QUERY: string, OFFSET: number, parsedItemsPerPage: number) {
+export async function getUserByPagePG(QUERY: string, OFFSET: number, parsedItemsPerPage: number) {
     "use cache"
     cacheLife("max");
     cacheTag("readUser", "readUserByPage");
 
+    const pool = new Pool(pgSqlConfig);
     const result = await pool.query(
         `SELECT u1.user_uid, u1.username, u1.role, u1.user_created_dt, u1.user_updated_dt, COALESCE(u.username, 'system') AS user_updated_by
         FROM "jiajunleeWeb"."user" u1
@@ -107,15 +109,17 @@ export async function getUserByPagePG(pool: Pool, QUERY: string, OFFSET: number,
         OFFSET $2 LIMIT $3;`,
         [QUERY, OFFSET, parsedItemsPerPage]
     );
+    await pool.end();
 
     return result;
 };
 
-export async function getUserByPageMSSQL(pool: sql.ConnectionPool, QUERY: string, OFFSET: number, parsedItemsPerPage: number) {
+export async function getUserByPageMSSQL(QUERY: string, OFFSET: number, parsedItemsPerPage: number) {
     "use cache"
     cacheLife("max");
     cacheTag("readUser", "readUserByPage");
 
+    let pool = await sql.connect(msSqlConfig);
     const result = await pool.request()
     .input('offset', sql.Int, OFFSET)
     .input('limit', sql.Int, parsedItemsPerPage)
@@ -128,6 +132,7 @@ export async function getUserByPageMSSQL(pool: sql.ConnectionPool, QUERY: string
             OFFSET @offset ROWS
             FETCH NEXT @limit ROWS ONLY;
     `;
+    await pool.close();
 
     return result;
 };
@@ -154,15 +159,12 @@ export async function readUserByPage(itemsPerPage: number | unknown, currentPage
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
-            const result = await getUserByPagePG(pool, QUERY, OFFSET, parsedItemsPerPage);
+            const result = await getUserByPagePG(QUERY, OFFSET, parsedItemsPerPage);
             parsedForm = readUserWithoutPassSchema.array().safeParse(result.rows);    
-            await pool.end(); 
         } 
 
         else {
-            let pool = await sql.connect(msSqlConfig);
-            const result = await getUserByPageMSSQL(pool, QUERY, OFFSET, parsedItemsPerPage);
+            const result = await getUserByPageMSSQL(QUERY, OFFSET, parsedItemsPerPage);
             parsedForm = readUserWithoutPassSchema.array().safeParse(result.recordset);
         }
 
@@ -177,32 +179,36 @@ export async function readUserByPage(itemsPerPage: number | unknown, currentPage
     return parsedForm.data
 };
 
-export async function getUserTotalPageAdminPG(pool: Pool, QUERY: string) {
+export async function getUserTotalPageAdminPG(QUERY: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readUser", "readUserTotalPageAdmin");
 
+    const pool = new Pool(pgSqlConfig);
     const result = await pool.query(
         `SELECT user_uid, username, role, user_created_dt, user_updated_dt
         FROM "jiajunleeWeb"."user"
         WHERE role != 'boss' AND (CAST(user_uid AS TEXT) LIKE $1 OR username LIKE $1);`,
         [QUERY]
     );
+    await pool.end();
 
     return result;
 };
 
-export async function getUserTotalPageAdminMSSQL(pool: sql.ConnectionPool, QUERY: string) {
+export async function getUserTotalPageAdminMSSQL(QUERY: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readUser", "readUserTotalPageAdmin");
 
+    let pool = await sql.connect(msSqlConfig);
     const result = await pool.request()
         .input('query', sql.VarChar, QUERY)
         .query`SELECT user_uid, username, role, user_created_dt, user_updated_dt
                 FROM [jiajunleeWeb].[user]
                 WHERE role != 'boss' AND (user_uid like @query OR username like @query);
     `;
+    await pool.close();
 
     return result;
 };
@@ -226,15 +232,12 @@ export async function readUserTotalPageAdmin(itemsPerPage: number | unknown, que
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
-            const result = await getUserTotalPageAdminPG(pool, QUERY);
+            const result = await getUserTotalPageAdminPG(QUERY);
             parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.rows);
-            await pool.end();
         }
 
         else {
-            let pool = await sql.connect(msSqlConfig);
-            const result = await getUserTotalPageAdminMSSQL(pool, QUERY);
+            const result = await getUserTotalPageAdminMSSQL(QUERY);
             parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.recordset);
         }
 
@@ -250,11 +253,12 @@ export async function readUserTotalPageAdmin(itemsPerPage: number | unknown, que
     return totalPage
 };
 
-export async function getUserByPageAdminPG(pool: Pool, QUERY: string, OFFSET: number, parsedItemsPerPage: number) {
+export async function getUserByPageAdminPG(QUERY: string, OFFSET: number, parsedItemsPerPage: number) {
     "use cache"
     cacheLife("max");
     cacheTag("readUser", "readUserByPageAdmin");
 
+    const pool = new Pool(pgSqlConfig);
     const result = await pool.query(
         `SELECT u1.user_uid, u1.username, u1.role, COALESCE(u.username, 'system') AS user_updated_by
         FROM "jiajunleeWeb"."user" u1
@@ -264,15 +268,17 @@ export async function getUserByPageAdminPG(pool: Pool, QUERY: string, OFFSET: nu
         OFFSET $2 LIMIT $3;`,
         [QUERY, OFFSET, parsedItemsPerPage]
     );
+    await pool.end();
 
     return result;
 };
 
-export async function getUserByPageAdminMSSQL(pool: sql.ConnectionPool, QUERY: string, OFFSET: number, parsedItemsPerPage: number) {
+export async function getUserByPageAdminMSSQL(QUERY: string, OFFSET: number, parsedItemsPerPage: number) {
     "use cache"
     cacheLife("max");
     cacheTag("readUser", "readUserByPageAdmin");
 
+    let pool = await sql.connect(msSqlConfig);
     const result = await pool.request()
         .input('offset', sql.Int, OFFSET)
         .input('limit', sql.Int, parsedItemsPerPage)
@@ -285,6 +291,7 @@ export async function getUserByPageAdminMSSQL(pool: sql.ConnectionPool, QUERY: s
                 OFFSET @offset ROWS
                 FETCH NEXT @limit ROWS ONLY;
         `;
+    await pool.close();
 
     return result;
 };
@@ -311,15 +318,12 @@ export async function readUserByPageAdmin(itemsPerPage: number | unknown, curren
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
-            const result = await getUserByPageAdminPG(pool, QUERY, OFFSET, parsedItemsPerPage);
+            const result = await getUserByPageAdminPG(QUERY, OFFSET, parsedItemsPerPage);
             parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.rows);
-            await pool.end();
         }
 
         else {
-            let pool = await sql.connect(msSqlConfig);
-            const result = await getUserByPageAdminMSSQL(pool, QUERY, OFFSET, parsedItemsPerPage);
+            const result = await getUserByPageAdminMSSQL(QUERY, OFFSET, parsedItemsPerPage);
             parsedForm = readUserWithoutPassAdminSchema.array().safeParse(result.recordset);
         }
 
@@ -377,6 +381,7 @@ export async function signIn(username: TUsernameSchema | unknown, password: TPas
                                     FROM [jiajunleeWeb].[user]
                                     WHERE username = @username;
                             `;
+            await pool.close();
             parsedResult = readUserSchema.safeParse(result.recordset[0]);
         }
     
@@ -503,6 +508,7 @@ export async function updateUserLDAP(username: TUsernameSchema | unknown, passwo
                                     SET password = @password, user_updated_dt = @user_updated_dt
                                     WHERE user_uid = @user_uid;
                             `;
+            await pool.close();
         }
     } 
     catch (err) {
@@ -539,7 +545,6 @@ export async function signInAzureAD(username: TUsernameSchema | unknown): StateP
         };
     }
 
-    let parsedResult;
     try {
         if (parsedEnv.DB_TYPE === "PG") {
             const pool = new Pool(pgSqlConfig);
@@ -582,6 +587,7 @@ export async function signInAzureAD(username: TUsernameSchema | unknown): StateP
                                     WHEN MATCHED THEN
                                         UPDATE SET target.user_updated_dt = source.user_updated_dt
                                     OUTPUT inserted.user_uid, inserted.username, inserted.role;`;
+            await pool.close();
 
             if (!result.recordset || result.recordset.length === 0) {
                 return {
@@ -655,6 +661,7 @@ export async function signUp(username: TUsernameSchema | unknown, password: TPas
                                     (user_uid, username, password, role, user_created_dt, user_updated_dt)
                                     VALUES (@user_uid, @username, @password, @role, @user_created_dt, @user_updated_dt);
                             `;
+            await pool.close();
         }
     } 
     catch (err) {
@@ -733,6 +740,7 @@ export async function updateUser(formData: FormData | unknown): StatePromise {
                                     SET password = @password, user_updated_dt = @user_updated_dt, user_updated_by = @user_updated_by
                                     WHERE user_uid = @user_uid;
                             `;
+            await pool.close();
         }
     } 
     catch (err) {
@@ -796,6 +804,7 @@ export async function deleteUser(user_uid: string | unknown): StatePromise {
                             .query`DELETE FROM [jiajunleeWeb].[user] 
                                     WHERE user_uid = @user_uid;
                             `;
+            await pool.close();
         }
     } 
     catch (err) {
@@ -810,11 +819,12 @@ export async function deleteUser(user_uid: string | unknown): StatePromise {
     return { message: `Successfully deleted user ${parsedForm.data.user_uid}` }
 };
 
-export async function getUserByIdPG(pool: Pool, user_uid: string) {
+export async function getUserByIdPG(user_uid: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readUser", "readUserById");
 
+    const pool = new Pool(pgSqlConfig);
     const result = await pool.query(
         `SELECT u1.user_uid, u1.username, u1.role, u1.user_created_dt, u1.user_updated_dt,
                 COALESCE(u.username, 'system') AS user_updated_by
@@ -823,15 +833,17 @@ export async function getUserByIdPG(pool: Pool, user_uid: string) {
         WHERE u1.user_uid = $1;`,
         [user_uid]
     );
+    await pool.end();
 
     return result;
 };
 
-export async function getUserByIdMSSQL(pool: sql.ConnectionPool, user_uid: string) {
+export async function getUserByIdMSSQL(user_uid: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readUser", "readUserById");
 
+    let pool = await sql.connect(msSqlConfig);
     const result = await pool.request()
         .input('user_uid', sql.UniqueIdentifier, user_uid)
         .query`SELECT u1.user_uid, u1.username, u1.role, u1.user_created_dt, u1.user_updated_dt, COALESCE(u.username, 'system') as user_updated_by
@@ -839,6 +851,7 @@ export async function getUserByIdMSSQL(pool: sql.ConnectionPool, user_uid: strin
                 left join [jiajunleeWeb].[user] u ON u1.user_updated_by = u.user_uid
                 WHERE u1.user_uid = @user_uid;
     `;
+    await pool.close();
 
     return result;
 };
@@ -866,15 +879,12 @@ export async function readUserById(user_uid: string | unknown) {
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
-            const result = await getUserByIdPG(pool, parsedInput.data.user_uid);
+            const result = await getUserByIdPG(parsedInput.data.user_uid);
             parsedForm = readUserWithoutPassSchema.safeParse(result.rows[0]);
-            await pool.end();
         }
         
         else {
-            let pool = await sql.connect(msSqlConfig);
-            const result = await getUserByIdMSSQL(pool, parsedInput.data.user_uid);
+            const result = await getUserByIdMSSQL(parsedInput.data.user_uid);
             parsedForm = readUserWithoutPassSchema.safeParse(result.recordset[0]);
         }
 
@@ -953,6 +963,7 @@ export async function updateRole(formData: FormData | unknown): StatePromise {
                                     SET role = @role, user_updated_dt = @user_updated_dt, user_updated_by = @user_updated_by
                                     WHERE user_uid = @user_uid;
                             `;
+            await pool.close();
         }
     } 
     catch (err) {
@@ -1030,6 +1041,7 @@ export async function updateRoleAdmin(formData: FormData | unknown): StatePromis
                                     SET role = @role, user_updated_dt = @user_updated_dt, user_updated_by = @user_updated_by
                                     WHERE user_uid = @user_uid and role <> 'boss';
                             `;
+            await pool.close();
         }
     } 
     catch (err) {

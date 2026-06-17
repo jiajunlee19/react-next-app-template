@@ -1,3 +1,7 @@
+import { rateLimitByIP, rateLimitByUid } from "@/app/_libs/rate_limit";
+import { getServerSession } from "next-auth/next";
+import { options } from "@/app/_libs/nextAuth_options";
+import { checkWidgetAccess } from "@/app/_libs/widgets";
 import { NextResponse } from 'next/server';
 import { readSnowflake } from '@/app/_actions/example';
 import { getErrorMessage } from '@/app/_libs/error_handler';
@@ -12,6 +16,23 @@ const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 export async function POST(req: Request) {
 
     try {
+
+        const session = await getServerSession(options);
+
+        if (!session) {
+            return NextResponse.json({ error: ["Unauthorized access. No session found."] }, { status: 400 });
+        }
+
+        const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
+
+        if (!hasWidgetViewAccess) {
+            return NextResponse.json({ error: [`Access denied. You ae not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access for /authenticated/example.`] }, { status: 400 });
+        }
+
+        if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+            return NextResponse.json({ error: ["Too many requests. Please try again later."] }, { status: 400 });
+        }
+
         const { input_values, selected_reports } = await req.json();
         const parsedInputValues = inputValuesSchema.safeParse(input_values);
         const parsedSelectedReports = selectedReportsSchema.safeParse(selected_reports);

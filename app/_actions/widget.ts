@@ -18,32 +18,36 @@ import { checkWidgetAccess } from "@/app/_libs/widgets";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
-export async function getWidgetTotalPagePG(pool: Pool, QUERY: string) {
+export async function getWidgetTotalPagePG(QUERY: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readWidget", "readWidgetTotalPage");
 
+    const pool = new Pool(pgSqlConfig);
     const result = await pool.query(
         `SELECT widget_uid, widget_name, widget_description, widget_group, widget_href, widget_tabs, widget_owners, widget_viewers, widget_created_dt, widget_updated_dt, widget_updated_by
         FROM "jiajunleeWeb"."widget"
         WHERE (CAST(widget_uid AS TEXT) LIKE $1 OR widget_name LIKE $1 OR widget_group LIKE $1 OR widget_href LIKE $1);`,
         [QUERY]
     );
+    await pool.end();
 
     return result;
 };
 
-export async function getWidgetTotalPageMSSQL(pool: sql.ConnectionPool, QUERY: string) {
+export async function getWidgetTotalPageMSSQL(QUERY: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readWidget", "readWidgetTotalPage");
 
+    let pool = await sql.connect(msSqlConfig);
     const result = await pool.request()
         .input('query', sql.VarChar, QUERY)
         .query`SELECT widget_uid, widget_name, widget_description, widget_group, widget_href, widget_tabs, widget_owners, widget_viewers, widget_created_dt, widget_updated_dt, widget_updated_by
                 FROM [jiajunleeWeb].[widget]
                 WHERE (widget_uid like @query OR widget_name like @query OR widget_group like @query OR widget_href like @query);
     `;
+    await pool.close();
 
     return result;
 };
@@ -67,20 +71,17 @@ export async function readWidgetTotalPage(itemsPerPage: number | unknown, query?
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
-            const result = await getWidgetTotalPagePG(pool, QUERY);
+            const result = await getWidgetTotalPagePG(QUERY);
             parsedForm = readWidgetSchema.array().safeParse(result.rows.map(row => ({
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
                 widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             })));
-            await pool.end();
         }
 
         else {
-            let pool = await sql.connect(msSqlConfig);
-            const result = await getWidgetTotalPageMSSQL(pool, QUERY);
+            const result = await getWidgetTotalPageMSSQL(QUERY);
             parsedForm = readWidgetSchema.array().safeParse(result.recordset.map(row => ({
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
@@ -106,11 +107,12 @@ export async function readWidgetTotalPage(itemsPerPage: number | unknown, query?
     return totalPage
 };
 
-export async function getWidgetByPagePG(pool: Pool, QUERY: string) {
+export async function getWidgetByPagePG(QUERY: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readWidget", "readWidgetByPage");
 
+    const pool = new Pool(pgSqlConfig);
     const result = await pool.query(
         `SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') AS widget_updated_by
         FROM "jiajunleeWeb"."widget" w
@@ -120,15 +122,17 @@ export async function getWidgetByPagePG(pool: Pool, QUERY: string) {
         `,
         [QUERY]
     );
+    await pool.end();
 
     return result;
 };
 
-export async function getWidgetByPageMSSQL(pool: sql.ConnectionPool, QUERY: string) {
+export async function getWidgetByPageMSSQL(QUERY: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readWidget", "readWidgetByPage");
 
+    let pool = await sql.connect(msSqlConfig);
     const result = await pool.request()
         .input('query', sql.VarChar, QUERY)
         .query`SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') as widget_updated_by
@@ -138,6 +142,7 @@ export async function getWidgetByPageMSSQL(pool: sql.ConnectionPool, QUERY: stri
                 ORDER BY w.widget_group asc
                 ;
     `;
+    await pool.close();
 
     return result;
 };
@@ -176,20 +181,17 @@ export async function readWidgetByPage(itemsPerPage: number | unknown, currentPa
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
-            const result = await getWidgetByPagePG(pool, QUERY);
+            const result = await getWidgetByPagePG(QUERY);
             parsedForm = readWidgetSchema.array().safeParse(result.rows.map(row => ({
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
                 widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             })));
-            await pool.end();
         }
         
         else {
-            let pool = await sql.connect(msSqlConfig);
-            const result = await getWidgetByPageMSSQL(pool, QUERY);
+            const result = await getWidgetByPageMSSQL(QUERY);
             parsedForm = readWidgetSchema.array().safeParse(result.recordset.map(row => ({
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
@@ -215,31 +217,35 @@ export async function readWidgetByPage(itemsPerPage: number | unknown, currentPa
     return ownedWidgets.slice(OFFSET, OFFSET + parsedItemsPerPage)
 };
 
-export async function getAllWidgetPG(pool: Pool) {
+export async function getAllWidgetPG() {
     "use cache"
     cacheLife("max");
     cacheTag("readWidget", "readAllWidget");
 
+    const pool = new Pool(pgSqlConfig);
     const result = await pool.query(
         `SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') AS widget_updated_by
         FROM "jiajunleeWeb"."widget" w
         LEFT JOIN "jiajunleeWeb"."user" u ON w.widget_updated_by = u.user_uid;`
     );
+    await pool.end();
 
     return result;
 };
 
-export async function getAllWidgetMSSQL(pool: sql.ConnectionPool) {
+export async function getAllWidgetMSSQL() {
     "use cache"
     cacheLife("max");
     cacheTag("readWidget", "readAllWidget");
 
+    let pool = await sql.connect(msSqlConfig);
     const result = await pool.request()
         .query`SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') as widget_updated_by
                 FROM [jiajunleeWeb].[widget] w
                 left join [jiajunleeWeb].[user] u ON w.widget_updated_by = u.user_uid
                 ;
     `;
+    await pool.close();
 
     return result;
 };
@@ -259,20 +265,17 @@ export async function readAllWidget() {
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
-            const result = await getAllWidgetPG(pool);
+            const result = await getAllWidgetPG();
             parsedForm = readWidgetSchema.array().safeParse(result.rows.map(row => ({
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
                 widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             })));
-            await pool.end();
         }
         
         else {
-            let pool = await sql.connect(msSqlConfig);
-            const result = await getAllWidgetMSSQL(pool);
+            const result = await getAllWidgetMSSQL();
             parsedForm = readWidgetSchema.array().safeParse(result.recordset.map(row => ({
                 ...row,
                 widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
@@ -292,11 +295,12 @@ export async function readAllWidget() {
     return parsedForm.data
 };
 
-export async function getWidgetUidPG(pool: Pool, widget_href: string) {
+export async function getWidgetUidPG(widget_href: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readWidget", "readWidgetUid");
 
+    const pool = new Pool(pgSqlConfig);
     const result = await pool.query(
         `SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') AS widget_updated_by
         FROM "jiajunleeWeb"."widget" w
@@ -304,15 +308,17 @@ export async function getWidgetUidPG(pool: Pool, widget_href: string) {
         WHERE w.widget_href = $1;`,
         [widget_href]
     );
+    await pool.end();
 
     return result;
 };
 
-export async function getWidgetUidMSSQL(pool: sql.ConnectionPool, widget_href: string) {
+export async function getWidgetUidMSSQL(widget_href: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readWidget", "readWidgetUid");
 
+    let pool = await sql.connect(msSqlConfig);
     const result = await pool.request()
         .input('widget_href', sql.VarChar, widget_href)
         .query`SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') as widget_updated_by
@@ -320,6 +326,7 @@ export async function getWidgetUidMSSQL(pool: sql.ConnectionPool, widget_href: s
                 left join [jiajunleeWeb].[user] u ON w.widget_updated_by = u.user_uid
                 WHERE w.widget_href = @widget_href;
     `;
+    await pool.close();
 
     return result;
 };
@@ -347,8 +354,7 @@ export async function readWidgetUid(widget_href: string | unknown) {
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
-            const result = await getWidgetUidPG(pool, parsedInput.data.widget_href);
+            const result = await getWidgetUidPG(parsedInput.data.widget_href);
             const row = result.rows[0];
             parsedForm = readWidgetSchema.safeParse({
                 ...row,
@@ -356,12 +362,10 @@ export async function readWidgetUid(widget_href: string | unknown) {
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
                 widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             });
-            await pool.end();
         }
         
         else {
-            let pool = await sql.connect(msSqlConfig);
-            const result = await getWidgetUidMSSQL(pool, parsedInput.data.widget_href);
+            const result = await getWidgetUidMSSQL(parsedInput.data.widget_href);
             const row = result.recordset[0];
             parsedForm = readWidgetSchema.safeParse({
                 ...row,
@@ -510,6 +514,7 @@ export async function createWidget(prevState: State | unknown, formData: FormDat
                                         @widget_updated_by
                                     );
                             `;
+            await pool.close();
         }
     } 
     catch (err) {
@@ -647,6 +652,7 @@ export async function updateWidget(prevState: State | unknown, formData: FormDat
                                         widget_updated_by = @widget_updated_by
                                     WHERE widget_uid = @widget_uid;
                             `;
+            await pool.close();
         }
     } 
     catch (err) {
@@ -726,6 +732,7 @@ export async function deleteWidget(widget_uid: string): StatePromise {
                             .query`DELETE FROM [jiajunleeWeb].[widget] 
                                     WHERE widget_uid = @widget_uid;
                             `;
+            await pool.close();
         }
     } 
     catch (err) {
@@ -740,11 +747,12 @@ export async function deleteWidget(widget_uid: string): StatePromise {
     return { message: `Successfully deleted widget ${parsedForm.data.widget_uid}` }
 };
 
-export async function getWidgetByUidPG(pool: Pool, widget_uid: string) {
+export async function getWidgetByUidPG(widget_uid: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readWidget", "readWidgetByUid");
 
+    const pool = new Pool(pgSqlConfig);
     const result = await pool.query(
         `SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt,
                 COALESCE(u.username, 'system') AS widget_updated_by
@@ -753,15 +761,17 @@ export async function getWidgetByUidPG(pool: Pool, widget_uid: string) {
         WHERE w.widget_uid = $1;`,
         [widget_uid]
     );
+    await pool.end();
 
     return result;
 };
 
-export async function getWidgetByUidMSSQL(pool: sql.ConnectionPool, widget_uid: string) {
+export async function getWidgetByUidMSSQL(widget_uid: string) {
     "use cache"
     cacheLife("max");
     cacheTag("readWidget", "readWidgetByUid");
 
+    let pool = await sql.connect(msSqlConfig);
     const result = await pool.request()
         .input('widget_uid', sql.VarChar, widget_uid)
         .query`SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, 
@@ -770,6 +780,7 @@ export async function getWidgetByUidMSSQL(pool: sql.ConnectionPool, widget_uid: 
                 left join [jiajunleeWeb].[user] u ON w.widget_updated_by = u.user_uid
                 WHERE w.widget_uid = @widget_uid;
     `;
+    await pool.close();
 
     return result;
 };
@@ -797,8 +808,7 @@ export async function readWidgetByUid(widget_uid: string) {
     let parsedForm;
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
-            const result = await getWidgetByUidPG(pool, parsedInput.data.widget_uid);
+            const result = await getWidgetByUidPG(parsedInput.data.widget_uid);
             const row = result.rows[0];
             parsedForm = readWidgetSchema.safeParse({
                 ...row,
@@ -806,12 +816,10 @@ export async function readWidgetByUid(widget_uid: string) {
                 widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
                 widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
             });
-            await pool.end();
         }
         
         else {
-            let pool = await sql.connect(msSqlConfig);
-            const result = await getWidgetByUidMSSQL(pool, parsedInput.data.widget_uid);
+            const result = await getWidgetByUidMSSQL(parsedInput.data.widget_uid);
             const row = result.recordset[0];
             parsedForm = readWidgetSchema.safeParse({
                 ...row,

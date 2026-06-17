@@ -2,7 +2,7 @@
 
 import { HomeIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline"
 import { useSession } from "next-auth/react"
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation"
 import { twMerge } from "tailwind-merge";
@@ -12,12 +12,12 @@ import { checkWidgetAccess } from "@/app/_libs/widgets";
 import { type TReadWidgetSchema } from "@/app/_libs/zod_server";
 import Image from "next/image";
 
-export default function Header({ baseUrl }: { baseUrl: string }) {
+export default function Header({ baseUrl, widgets }: { baseUrl: string, widgets: TReadWidgetSchema[] }) {
 
     const pathname = usePathname();
 
     const { data: session } = useSession();
-
+    
     const [userDisplayName, setUserDisplayName] = useState<string | undefined>(undefined);
 
     const [access, setAccess] = useState<{
@@ -26,20 +26,6 @@ export default function Header({ baseUrl }: { baseUrl: string }) {
         owners?: string[];
         viewers?: string[];
     }>({});
-    
-    const [widgets, setWidgets] = useState<TReadWidgetSchema[]>([]);
-    useEffect(() => {
-        const fetchWidgets = async () => {
-            try {
-                const res = await fetch(`${baseUrl}/api/readWidgets`);
-                const data = await res.json();
-                setWidgets(data.widgets ?? []);
-            } catch {
-                setWidgets([]);
-            }
-        };
-        fetchWidgets();
-    }, [baseUrl]);
 
     useEffect(() => {
         const fetchAccess = async () => {
@@ -53,7 +39,7 @@ export default function Header({ baseUrl }: { baseUrl: string }) {
         };
         fetchAccess();
       }, [baseUrl, pathname, session]);
-    
+
     // Find current widget and its tabs based on pathname
     const currentWidget = useMemo(() => {
         for (const widget of widgets) {
@@ -80,7 +66,7 @@ export default function Header({ baseUrl }: { baseUrl: string }) {
                 title={userDisplayName ?? ""}
                 width={28}
                 height={28}
-                className={twMerge("rounded-full object-cover", access.hasWidgetOwnerAccess ? "ring-2 ring-red-400" : "")}
+                className={twMerge("rounded-full object-cover", access?.hasWidgetOwnerAccess ? "ring-2 ring-red-400" : "")}
                 referrerPolicy="no-referrer" 
             />
         ) : <span>{userDisplayName}</span>
