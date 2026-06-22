@@ -72,22 +72,12 @@ export async function readWidgetTotalPage(itemsPerPage: number | unknown, query?
     try {
         if (parsedEnv.DB_TYPE === "PG") {
             const result = await getWidgetTotalPagePG(QUERY);
-            parsedForm = readWidgetSchema.array().safeParse(result.rows.map(row => ({
-                ...row,
-                widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
-                widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
-                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
-            })));
+            parsedForm = readWidgetSchema.array().safeParse(result.rows);
         }
 
         else {
             const result = await getWidgetTotalPageMSSQL(QUERY);
-            parsedForm = readWidgetSchema.array().safeParse(result.recordset.map(row => ({
-                ...row,
-                widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
-                widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
-                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
-            })));
+            parsedForm = readWidgetSchema.array().safeParse(result.recordset);
         }
 
         if (!parsedForm.success) {
@@ -182,22 +172,12 @@ export async function readWidgetByPage(itemsPerPage: number | unknown, currentPa
     try {
         if (parsedEnv.DB_TYPE === "PG") {
             const result = await getWidgetByPagePG(QUERY);
-            parsedForm = readWidgetSchema.array().safeParse(result.rows.map(row => ({
-                ...row,
-                widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
-                widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
-                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
-            })));
+            parsedForm = readWidgetSchema.array().safeParse(result.rows);
         }
         
         else {
             const result = await getWidgetByPageMSSQL(QUERY);
-            parsedForm = readWidgetSchema.array().safeParse(result.recordset.map(row => ({
-                ...row,
-                widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
-                widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
-                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
-            })));
+            parsedForm = readWidgetSchema.array().safeParse(result.recordset);
         }
 
         if (!parsedForm.success) {
@@ -266,22 +246,12 @@ export async function readAllWidget() {
     try {
         if (parsedEnv.DB_TYPE === "PG") {
             const result = await getAllWidgetPG();
-            parsedForm = readWidgetSchema.array().safeParse(result.rows.map(row => ({
-                ...row,
-                widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
-                widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
-                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
-            })));
+            parsedForm = readWidgetSchema.array().safeParse(result.rows);
         }
         
         else {
             const result = await getAllWidgetMSSQL();
-            parsedForm = readWidgetSchema.array().safeParse(result.recordset.map(row => ({
-                ...row,
-                widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
-                widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
-                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
-            })));
+            parsedForm = readWidgetSchema.array().safeParse(result.recordset);
         }
 
         if (!parsedForm.success) {
@@ -356,23 +326,13 @@ export async function readWidgetUid(widget_href: string | unknown) {
         if (parsedEnv.DB_TYPE === "PG") {
             const result = await getWidgetUidPG(parsedInput.data.widget_href);
             const row = result.rows[0];
-            parsedForm = readWidgetSchema.safeParse({
-                ...row,
-                widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
-                widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
-                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
-            });
+            parsedForm = readWidgetSchema.safeParse(row);
         }
         
         else {
             const result = await getWidgetUidMSSQL(parsedInput.data.widget_href);
             const row = result.recordset[0];
-            parsedForm = readWidgetSchema.safeParse({
-                ...row,
-                widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
-                widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
-                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
-            });
+            parsedForm = readWidgetSchema.safeParse(row);
         }
 
         if (!parsedForm.success) {
@@ -810,23 +770,13 @@ export async function readWidgetByUid(widget_uid: string) {
         if (parsedEnv.DB_TYPE === "PG") {
             const result = await getWidgetByUidPG(parsedInput.data.widget_uid);
             const row = result.rows[0];
-            parsedForm = readWidgetSchema.safeParse({
-                ...row,
-                widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
-                widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
-                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
-            });
+            parsedForm = readWidgetSchema.safeParse(row);
         }
         
         else {
             const result = await getWidgetByUidMSSQL(parsedInput.data.widget_uid);
             const row = result.recordset[0];
-            parsedForm = readWidgetSchema.safeParse({
-                ...row,
-                widget_tabs: row.widget_tabs ? JSON.parse(row.widget_tabs) : [],
-                widget_owners: row.widget_owners ? row.widget_owners.split(',') : [],
-                widget_viewers: row.widget_viewers ? row.widget_viewers.split(',') : [],
-            });
+            parsedForm = readWidgetSchema.safeParse(row);
         }
 
         if (!parsedForm.success) {

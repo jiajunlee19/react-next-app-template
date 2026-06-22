@@ -3,7 +3,7 @@ import { rateLimitByIP } from "@/app/_libs/rate_limit";
 import { groupsUserSchema } from '@/app/_libs/zod_auth';
 import ldap_client from '@/app/_libs/ldap';
 import { getErrorMessage } from '@/app/_libs/error_handler';
-import { getGroupsLDAP } from '@/app/_actions/api';
+import { getGroupsLDAP } from '@/app/_actions/ldap';
 
 export async function POST(request: NextRequest) {
     try {

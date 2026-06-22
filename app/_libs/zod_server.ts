@@ -50,9 +50,9 @@ export const createWidgetSchema = z.object({
 
 export type TReadWidgetSchema = z.infer<typeof readWidgetSchema>;
 export const readWidgetSchema = createWidgetSchema.extend({
-    widget_tabs: z.array(widgetTabSchema),
-    widget_owners: z.array(z.string()),
-    widget_viewers: z.array(z.string()),
+    // widget_tabs: z.array(widgetTabSchema),
+    // widget_owners: z.array(z.string()),
+    // widget_viewers: z.array(z.string()),
     widget_updated_by: z.string().toLowerCase().min(1).max(100),
 }).partial();
 

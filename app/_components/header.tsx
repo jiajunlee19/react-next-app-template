@@ -50,6 +50,15 @@ export default function Header({ baseUrl, widgets }: { baseUrl: string, widgets:
         return null;
     }, [pathname, widgets])
 
+    const currentTabs = useMemo(() => {
+        if (!currentWidget?.widget_tabs) return null;
+        try {
+            return JSON.parse(currentWidget.widget_tabs) as { name: string; href: string }[];
+        } catch {
+            return null;
+        }
+      }, [currentWidget]);
+      
     const leftNavLinks = [
         { name: "Home", href: "/", icon: <HomeIcon className="h-6" /> },
     ];
@@ -170,9 +179,9 @@ export default function Header({ baseUrl, widgets }: { baseUrl: string, widgets:
 
                             {/* Dynamic tabs between leftNav and middleNav */}
                             <div>
-                                {currentWidget && currentWidget.widget_tabs && currentWidget.widget_tabs.length > 0 && (
+                                {currentWidget && currentTabs && currentTabs.length > 0 && (
                                     <nav className="flex items-center gap-4 overflow-x-auto">
-                                        {currentWidget.widget_tabs.map((tab) => {
+                                        {currentTabs.map((tab) => {
                                             return (
                                                 <Link key={tab.name} href={tab.href} className={twMerge("no-underline", (pathname === tab.href) && "font-semibold text-purple-500 dark:text-purple-200")}>
                                                     {tab.name}
@@ -239,14 +248,14 @@ export default function Header({ baseUrl, widgets }: { baseUrl: string, widgets:
                     }>
 
                     {/* Dynamic sideNavs for current widget */}
-                    {currentWidget && currentWidget.widget_tabs && currentWidget.widget_tabs.length > 0 ? (
+                    {currentWidget && currentTabs && currentTabs.length > 0 ? (
                         <li>
                             <h2>{currentWidget.widget_name}</h2>
                             <div className="relative my-3 pl-2">
                                 <div className="absolute inset-x-0 top-0 h-16 bg-zinc-800/2.5 will-change-transform dark:bg-white/2.5 origin-[50%_50%_1px]" />
                                 <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/50 transform-none origin-[50%_50%_1px]" />
                                 <ul role="list">
-                                    {currentWidget.widget_tabs.map((link) => {
+                                    {currentTabs.map((link) => {
                                         return (
                                             <li key={link.name} className="relative">
                                                 <Link key={link.name} className={twMerge("no-underline py-1 pl-4 pr-3 truncate", pathname === link.href && "font-semibold text-purple-500 dark:text-purple-200")} href={link.href}>

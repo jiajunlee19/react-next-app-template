@@ -20,7 +20,7 @@ type FormProps = {
 
 export default function Form( {formTitle, inputType, rowData, selectOptionData, action, formAction, redirectLink}: FormProps ) {
 
-    const initialState  = { message: null, errors: {} };
+    const initialState  = { message: "", error: {} };
     const [state, dispatch] = useActionState(formAction, initialState);
 
     const formRef = useRef<HTMLFormElement>(null);

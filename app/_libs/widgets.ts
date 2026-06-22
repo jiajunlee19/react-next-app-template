@@ -64,7 +64,7 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
         viewers = ["everyone"];
     }
     else {
-        viewers = widget.widget_viewers;
+        viewers = widget.widget_viewers.split(',');
     }
 
     // If no widget owners defined, default to viewers
@@ -73,7 +73,7 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
         owners = viewers;
     }
     else {
-        owners = widget.widget_owners;
+        owners = widget.widget_owners.split(',');
     }
 
     // Widget owners
