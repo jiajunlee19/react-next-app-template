@@ -45,12 +45,7 @@ export default async function UpdateWidget(props: {params: Promise<{widget_uid: 
                     'widget_owners': 'text',
                     'widget_viewers': 'text',
                 }}
-                rowData={{
-                    ...widget,
-                    widget_tabs: widget.widget_tabs ? JSON.stringify(widget.widget_tabs) : '',
-                    widget_owners: widget.widget_owners ? widget.widget_owners.join(',') : '',
-                    widget_viewers: widget.widget_viewers ? widget.widget_viewers.join(',') : '',
-                }}
+                rowData={widget}
                 selectOptionData={null}
                 action="update"
                 formAction={updateWidget}

@@ -64,11 +64,6 @@ export const columns = [
         meta: {
             widget: "text",
         },
-        cell: ({ getValue }) => {
-            const tabs = getValue() as {name: string, href: string}[];
-            if (!Array.isArray(tabs)) return null;
-            return tabs.map(tab => tab.name).join(', ');
-        },
     }),
     columnHelper.accessor("widget_owners", {
         id: "widget_owners",
@@ -76,11 +71,6 @@ export const columns = [
         footer: "widget_owners",
         meta: {
             widget: "text",
-        },
-        cell: ({ getValue }) => {
-            const owners = getValue() as string[];
-            if (!Array.isArray(owners)) return null;
-            return owners.join(', ');
         },
     }),
     columnHelper.accessor("widget_viewers", {
@@ -90,11 +80,7 @@ export const columns = [
         meta: {
             widget: "text",
         },
-        cell: ({ getValue }) => {
-            const viewers = getValue() as string[];
-            if (!Array.isArray(viewers)) return null;
-            return viewers.join(', ');
-        },
+
     }),
     columnHelper.accessor("widget_created_dt", {
         id: "widget_created_dt",

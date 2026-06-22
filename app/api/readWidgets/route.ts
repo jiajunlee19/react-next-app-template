@@ -1,29 +1,19 @@
 import { NextResponse } from "next/server";
 import { parsedEnv } from "@/app/_libs/zod_env";
 import { getErrorMessage } from "@/app/_libs/error_handler";
-import { getWidgetsMSSQL, getWidgetsPG } from "@/app/_actions/api";
+import { getAllWidgetMSSQL, getAllWidgetPG } from "@/app/_actions/widget";
 
 export async function GET() {
     try {
-        let rows: any[];
+        let widgets: any[];
 
         if (parsedEnv.DB_TYPE === "PG") {
-            const result = await getWidgetsPG();
-            rows = result.rows;
+            const result = await getAllWidgetPG();
+            widgets = result.rows;
         } else {
-            const result = await getWidgetsMSSQL();
-            rows = result.recordset;
+            const result = await getAllWidgetMSSQL();
+            widgets = result.recordset;
         }
-
-        const widgets = rows.map((row) => ({
-            ...row,
-            widget_tabs: Array.isArray(row.widget_tabs) ? row.widget_tabs :
-                            (typeof row.widget_tabs === 'string' && row.widget_tabs ? JSON.parse(row.widget_tabs) : []),
-            widget_owners: Array.isArray(row.widget_owners) ? row.widget_owners :
-                            (typeof row.widget_owners === 'string' && row.widget_owners ? row.widget_owners.split(',') : []),    
-            widget_viewers: Array.isArray(row.widget_viewers) ? row.widget_viewers :
-                            (typeof row.widget_viewers === 'string' && row.widget_viewers ? row.widget_viewers.split(',') : []),      
-        }));
 
         return NextResponse.json({ widgets });
     } catch (err) {
