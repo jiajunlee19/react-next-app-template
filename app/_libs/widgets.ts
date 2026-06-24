@@ -1,5 +1,5 @@
-import { type TRole } from "@/app/_libs/types";
-import { type TReadWidgetSchema, TCreateWidgetSchema } from "@/app/_libs/zod_server";
+import { type ServerResponse, type TRole } from "@/app/_libs/types";
+import { type TReadWidgetSchema, type TCreateWidgetSchema } from "@/app/_libs/zod_server";
 
 export const widgets: TCreateWidgetSchema[] = [
     {
@@ -46,8 +46,8 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
     }
 
     const resReadWidgets = await fetch(`${base_url}/api/readWidgets`);
-    const dataWidgets = await resReadWidgets.json();
-    const widgets = dataWidgets.widgets as TReadWidgetSchema[];
+    const resWidgets: ServerResponse<TReadWidgetSchema[]> = await resReadWidgets.json();
+    const widgets = resWidgets.success ? resWidgets.data : [];
     const widget = widgets.find((widget) => pathname.startsWith(widget.widget_href ?? ""));
 
     // Grant to everyone if its not a widget

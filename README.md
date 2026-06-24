@@ -296,11 +296,15 @@ This section outlines the important concepts used in this template.
 3. As Server Actions are directly communicating to database, they need to be carefully designed to prevent data leakage and avoid malicious attack.
     - Always treat the input arguments as `unknown` type, they must be sanitized to ensure only those with expected formats are used downstream.
         ```ts
-            export async function updateUser(formData: FormData | unknown): StatePromise {
+            export async function update(formData: FormData | unknown): StatePromise {
 
                 // Verify input format
                 if (!(formData instanceof FormData)) {
-                    throw new Error('Invalid input provided !');
+                    return {
+                        success: false,
+                        message: "Invalid input provided.",
+                        reason: "Invalid Input",
+                    }
                 };
 
                 // Verify input data
@@ -310,22 +314,32 @@ This section outlines the important concepts used in this template.
                 });
 
                 if (!parsedForm.success) {
-                    return { 
+                    return {
+                        success: false,
+                        message: parsedForm.error.message,
+                        reason: "Invalid Input",
                         error: parsedForm.error.flatten().fieldErrors,
-                        message: "Invalid input provided, failed to update user!"
-                    };
+                    }
                 };
 
                 // Verify authorization if required
                 const session = await getServerSession(options);
 
-                if (!session || (session.user.role !== 'boss' && session.user.user_uid != parsedForm.data.user_uid )) {
-                    redirect("/denied");
+                if (!session) {
+                    return {
+                        success: false,
+                        message: "You are unauthenticated.",
+                        reason: "Unauthenticated",
+                    }
                 }
 
                 // Apply rate-limiting to avoid server overhead or malicious attack
                 if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
-                    redirect("/tooManyRequests");
+                    return {
+                        success: false,
+                        message: "Too many requests, try again later.",
+                        reason: "Too Many Requests",
+                    }
                 }
 
                 // Good to go ! Now, its safe to execute database actions after all the checks !

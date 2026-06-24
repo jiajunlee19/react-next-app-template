@@ -3,7 +3,7 @@ import { rateLimitByIP } from "@/app/_libs/rate_limit";
 import { groupsUserSchema } from '@/app/_libs/zod_auth';
 import ldap_client from '@/app/_libs/ldap';
 import { getErrorMessage } from '@/app/_libs/error_handler';
-import { getGroupsLDAP } from '@/app/_actions/ldap';
+import { getGroupsLDAPService } from '@/app/_services/ldap';
 
 export async function POST(request: NextRequest) {
     try {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
         const results = await Promise.all(parsedForm.data.groups.map(async (group) => {
             try {
-                const searchResult = await getGroupsLDAP(group);
+                const searchResult = await getGroupsLDAPService(group);
 
                 // Return false if group is not found
                 if (searchResult.searchEntries.length <= 0 || !("uniqueMember" in searchResult.searchEntries[0])) {

@@ -20,7 +20,7 @@ export type TInputType = {
 
 export type State = {
     error?: {
-        [key: string]: string[]
+        [key: string]: string[] | undefined
     },
     message: string,
     data?: {
@@ -29,3 +29,25 @@ export type State = {
 };
 
 export type StatePromise = Promise<State>;
+
+type KnownReason = "Unauthenticated" | "Access Denied" | "Too Many Requests" | "Invalid Input" | "Invalid Output" | "Unexpected Error";
+
+export type ErrorResponse = {
+    success: false,
+    message: string,
+    reason: KnownReason,
+    error?: {
+        [key: string]: string[] | undefined
+    },
+    data?: {
+        [key: string]: string
+    },
+};
+
+export type SuccessResponse<T> = {
+    success: true,
+    message: string,
+    data: T,
+};
+
+export type ServerResponse<T> = ErrorResponse | SuccessResponse<T>;

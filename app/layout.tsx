@@ -33,12 +33,7 @@ export default async function RootLayout({
     const session = await getServerSession(options);
     // console.log(session?.user)
 
-    let widgets: TReadWidgetSchema[];
-    try {
-        widgets = await readAllWidget();
-    } catch {
-        widgets = [];
-    }
+    const widgets = await readAllWidget();
 
   return (
     <html lang="en" className={twMerge("scroll-smooth", typeof window !== "undefined" && localStorage.getItem("darkMode") === "true" ? "dark": "light")}>

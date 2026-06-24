@@ -1,6 +1,5 @@
 import { readWidgetByUid, updateWidget } from "@/app/_actions/widget";
 import Form from "@/app/_components/basic/form";
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next'
 import Breadcrumbs from "@/app/_components/basic/breadcrumbs";
 
@@ -14,18 +13,7 @@ export default async function UpdateWidget(props: {params: Promise<{widget_uid: 
 
     const widget_uid = params.widget_uid;
 
-    let widget;
-    try {
-        [widget] = await Promise.all([
-            readWidgetByUid(widget_uid)
-        ]);
-    } catch (err) {
-        widget = null; 
-    }
-
-    if (!widget) {
-        notFound();
-    }
+    const widget = await readWidgetByUid(widget_uid);
 
     return (
         <>
