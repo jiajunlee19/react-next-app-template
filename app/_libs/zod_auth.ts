@@ -41,10 +41,16 @@ export const readUserSchema = signUpSchema.extend({
     user_updated_by: usernameSchema,
 }).partial();
 
+
 export type TReadUserWithoutPassSchema = z.infer<typeof readUserWithoutPassSchema>;
 export const readUserWithoutPassSchema = readUserSchema.omit({
     password: true,
 });
+
+export type TReadUserWithTokenSchema = z.infer<typeof readUserWithTokenSchema>;
+export const readUserWithTokenSchema = readUserWithoutPassSchema.extend({
+    jwtToken: z.string(),
+}).partial();
 
 export type TReadUserWithoutPassAdminSchema = z.infer<typeof readUserWithoutPassAdminSchema>;
 export const readUserWithoutPassAdminSchema = readUserSchema.omit({

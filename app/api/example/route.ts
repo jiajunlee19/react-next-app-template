@@ -3,13 +3,14 @@ import { getServerSession } from "next-auth/next";
 import { options } from "@/app/_libs/nextAuth_options";
 import { checkWidgetAccess } from "@/app/_libs/widgets";
 import { NextResponse } from 'next/server';
-import { readSnowflake } from '@/app/_actions/example';
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import ExcelJS from 'exceljs';
 import { autoFitColumns } from '@/app/_libs/excel';
 import { parsedEnv } from '@/app/_libs/zod_env';
 import { v5 as uuidv5 } from 'uuid';
 import { inputValuesSchema, selectedReportsSchema } from '@/app/_libs/zod_server';
+import { type ServerResponse, type TRowData } from "@/app/_libs/types";
+import { readSnowflakeService } from "@/app/_services/example";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
@@ -20,17 +21,17 @@ export async function POST(req: Request) {
         const session = await getServerSession(options);
 
         if (!session) {
-            return NextResponse.json({ error: ["Unauthorized access. No session found."] }, { status: 400 });
+            return NextResponse.json({ message: ["You are unauthorized."] }, { status: 401 });
         }
 
         const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
 
         if (!hasWidgetViewAccess) {
-            return NextResponse.json({ error: [`Access denied. You ae not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access for /authenticated/example.`] }, { status: 400 });
+            return NextResponse.json({ message: [`Access denied. You ae not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access,`] }, { status: 402 });
         }
 
         if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
-            return NextResponse.json({ error: ["Too many requests. Please try again later."] }, { status: 400 });
+            return NextResponse.json({ message: ["Too many requests, try again later."] }, { status: 429 });
         }
 
         const { input_values, selected_reports } = await req.json();
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
         }
 
         if (parsedInputValues.data.join('\n').length > 500) {
-            return NextResponse.json({ error: ['Input values exceed 500 character limit.'] })
+            return NextResponse.json({ message: ['Input values exceed 500 character limit.'] }, { status: 400 })
         }
 
         const workbook = new ExcelJS.Workbook();
@@ -69,16 +70,16 @@ export async function POST(req: Request) {
         const report_uid = uuidv5(dt_start.toString(), UUID5_SECRET);
         const report_output = `Reports_${report_uid}.xlsx`;
 
-        for (const report of JSON.stringify(parsedInputValues.data)) {
+        for (const report of JSON.stringify(parsedSelectedReports)) {
+            let response: ServerResponse<TRowData[]>;
             let sheetName;
-            let result: { error: string[] | { field: string, message: string }[], data?: undefined} | { data: any[], error?: undefined };
 
             const timestamp = new Date();
 
             switch (report) {
                 case 'xxx':
                     sheetName = 'xxx';
-                    result = await readSnowflake([]);
+                    response = await readSnowflakeService([]);
                     break;
                 
                 default:
@@ -88,35 +89,28 @@ export async function POST(req: Request) {
                     continue;
             }
 
-            if ('error' in result) {
-                if (Array.isArray(result.error)) {
-                    if (typeof result.error[0] === "string") {
-                        for (const errMsg of result.error as string[]) {
-                            errorRows.push([timestamp, JSON.stringify(parsedInputValues.data), report, sheetName, '', errMsg]);
-                            err_count += 1;
+            if (!response.success) {
+                if (response.error) {
+                    for (const [field, messages] of Object.entries(response.error)) {
+
+                        // if the field are input field, return error to client and stop processing
+                        if (["input_values"].includes(field)) {
+                            return NextResponse.json(response, { status: 400 });
+                        }
+    
+                        for (const msg of messages ?? []) {
+                          errorRows.push([timestamp, JSON.stringify(parsedInputValues.data), report, sheetName, field, msg]);
+                          err_count += 1;
                         }
                     }
-                    else {
-                        // error is array of objects (field-message pairs)
-                        for (const errObj of result.error as { field: string, message: string }[]) {
-                            if (['roleList'].includes(errObj.field)) {
-                                // if the field are input field, return error to client and stop processing
-                                return NextResponse.json({ error: result.error }, { status: 400 });
-                            }
-                            errorRows.push([timestamp, JSON.stringify(parsedInputValues.data), report, sheetName, errObj.field, errObj.message]);
-                            err_count += 1;
-                        }
-                    }
-                } else {
-                    // error is not a list, invalid
-                    errorRows.push([timestamp, JSON.stringify(parsedInputValues.data), report, sheetName, '', 'Unknown error format.']);
-                    err_count += 1;
                 }
                 continue;
             }
 
+            const result = response.data;
+
             const dataSheet = workbook.addWorksheet(sheetName);
-            const dataColumns = Object.keys(result.data[0]);
+            const dataColumns = Object.keys(result[0]);
             dataSheet.addTable({
                 name: sheetName.replace(/\s+/g, '_'),
                 ref: 'A1',
@@ -127,7 +121,7 @@ export async function POST(req: Request) {
                     showRowStripes: true,
                 },
                 columns: dataColumns.map(key => ({ name: key, filterButton: true })),
-                rows: result.data.map(row => dataColumns.map(key => row[key] ?? '')),
+                rows: result.map(row => dataColumns.map(key => row[key] ?? '')),
             });
 
             autoFitColumns(dataSheet);
@@ -178,7 +172,7 @@ export async function POST(req: Request) {
         });
 
     } catch (err) {
-        return NextResponse.json({ error: [getErrorMessage(err)] }, { status: 500 });
+        return NextResponse.json({ message: getErrorMessage(err) }, { status: 500 });
     }
 
 };

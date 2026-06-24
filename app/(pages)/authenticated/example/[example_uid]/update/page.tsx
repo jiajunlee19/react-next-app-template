@@ -1,6 +1,5 @@
 import { readExampleById, updateExample } from "@/app/_actions/example";
 import Form from "@/app/_components/basic/form";
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next'
 import Breadcrumbs from "@/app/_components/basic/breadcrumbs";
 
@@ -14,18 +13,7 @@ export default async function UpdateExample(props: {params: Promise<{example_uid
 
     const example_uid = params.example_uid;
 
-    let example;
-    try {
-        [example] = await Promise.all([
-            readExampleById(example_uid)
-        ]);
-    } catch (err) {
-        example = null; 
-    }
-
-    if (!example) {
-        notFound();
-    }
+    const example = await readExampleById(example_uid);
 
     return (
         <>

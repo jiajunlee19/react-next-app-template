@@ -1,19 +1,14 @@
 import { NextResponse } from "next/server";
-import { revalidateSnowflakeCache } from "@/app/_actions/example";
+import { revalidateSnowflakeCacheService } from "@/app/_services/example";
+import { returnResponseOnError } from "@/app/_libs/response_handler";
 
 export async function POST() {
-    try {
-        const result = await revalidateSnowflakeCache();
 
-        if (result && "error" in result) {
-            return NextResponse.json({ success: false, error: result.error }, { status: 400 });
-        }
+    const response = await revalidateSnowflakeCacheService();
 
-        return NextResponse.json({ success: true });
-
-    } catch (err) {
-        return NextResponse.json(
-            { success: false, error: (err as Error).message }, { status: 500 }
-        );
+    if (!(response.success)) {
+        return returnResponseOnError(response);
     }
+
+    return NextResponse.json({ response }, { status: 200 });
 };
