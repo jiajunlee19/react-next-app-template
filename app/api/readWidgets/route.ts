@@ -10,5 +10,5 @@ export async function GET() {
         return returnResponseOnError(response);
     }
 
-    return NextResponse.json(response, { status: 200 })
+    return NextResponse.json({ response }, { status: 200 })
 };

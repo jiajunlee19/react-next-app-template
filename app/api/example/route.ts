@@ -39,21 +39,11 @@ export async function POST(req: Request) {
         const parsedSelectedReports = selectedReportsSchema.safeParse(selected_reports);
 
         if (!parsedInputValues.success) {
-            return NextResponse.json({
-                error: parsedInputValues.error.errors.map(e => ({
-                    field: 'input_values',
-                    message: e.message,
-                }))
-            }, { status: 400 });
+            return NextResponse.json({ message: ["Invalid input values provided."] }, { status: 400 });
         }
 
         if (!parsedSelectedReports.success) {
-            return NextResponse.json({
-                error: parsedSelectedReports.error.errors.map(e => ({
-                    field: 'selected_reports',
-                    message: e.message,
-                }))
-            }, { status: 400 });
+            return NextResponse.json({ message: ["Invalid selected reports provided."] }, { status: 400 });
         }
 
         if (parsedInputValues.data.join('\n').length > 500) {
@@ -90,14 +80,13 @@ export async function POST(req: Request) {
             }
 
             if (!response.success) {
+                // if the field are input field, return error to client and stop processing
+                if (["Invalid Input"].includes(response.reason)) {
+                    return NextResponse.json({ response }, { status: 400 });
+                }
+
                 if (response.error) {
                     for (const [field, messages] of Object.entries(response.error)) {
-
-                        // if the field are input field, return error to client and stop processing
-                        if (["input_values"].includes(field)) {
-                            return NextResponse.json(response, { status: 400 });
-                        }
-    
                         for (const msg of messages ?? []) {
                           errorRows.push([timestamp, JSON.stringify(parsedInputValues.data), report, sheetName, field, msg]);
                           err_count += 1;
