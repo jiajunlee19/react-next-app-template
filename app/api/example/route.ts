@@ -27,7 +27,7 @@ export async function POST(req: Request) {
         const { hasWidgetViewAccess, owners, viewers } = await checkWidgetAccess(parsedEnv.BASE_URL, "/authenticated/example", session.user.username, session.user.role);
 
         if (!hasWidgetViewAccess) {
-            return NextResponse.json({ message: [`Access denied. You ae not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access,`] }, { status: 402 });
+            return NextResponse.json({ message: [`Access denied. You ae not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access,`] }, { status: 403 });
         }
 
         if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
