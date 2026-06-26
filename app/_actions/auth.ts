@@ -58,8 +58,8 @@ export async function readUserById(user_uid: string | unknown) {
     const response = await readUserByIdService(user_uid);
 
     if (!(response.success)) {
-        redirectOnError(response);
-        throw new Error("Unexpected error, should redirect.")
+        console.error(response.message);
+        return {}
     }
 
     return response.data

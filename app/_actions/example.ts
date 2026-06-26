@@ -2,19 +2,7 @@
 
 import { StatePromise, type State } from '@/app/_libs/types';
 import { redirectOnError, returnStateOnError } from "@/app/_libs/response_handler";
-import { readSnowflakeService, readExampleTotalPageService, readExampleByPageService, readAllExampleService, readExampleUidService, readExampleByIdService, createExampleService, updateExampleService, deleteExampleService } from "@/app/_services/example";
-
-export async function readSnowflake(inputList: string[]) {
-
-    const response = await readSnowflakeService(inputList);
-
-    if (!(response.success)) {
-        redirectOnError(response);
-        throw new Error("Unexpected error, should redirect.")
-    }
-
-    return response.data
-};
+import { readExampleTotalPageService, readExampleByPageService, readAllExampleService, readExampleUidService, readExampleByIdService, createExampleService, updateExampleService, deleteExampleService } from "@/app/_services/example";
 
 export async function readExampleTotalPage(itemsPerPage: number | unknown, query?: string | unknown) {
 
@@ -45,8 +33,8 @@ export async function readAllExample() {
     const response = await readAllExampleService();
 
     if (!(response.success)) {
-        redirectOnError(response);
-        throw new Error("Unexpected error, should redirect.")
+        console.error(response.message);
+        return []
     }
 
     return response.data
@@ -57,8 +45,8 @@ export async function readExampleUid(example: string | unknown) {
     const response = await readExampleUidService(example);
 
     if (!(response.success)) {
-        redirectOnError(response);
-        throw new Error("Unexpected error, should redirect.")
+        console.error(response.message);
+        return {}
     }
 
     return response.data
@@ -69,8 +57,8 @@ export async function readExampleById(example_uid: string) {
     const response = await readExampleByIdService(example_uid);
 
     if (!(response.success)) {
-        redirectOnError(response);
-        throw new Error("Unexpected error, should redirect.")
+        console.error(response.message);
+        return {}
     }
 
     return response.data
