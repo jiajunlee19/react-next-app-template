@@ -33,8 +33,8 @@ export async function readAllWidget() {
     const response = await readAllWidgetService();
 
     if (!(response.success)) {
-        redirectOnError(response);
-        throw new Error("Unexpected error, should redirect.")
+        console.error(response.message);
+        return []
     }
 
     return response.data
@@ -45,8 +45,8 @@ export async function readWidgetUid(widget_href: string | unknown) {
     const response = await readWidgetUidService(widget_href);
 
     if (!(response.success)) {
-        redirectOnError(response);
-        throw new Error("Unexpected error, should redirect.")
+        console.error(response.message);
+        return {}
     }
 
     return response.data
@@ -57,8 +57,8 @@ export async function readWidgetByUid(widget_uid: string) {
     const response = await readWidgetByUidService(widget_uid);
 
     if (!(response.success)) {
-        redirectOnError(response);
-        throw new Error("Unexpected error, should redirect.")
+        console.error(response.message);
+        return {}
     }
 
     return response.data
