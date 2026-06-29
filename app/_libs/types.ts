@@ -19,6 +19,7 @@ export type TInputType = {
 }
 
 export type State = {
+    success: boolean,
     error?: {
         [key: string]: string[] | undefined
     },

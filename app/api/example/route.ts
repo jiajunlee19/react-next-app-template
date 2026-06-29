@@ -93,6 +93,11 @@ export async function POST(req: Request) {
                         }
                     }
                 }
+
+                else {
+                    errorRows.push([timestamp, JSON.stringify(parsedInputValues.data), report, sheetName, '', response.message]);
+                }
+                
                 continue;
             }
 

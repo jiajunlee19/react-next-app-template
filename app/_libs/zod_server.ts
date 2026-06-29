@@ -20,7 +20,7 @@ export const createWidgetSchema = z.object({
     widget_description: z.string().min(1),
     widget_group: z.string().toUpperCase().min(1),
     widget_href: z.string().min(1),
-    widget_tabs: z.string().nullish().refine((val) => {
+    widget_tabs: z.string().nullish().transform((val) => val === "" ? null : val).refine((val) => {
         if (!val) return true;
         try {
             const parsed = JSON.parse(val);
@@ -31,13 +31,13 @@ export const createWidgetSchema = z.object({
     }, {
         message: 'Widget Tabs must be a valid JSON array of {name, href} objects ! eg: [{"name":"tab1","href":"/tab1"}]',
     }),
-    widget_owners: z.string().nullish().refine((val) => {
+    widget_owners: z.string().nullish().transform((val) => val === "" ? null : val).refine((val) => {
         if (!val) return true;
         return val.split(',').every(v => v.trim().length > 0);
     }, {
         message: 'Widget Owners must be comma-separated list of username or group !'
     }),
-    widget_viewers: z.string().nullish().refine((val) => {
+    widget_viewers: z.string().nullish().transform((val) => val === "" ? null : val).refine((val) => {
         if (!val) return true;
         return val.split(',').every(v => v.trim().length > 0);
     }, {

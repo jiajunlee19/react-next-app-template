@@ -32,10 +32,10 @@ export default function TableActionButton({ id, action, redirectLink, icon, conf
     return (
         <form action={ async () => {
             const result = await action(id);
-            if (result?.error && result?.message) {
-                toast.error(JSON.stringify(result.error));
+            if (!result.success && result.message) {
+                toast.error(result.message);
             }
-            else if (result?.message) {
+            else if (result.success && result.message) {
                 toast.success(result.message);
                 redirect(redirectLink);
             }
