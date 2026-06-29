@@ -43,12 +43,12 @@ export const options: NextAuthOptions = {
                 // Docs: https://github.com/ldapts/ldapts/tree/main
                 const result = await signInLDAP(credentials.username, credentials.password);
 
-                if (!result || "error" in result) {
-                    throw new Error(JSON.stringify(result.error))
+                if (!result.success && result.message) {
+                    throw new Error(result.message)
                     // return null
                 }
 
-                return result as User;
+                return result.data as User;
             },
         }),
         CredentialsProvider({
@@ -79,12 +79,12 @@ export const options: NextAuthOptions = {
 
                 const result = await signIn(credentials.username, credentials.password);
 
-                if (!result || "error" in result) {
-                    throw new Error(JSON.stringify(result.error))
+                if (!result.success && result.message) {
+                    throw new Error(result.message)
                     // return null
                 }
 
-                return result as User;
+                return result.data as User;
             }
         }),
     ],
@@ -111,8 +111,8 @@ export const options: NextAuthOptions = {
                 const username = user.email?.split("@")[0].toLowerCase();
                 const result = await signInAzureAD(username);
 
-                if (!result || "error" in result) {
-                    throw new Error(JSON.stringify(result.error))
+                if (!result.success && result.message) {
+                    throw new Error(result.message)
                 }
 
                 if (user?.image) {

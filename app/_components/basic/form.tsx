@@ -20,7 +20,7 @@ type FormProps = {
 
 export default function Form( {formTitle, inputType, rowData, selectOptionData, action, formAction, redirectLink}: FormProps ) {
 
-    const initialState  = { message: "", error: {} };
+    const initialState  = { success: true, message: "", error: {} };
     const [state, dispatch] = useActionState(formAction, initialState);
 
     const formRef = useRef<HTMLFormElement>(null);
@@ -156,10 +156,10 @@ export default function Form( {formTitle, inputType, rowData, selectOptionData, 
         );
     };
 
-    if (state.message && state.error) {
+    if (!state.success && state.message) {
         toast.error(state.message);
     }
-    else if (state.message) {
+    else if (state.success && state.message) {
         toast.success(state.message);
         redirect(redirectLink);
     }

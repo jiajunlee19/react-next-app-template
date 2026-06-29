@@ -11,6 +11,7 @@ export function returnStateOnError(errorResponse: ErrorResponse) {
         case "Invalid Output":
         case "Unexpected Error":
             return {
+                success: errorResponse.success,
                 error: errorResponse.error,
                 message: errorResponse.message,
                 data: errorResponse.data,

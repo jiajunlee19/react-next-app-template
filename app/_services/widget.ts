@@ -281,17 +281,7 @@ async function getAllWidgetMSSQL() {
 
 export async function readAllWidgetService(): Promise<ServerResponse<TReadWidgetSchema[]>> {
 
-    const session = await getServerSession(options);
-
-    if (!session) {
-        return {
-            success: false,
-            message: "You are unauthenticated.",
-            reason: "Unauthenticated",
-        }
-    }
-
-    if (await rateLimitByUid(session.user.user_uid, 20, 1000*60)) {
+    if (await rateLimitByIP(20, 1000*60)) {
         return {
             success: false,
             message: "Too many requests, try again later.",

@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "dotenv -e .env -- next dev --turbopack",
-    "dev-build": "dotenv -e .env -- next build",
+    "dev": "dotenv -e .env.dev.local -- next dev --turbopack",
+    "dev-build": "dotenv -e .env.dev.local -- next build",
     "build": "dotenv -e .env -- next build",
     "start": "dotenv -e .env -- next start",
     "lint": "next lint",
-    "seed": "dotenv -e .env -- npx esrun ./app/_scripts/seed.ts",
-    "hash": "dotenv -e .env -- npx esrun ./app/_scripts/generateHash.js"
+    "seed": "dotenv -e .env.dev.local -- npx esrun ./app/_scripts/seed.ts",
+    "hash": "dotenv -e .env.dev.local -- npx esrun ./app/_scripts/generateHash.js"
   },
   "dependencies": {
     "@digitak/esrun": "^3.2.26",

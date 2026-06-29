@@ -73,7 +73,7 @@ export async function signIn(username: TUsernameSchema | unknown, password: TPas
         return returnStateOnError(response);
     }
 
-    return response.data
+    return response
 };
 
 export async function signInLDAP(username: TUsernameSchema | unknown, password: TPasswordSchema | unknown) {
@@ -84,7 +84,7 @@ export async function signInLDAP(username: TUsernameSchema | unknown, password: 
         return returnStateOnError(response);
     }
 
-    return response.data
+    return response
 };
 
 export async function signInAzureAD(username: TUsernameSchema | unknown) {
@@ -95,7 +95,7 @@ export async function signInAzureAD(username: TUsernameSchema | unknown) {
         return returnStateOnError(response);
     }
 
-    return response.data
+    return response
 };
 
 export async function signUp(username: TUsernameSchema | unknown, password: TPasswordSchema | unknown): StatePromise {
