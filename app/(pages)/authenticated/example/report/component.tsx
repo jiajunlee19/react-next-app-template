@@ -3,6 +3,7 @@
 import { getErrorMessage } from "@/app/_libs/error_handler";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 type ReportOption = {
     id: string,
@@ -102,8 +103,9 @@ export default function ReportsComponent( { inputTypeList, reportOptions }: Repo
             a.href = url;
             a.download = filename;
             a.click();
+            toast.success(`Successfully generated report ${filename}`, { duration: Infinity });
         } catch (err) {
-            alert('Failed to generate reports.\n\n' + getErrorMessage(err));
+            toast.error('Failed to generate reports.\n\n' + getErrorMessage(err), { duration: Infinity });
         } finally {
             setLoading(false);
         }
