@@ -11,7 +11,7 @@ import ThemeContextProvider from '@/app/_context/theme-context'
 import { parsedEnv } from '@/app/_libs/zod_env'
 import { Analytics } from '@/app/_components/analytics'
 import { readAllWidget } from "@/app/_actions/widget"
-import { TReadWidgetSchema } from "@/app/_libs/zod_server"
+import { CustomToast } from '@/app/_components/basic/custom_toast'
 // import { Inter } from 'next/font/google'
 
 // const inter = Inter({ subsets: ['latin'] })
@@ -56,7 +56,7 @@ export default async function RootLayout({
                   <Footer />
                 </footer>
               </div>
-              <Toaster position="bottom-right" />
+              <CustomToast />
             </div>
 
           </body>
