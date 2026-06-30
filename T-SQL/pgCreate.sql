@@ -1,3 +1,12 @@
+DROP TABLE "jiajunleeWeb"."analytics";
+DROP TABLE "jiajunleeWeb"."widget";
+DROP TABLE "jiajunleeWeb"."example";
+DROP TABLE "jiajunleeWeb"."user";
+
+DROP SCHEMA jiajunleeWeb;
+
+CREATE SCHEMA jiajunleeWeb;
+
 CREATE TABLE "jiajunleeWeb"."user" (
     user_uid UUID NOT NULL,
     username VARCHAR(100) NOT NULL,
@@ -10,7 +19,7 @@ CREATE TABLE "jiajunleeWeb"."user" (
     CONSTRAINT pk_user_uid PRIMARY KEY (user_uid),
     CONSTRAINT fk_user_updated_by FOREIGN KEY (user_updated_by)
         REFERENCES "jiajunleeWeb"."user"(user_uid)
-)
+);
 
 CREATE TABLE "jiajunleeWeb"."widget" (
     widget_uid UUID NOT NULL,
@@ -30,7 +39,7 @@ CREATE TABLE "jiajunleeWeb"."widget" (
         REFERENCES "jiajunleeWeb"."user"(user_uid)
         ON UPDATE CASCADE
         ON DELETE NO ACTION
-)
+);
 
 CREATE TABLE "jiajunleeWeb"."analytics" (
     event_uid UUID NOT NULL,
@@ -45,7 +54,7 @@ CREATE TABLE "jiajunleeWeb"."analytics" (
         REFERENCES "jiajunleeWeb"."user"(user_uid)
         ON UPDATE CASCADE
         ON DELETE NO ACTION
-)
+);
 
 CREATE TABLE "jiajunleeWeb"."example" (
     example_uid UUID NOT NULL,
@@ -59,4 +68,4 @@ CREATE TABLE "jiajunleeWeb"."example" (
         REFERENCES "jiajunleeWeb"."user"(user_uid)
         ON UPDATE CASCADE
         ON DELETE NO ACTION
-)
+);

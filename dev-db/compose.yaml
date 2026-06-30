@@ -1,18 +1,33 @@
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:16
     container_name: postgres
     networks:
       - dev-db
     restart: no
     environment:
       POSTGRES_DB: ${DB_DATABASE}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql
+    networks:
+      - dev-db
+    restart: no
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_DB: "${DB_DATABASE}"
+      SA_PASSWORD: "${DB_PASSWORD}"
+    ports:
+      - "1433:1433"
+    volumes:
+      - ./mssql_data:/var/opt/mssql 
 
   # pgadmin:
   #   image: dpage/pgadmin4:latest
@@ -51,3 +66,6 @@ services:
 networks:
   dev-db:
     name: dev-db
+
+volumes:
+  postgres_data:
