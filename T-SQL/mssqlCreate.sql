@@ -1,3 +1,15 @@
+DROP TABLE [jiajunleeWeb].[analytics];
+DROP TABLE [jiajunleeWeb].[widget];
+DROP TABLE [jiajunleeWeb].[example];
+DROP TABLE [jiajunleeWeb].[user];
+GO
+
+DROP SCHEMA jiajunleeWeb;
+GO
+
+CREATE SCHEMA jiajunleeWeb;
+GO
+
 CREATE TABLE [jiajunleeWeb].[user] (
     user_uid UNIQUEIDENTIFIER NOT NULL,
     username VARCHAR(100) NOT NULL,
@@ -10,7 +22,7 @@ CREATE TABLE [jiajunleeWeb].[user] (
     CONSTRAINT pk_user_uid PRIMARY KEY CLUSTERED (user_uid),
     CONSTRAINT fk_user_updated_by FOREIGN KEY (user_updated_by)
         REFERENCES [jiajunleeWeb].[user](user_uid)
-)
+);
 
 CREATE TABLE [jiajunleeWeb].[widget] (
     widget_uid UNIQUEIDENTIFIER NOT NULL,
@@ -31,7 +43,7 @@ CREATE TABLE [jiajunleeWeb].[widget] (
         ON UPDATE CASCADE
         ON DELETE NO ACTION,
     CONSTRAINT chk_widget_tabs CHECK (ISJSON(widget_tabs) = 1 OR widget_tabs IS NULL)
-)
+);
 
 CREATE TABLE [jiajunleeWeb].[analytics] (
     event_uid UNIQUEIDENTIFIER NOT NULL,
@@ -46,7 +58,7 @@ CREATE TABLE [jiajunleeWeb].[analytics] (
         REFERENCES [jiajunleeWeb].[user](user_uid)
         ON UPDATE CASCADE
         ON DELETE NO ACTION
-)
+);
 
 CREATE TABLE [jiajunleeWeb].[example] (
     example_uid UNIQUEIDENTIFIER NOT NULL,
@@ -60,4 +72,4 @@ CREATE TABLE [jiajunleeWeb].[example] (
         REFERENCES [jiajunleeWeb].[user](user_uid)
         ON UPDATE CASCADE
         ON DELETE NO ACTION
-)
+);
