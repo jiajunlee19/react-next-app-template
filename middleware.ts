@@ -66,5 +66,5 @@ export default withAuth(
 // Ref: https://nextjs.org/docs/app/building-your-application/routing/middleware#matcher
 export const config = { matcher: [
     // "/authenticated/:path*", "/protected/:path*", "/restricted/:path*"
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|auth/signIn|denied).*)"
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|public|auth|denied).*)"
 ]};

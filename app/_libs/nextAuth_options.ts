@@ -119,7 +119,7 @@ export const options: NextAuthOptions = {
                     token.picture = user.image;
                 }
 
-                return {...token, ...result}
+                return {...token, ...result.data}
             }
 
             return {...token, ...user}
