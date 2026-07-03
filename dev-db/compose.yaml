@@ -1,4 +1,10 @@
+# docker compose --env-file=../.env.dev.local up -d
+
 services:
+  # docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "P@ssw0rd" -C -Q "SELECT name FROM sys.databases"
+  # docker cp "../T-SQL/mssqlCreate.sql" mssql:/tmp/mssqlCreate.sql
+  # docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "P@ssw0rd" -C -d db -i /tmp/mssqlCreate.sql
+  # docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "P@ssw0rd" -C -d db -Q "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'jiajunleeWeb'"
   postgres:
     image: postgres:16
     container_name: postgres
@@ -15,6 +21,10 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   mssql:
+    # docker exec -it postgres psql -U sa -l
+    # docker cp "../T-SQL/pgCreate.sql" postgres:/tmp/pgCreate.sql
+    # docker exec -it postgres psql -U sa -d db -f /tmp/pgCreate.sql
+    # docker exec -it postgres psql -U sa -d db -c "\dt jiajunleeWeb.*"
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: mssql
     networks:
