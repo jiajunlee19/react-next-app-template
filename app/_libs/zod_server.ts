@@ -72,6 +72,7 @@ export const WidgetSchema = createWidgetSchema.pick({
 // For Analytics
 export const createAnalyticsSchema = z.object({
     event_uid: z.string().toLowerCase().min(1).uuid(),
+    tab_uid: z.string().toLowerCase().min(1).uuid(),
     event_name: z.string().toUpperCase().min(1),
     duration_ms: z.number().int().nonnegative().default(0),
     path: z.string().min(1),

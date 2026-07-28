@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { revalidateSnowflakeCacheService } from "@/app/_services/example";
 import { returnResponseOnError } from "@/app/_libs/response_handler";
+import { apiAnalytics } from '@/app/_libs/apiAnalytics';
 
-export async function POST() {
+async function handler() {
 
     const response = await revalidateSnowflakeCacheService();
 
@@ -12,3 +13,5 @@ export async function POST() {
 
     return NextResponse.json({ response }, { status: 200 });
 };
+
+export const GET = apiAnalytics(handler);

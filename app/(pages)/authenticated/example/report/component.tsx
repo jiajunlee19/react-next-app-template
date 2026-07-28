@@ -77,7 +77,7 @@ export default function ReportsComponent( { inputTypeList, reportOptions }: Repo
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const endpoint = '/api/example';
+            const endpoint = '/api/example/getReports';
             const res= await fetch(endpoint, {
                 method: 'POST',
                 headers: {
