@@ -16,6 +16,7 @@ export default function SignInComponent() {
 
     const searchParams = useSearchParams();
     const callBackUrl = searchParams.get('callbackUrl') || '/';
+    const error = searchParams.get('error');
 
     const formRef = useRef<HTMLFormElement>(null);
     const usernameRef = useRef("");
@@ -23,10 +24,14 @@ export default function SignInComponent() {
 
     // Auto-trigger Azure AD sign-in when page loads and user if not authenticated
     // useEffect(() => {
-    //     if (status === "unauthenticated") {
+    //     if (error) {
+    //         toast.error(error);
+    //     }
+
+    //     if (status === "unauthenticated" && !error) {
     //         signIn("azure-ad", { callbackUr: callBackUrl });
     //     }
-    // }, [status, callBackUrl])
+    // }, [status, callBackUrl, error])
 
     const handleSubmitClick = (e: React.MouseEvent<HTMLButtonElement>) => {
 

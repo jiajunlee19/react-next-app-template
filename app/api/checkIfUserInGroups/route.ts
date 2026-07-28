@@ -4,10 +4,11 @@ import { groupsUserSchema } from '@/app/_libs/zod_auth';
 import ldap_client from '@/app/_libs/ldap';
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import { getGroupsLDAPService } from '@/app/_services/ldap';
+import { apiAnalytics } from '@/app/_libs/apiAnalytics';
 
-export async function POST(request: NextRequest) {
+async function handler(req: NextRequest) {
     try {
-        const { groups, username } = await request.json();
+        const { groups, username } = await req.json();
 
         const parsedForm = groupsUserSchema.safeParse({
             groups: groups,
@@ -71,3 +72,5 @@ export async function POST(request: NextRequest) {
         }, { status: 500 });
     }
 };
+
+export const POST = apiAnalytics(handler);

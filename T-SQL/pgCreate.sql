@@ -43,6 +43,7 @@ CREATE TABLE "jiajunleeWeb"."widget" (
 
 CREATE TABLE "jiajunleeWeb"."analytics" (
     event_uid UUID NOT NULL,
+    tab_uid UUID NOT NULL,
     event_name VARCHAR(100) NOT NULL,
     duration_ms INTEGER NOT NULL DEFAULT 0,
     path VARCHAR(1000) NOT NULL,

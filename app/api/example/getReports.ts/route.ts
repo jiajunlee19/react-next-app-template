@@ -2,7 +2,7 @@ import { rateLimitByIP, rateLimitByUid } from "@/app/_libs/rate_limit";
 import { getServerSession } from "next-auth/next";
 import { options } from "@/app/_libs/nextAuth_options";
 import { checkWidgetAccess } from "@/app/_libs/widgets";
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import ExcelJS from 'exceljs';
 import { autoFitColumns } from '@/app/_libs/excel';
@@ -11,10 +11,11 @@ import { v5 as uuidv5 } from 'uuid';
 import { inputValuesSchema, selectedReportsSchema } from '@/app/_libs/zod_server';
 import { type ServerResponse, type TRowData } from "@/app/_libs/types";
 import { readSnowflakeService } from "@/app/_services/example";
+import { apiAnalytics } from '@/app/_libs/apiAnalytics';
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
-export async function POST(req: Request) {
+async function handler(req: NextRequest) {
 
     try {
 
@@ -157,7 +158,7 @@ export async function POST(req: Request) {
 
         // Delete old trace history
 
-        return new Response(buffer, {
+        return new NextResponse(buffer, {
             headers: {
                 'Context-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'Content-Disposition': `attachment; filenamme="${report_output || 'Reports.xlsx'}"`,
@@ -170,3 +171,5 @@ export async function POST(req: Request) {
     }
 
 };
+
+export const POST = apiAnalytics(handler);
