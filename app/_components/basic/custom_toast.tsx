@@ -1,3 +1,5 @@
+"use client"
+
 import { ToastBar, Toaster, toast } from "react-hot-toast";
 
 export function CustomToast () {
