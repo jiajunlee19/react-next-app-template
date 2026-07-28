@@ -1,4 +1,3 @@
-import { Toaster } from 'react-hot-toast'
 import Header from '@/app/_components/header'
 import Footer from '@/app/_components/footer'
 import '@/app/globals.css'
