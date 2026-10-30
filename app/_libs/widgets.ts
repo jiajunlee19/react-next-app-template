@@ -14,6 +14,16 @@ export const widgets: TCreateWidgetSchema[] = [
     }
 ];
 
+async function fetchJson(url: string, init?: RequestInit): Promise<unknown | null> {
+    try {
+        const res = await fetch(url, init);
+        if (!res.ok) return null;
+        return await res.json();
+    } catch {
+        return null;
+    }
+};
+
 export async function checkWidgetAccess(base_url: string | unknown, pathname: string | unknown, username: string | unknown, role: TRole | unknown) {
 
     if (typeof base_url !== "string" || typeof pathname !== "string" || typeof username !== "string" || !role) {
@@ -45,9 +55,9 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
         }
     }
 
-    const resReadWidgets = await fetch(`${base_url}/api/readWidgets`);
-    const resWidgets: ServerResponse<TReadWidgetSchema[]> = await resReadWidgets.json();
-    const widgets = resWidgets.success ? resWidgets.data : [];
+    const readWidgetsBody = await fetchJson(`${base_url}/api/readWidgets`);
+    const resWidgets = (readWidgetsBody as { response?: ServerResponse<TReadWidgetSchema[]> } | null)?.response;
+    const widgets = resWidgets?.success ? resWidgets.data : [];
     const widget = widgets.find((widget) => pathname.startsWith(widget.widget_href ?? ""));
 
     // Grant to everyone if its not a widget
@@ -58,13 +68,15 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
         viewers: ["everyone"],
     };
 
+    const splitList = (value: string) => value.split(",").map(v => v.trim()).filter(Boolean);
+
     // If no widget viewers defined, default to everyone
     let viewers: string[];
     if (!widget.widget_viewers || widget.widget_viewers.length <= 0) {
         viewers = ["everyone"];
     }
     else {
-        viewers = widget.widget_viewers.split(',');
+        viewers = splitList(widget.widget_viewers);
     }
 
     // If no widget owners defined, default to viewers
@@ -73,19 +85,18 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
         owners = viewers;
     }
     else {
-        owners = widget.widget_owners.split(',');
+        owners = splitList(widget.widget_owners);
     }
 
     // Widget owners
-    const resCheckIfUserInOwnerGroups = await fetch(`${base_url}/api/checkIfUserInGroups`, {
+    const checkIfUserInOwnerGroups = await fetchJson(`${base_url}/api/checkIfUserInGroups`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ groups: owners, username: username }),
     });
-    const checkIfUserInOwnerGroups = await resCheckIfUserInOwnerGroups.json();
-    const isUserInOwnerGroups = "isUserInGroups" in checkIfUserInOwnerGroups ? checkIfUserInOwnerGroups.isUserInGroups : false;
+    const isUserInOwnerGroups = !!(checkIfUserInOwnerGroups as { isUserInGroups?: boolean } | null)?.isUserInGroups;
     if (owners.includes("everyone") || owners.map(o => o.toLowerCase()).includes(username.toLowerCase()) || isUserInOwnerGroups) {
         return {
             hasWidgetOwnerAccess: true,
@@ -96,15 +107,14 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
     }
 
     // Widget viewers
-    const resCheckIfUserInViewerGroups = await fetch(`${base_url}/api/checkIfUserInGroups`, {
+    const checkIfUserInViewerGroups = await fetchJson(`${base_url}/api/checkIfUserInGroups`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ groups: viewers, username: username }),
     });
-    const checkIfUserInViewerGroups = await resCheckIfUserInViewerGroups.json();
-    const isUserInViewerGroups = "isUserInGroups" in checkIfUserInViewerGroups ? checkIfUserInViewerGroups.isUserInGroups : false;
+    const isUserInViewerGroups = !!(checkIfUserInViewerGroups as { isUserInGroups?: boolean } | null)?.isUserInGroups;
     if (viewers.includes("everyone") || viewers.map(v => v.toLowerCase()).includes(username.toLowerCase()) || isUserInViewerGroups) {
         return {
             hasWidgetOwnerAccess: false,

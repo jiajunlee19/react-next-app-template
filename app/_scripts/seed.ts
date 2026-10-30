@@ -5,7 +5,7 @@ import { signUpSchema } from "@/app/_libs/zod_auth";
 import { parsedEnv } from '@/app/_libs/zod_env';
 import sql from 'mssql';
 import { Pool } from 'pg';
-import { pgSqlConfig, msSqlConfig } from "@/app/_libs/sql_config";
+import { getPgPool, getMssqlPool } from "@/app/_libs/sql_config";
 import { getErrorMessage } from "@/app/_libs/error_handler";
 import bcrypt from 'bcryptjs';
 
@@ -19,7 +19,7 @@ async function seedUser() {
 
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
+            const pool = getPgPool();
 
             // Hash all passwords first
             const usersWithHashedPw = await Promise.all(
@@ -63,7 +63,7 @@ async function seedUser() {
         }
 
         else {
-            let pool = await sql.connect(msSqlConfig);
+            const pool = await getMssqlPool();
             const result = await Promise.all(parsedForm.data.map( async (d) => {
                     pool.request()
                 .input('user_uid', sql.VarChar, d.user_uid)
