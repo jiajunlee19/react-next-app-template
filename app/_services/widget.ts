@@ -6,7 +6,7 @@ import { options } from "@/app/_libs/nextAuth_options";
 import { v5 as uuidv5 } from 'uuid';
 import sql from 'mssql';
 import { Pool } from 'pg';
-import { pgSqlConfig, msSqlConfig } from "@/app/_libs/sql_config";
+import { getPgPool, getMssqlPool } from "@/app/_libs/sql_config";
 import { readWidgetSchema, createWidgetSchema, updateWidgetSchema, deleteWidgetSchema, WidgetSchema, type TReadWidgetSchema } from "@/app/_libs/zod_server";
 import { itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/zod_server';
 import { parsedEnv } from '@/app/_libs/zod_env';
@@ -22,7 +22,7 @@ async function getWidgetTotalPagePG(QUERY: string) {
     cacheLife("max");
     cacheTag("readWidget", "readWidgetTotalPage");
 
-    const pool = new Pool(pgSqlConfig);
+    const pool = getPgPool();
     const result = await pool.query(
         `SELECT widget_uid, widget_name, widget_description, widget_group, widget_href, widget_tabs, widget_owners, widget_viewers, widget_created_dt, widget_updated_dt, widget_updated_by
         FROM "jiajunleeWeb"."widget"
@@ -39,7 +39,7 @@ async function getWidgetTotalPageMSSQL(QUERY: string) {
     cacheLife("max");
     cacheTag("readWidget", "readWidgetTotalPage");
 
-    let pool = await sql.connect(msSqlConfig);
+    const pool = await getMssqlPool();
     const result = await pool.request()
         .input('query', sql.VarChar, QUERY)
         .query`SELECT widget_uid, widget_name, widget_description, widget_group, widget_href, widget_tabs, widget_owners, widget_viewers, widget_created_dt, widget_updated_dt, widget_updated_by
@@ -124,7 +124,7 @@ async function getWidgetByPagePG(QUERY: string) {
     cacheLife("max");
     cacheTag("readWidget", "readWidgetByPage");
 
-    const pool = new Pool(pgSqlConfig);
+    const pool = getPgPool();
     const result = await pool.query(
         `SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') AS widget_updated_by
         FROM "jiajunleeWeb"."widget" w
@@ -144,7 +144,7 @@ async function getWidgetByPageMSSQL(QUERY: string) {
     cacheLife("max");
     cacheTag("readWidget", "readWidgetByPage");
 
-    let pool = await sql.connect(msSqlConfig);
+    const pool = await getMssqlPool();
     const result = await pool.request()
         .input('query', sql.VarChar, QUERY)
         .query`SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') as widget_updated_by
@@ -251,7 +251,7 @@ async function getAllWidgetPG() {
     cacheLife("max");
     cacheTag("readWidget", "readAllWidget");
 
-    const pool = new Pool(pgSqlConfig);
+    const pool = getPgPool();
     const result = await pool.query(
         `SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') AS widget_updated_by
         FROM "jiajunleeWeb"."widget" w
@@ -267,7 +267,7 @@ async function getAllWidgetMSSQL() {
     cacheLife("max");
     cacheTag("readWidget", "readAllWidget");
 
-    let pool = await sql.connect(msSqlConfig);
+    const pool = await getMssqlPool();
     const result = await pool.request()
         .query`SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') as widget_updated_by
                 FROM [jiajunleeWeb].[widget] w
@@ -281,7 +281,7 @@ async function getAllWidgetMSSQL() {
 
 export async function readAllWidgetService(): Promise<ServerResponse<TReadWidgetSchema[]>> {
 
-    if (await rateLimitByIP(20, 1000*60)) {
+    if (await rateLimitByIP(600, 1000*60)) {
         return {
             success: false,
             message: "Too many requests, try again later.",
@@ -330,7 +330,7 @@ async function getWidgetUidPG(widget_href: string) {
     cacheLife("max");
     cacheTag("readWidget", "readWidgetUid");
 
-    const pool = new Pool(pgSqlConfig);
+    const pool = getPgPool();
     const result = await pool.query(
         `SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') AS widget_updated_by
         FROM "jiajunleeWeb"."widget" w
@@ -348,7 +348,7 @@ async function getWidgetUidMSSQL(widget_href: string) {
     cacheLife("max");
     cacheTag("readWidget", "readWidgetUid");
 
-    let pool = await sql.connect(msSqlConfig);
+    const pool = await getMssqlPool();
     const result = await pool.request()
         .input('widget_href', sql.VarChar, widget_href)
         .query`SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, COALESCE(u.username, 'system') as widget_updated_by
@@ -438,7 +438,7 @@ async function getWidgetByUidPG(widget_uid: string) {
     cacheLife("max");
     cacheTag("readWidget", "readWidgetByUid");
 
-    const pool = new Pool(pgSqlConfig);
+    const pool = getPgPool();
     const result = await pool.query(
         `SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt,
                 COALESCE(u.username, 'system') AS widget_updated_by
@@ -457,7 +457,7 @@ async function getWidgetByUidMSSQL(widget_uid: string) {
     cacheLife("max");
     cacheTag("readWidget", "readWidgetByUid");
 
-    let pool = await sql.connect(msSqlConfig);
+    const pool = await getMssqlPool();
     const result = await pool.request()
         .input('widget_uid', sql.VarChar, widget_uid)
         .query`SELECT w.widget_uid, w.widget_name, w.widget_description, w.widget_group, w.widget_href, w.widget_tabs, w.widget_owners, w.widget_viewers, w.widget_created_dt, w.widget_updated_dt, 
@@ -602,7 +602,7 @@ export async function createWidgetService(formData: FormData | unknown): Promise
 
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
+            const pool = getPgPool();
             const result = await pool.query(
                             `INSERT INTO "jiajunleeWeb"."widget"
                             (
@@ -637,7 +637,7 @@ export async function createWidgetService(formData: FormData | unknown): Promise
         }
         
         else {
-            let pool = await sql.connect(msSqlConfig);
+            const pool = await getMssqlPool();
             const result = await pool.request()
                             .input('widget_uid', sql.UniqueIdentifier, parsedForm.data.widget_uid)
                             .input('widget_name', sql.VarChar, parsedForm.data.widget_name)
@@ -771,7 +771,7 @@ export async function updateWidgetService(formData: FormData | unknown): Promise
 
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
+            const pool = getPgPool();
             const result = await pool.query(
                             `UPDATE "jiajunleeWeb"."widget"
                             SET 
@@ -800,7 +800,7 @@ export async function updateWidgetService(formData: FormData | unknown): Promise
         }
 
         else {
-            let pool = await sql.connect(msSqlConfig);
+            const pool = await getMssqlPool();
             const result = await pool.request()
                             .input('widget_uid', sql.UniqueIdentifier, parsedForm.data.widget_uid)
                             .input('widget_name', sql.VarChar, parsedForm.data.widget_name)
@@ -895,7 +895,7 @@ export async function deleteWidgetService(widget_uid: string): Promise<ServerRes
 
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
+            const pool = getPgPool();
             const result = await pool.query(
                             `DELETE FROM "jiajunleeWeb"."widget"
                             WHERE widget_uid = $1;`,
@@ -905,7 +905,7 @@ export async function deleteWidgetService(widget_uid: string): Promise<ServerRes
         }
         
         else {
-            let pool = await sql.connect(msSqlConfig);
+            const pool = await getMssqlPool();
             const result = await pool.request()
                             .input('widget_uid', sql.UniqueIdentifier, parsedForm.data.widget_uid)
                             .query`DELETE FROM [jiajunleeWeb].[widget] 

@@ -1,4 +1,6 @@
 import { envSchema } from "@/app/_libs/zod_env";
+import sql from "mssql";
+import { Pool } from "pg";
 
 const parsedEnv = envSchema.parse(process.env);
 
@@ -29,4 +31,27 @@ export const pgSqlConfig = {
   },
   max: 10,
   idleTimeoutMillis: 30000,
+};
+
+const globalForSql = globalThis as unknown as {
+  mssql_pool: Promise<sql.ConnectionPool> | undefined,
+  pg_pool: Pool | undefined,
+};
+
+export function getMssqlPool(): Promise<sql.ConnectionPool> {
+  if (!globalForSql.mssql_pool) {
+    globalForSql.mssql_pool = new sql.ConnectionPool(msSqlConfig).connect()
+      .catch((err) => {
+        globalForSql.mssql_pool = undefined;
+        throw err;
+      });
+  }
+  return globalForSql.mssql_pool;
+};
+
+export function getPgPool(): Pool {
+  if (!globalForSql.pg_pool) {
+    globalForSql.pg_pool = new Pool(pgSqlConfig);
+  }
+  return globalForSql.pg_pool;
 };

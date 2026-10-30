@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
-import { pgSqlConfig, msSqlConfig } from '@/app/_libs/sql_config';
+import { getPgPool, getMssqlPool } from '@/app/_libs/sql_config';
 import { parsedEnv } from '@/app/_libs/zod_env';
 import sql from 'mssql';
 import { rateLimitByIP } from '@/app/_libs/rate_limit';
 import { getServerSession } from 'next-auth/next';
 import { options } from '@/app/_libs/nextAuth_options';
 import { createAnalyticsSchema } from '@/app/_libs/zod_server';
-import { v5 as uuidv5 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
 const isDev = process.env.NODE_ENV === "development"
 
 export async function POST(req: NextRequest) {
 
-    if (isDev) return;
+    if (isDev) return NextResponse.json({ skipped: true }, { status: 200 });
 
     if (await rateLimitByIP(120, 1000 * 60)) {
         return NextResponse.json({ error: 'Too many request' }, { status: 429 });
@@ -31,10 +30,9 @@ export async function POST(req: NextRequest) {
     let { tab_uid, event_name, path, duration_ms, user_uid } = body as Record<string, unknown>;
     user_uid = user_uid ?? session?.user?.user_uid ?? null;
 
-    const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
     const now = new Date();
     const parsedBody = createAnalyticsSchema.safeParse({
-        event_uid: typeof event_name === "string" ? uuidv5(event_name + now.toString(), UUID5_SECRET) : undefined,
+        event_uid: typeof event_name === "string" ? uuidv4() : undefined,
         tab_uid: tab_uid,
         event_name: event_name,
         duration_ms: typeof duration_ms === "number" ? duration_ms : 0,
@@ -51,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     try {
         if (parsedEnv.DB_TYPE === 'PG') {
-            const pool = new Pool(pgSqlConfig);
+            const pool = getPgPool();
             await pool.query(
                 `INSERT INTO "jiajunleeWeb"."analytics" (event_uid, tab_uid, event_name, duration_ms, path, event_created_dt, event_created_by)
                 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -59,7 +57,7 @@ export async function POST(req: NextRequest) {
             );
             await pool.end();
         } else {
-            const pool = await sql.connect(msSqlConfig);
+            const pool = await getMssqlPool();
             await pool.request()
                 .input('event_uid', sql.UniqueIdentifier, parsedBody.data.event_uid)
                 .input('tab_uid', sql.UniqueIdentifier, parsedBody.data.tab_uid)

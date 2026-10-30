@@ -7,7 +7,7 @@ import { v5 as uuidv5 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import sql from 'mssql';
 import { Pool } from 'pg';
-import { pgSqlConfig, msSqlConfig } from "@/app/_libs/sql_config";
+import { getPgPool, getMssqlPool } from "@/app/_libs/sql_config";
 import { type TUsernameSchema, type TPasswordSchema, signInSchema, signInWithoutPassSchema, signUpSchema, readUserSchema, readUserWithoutPassSchema, updateUserSchema, deleteUserSchema, updateRoleSchema, updateRoleAdminSchema, readUserWithoutPassAdminSchema, type TReadUserSchema, type TReadUserWithTokenSchema } from "@/app/_libs/zod_auth";
 import { itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/zod_server';
 import { getErrorMessage } from '@/app/_libs/error_handler';
@@ -24,14 +24,13 @@ async function getUserTotalPagePG(QUERY: string) {
     cacheLife("max");
     cacheTag("readUser", "readUserTotalPage");
 
-    const pool = new Pool(pgSqlConfig);
+    const pool = getPgPool();
     const result = await pool.query(
         `SELECT user_uid, username, role, user_created_dt, user_updated_dt
         FROM "jiajunleeWeb"."user"
         WHERE (CAST(user_uid AS TEXT) LIKE $1 OR username LIKE $1);`,
         [QUERY]
     );
-    await pool.end();
 
     return result;
 };
@@ -41,14 +40,13 @@ async function getUserTotalPageMSSQL(QUERY: string) {
     cacheLife("max");
     cacheTag("readUser", "readUserTotalPage");
 
-    let pool = await sql.connect(msSqlConfig);
+    const pool = await getMssqlPool();
     const result = await pool.request()
         .input('query', sql.VarChar, QUERY)
         .query`SELECT user_uid, username, role, user_created_dt, user_updated_dt
                 FROM [jiajunleeWeb].[user]
                 WHERE (user_uid like @query OR username like @query);
     `;
-    await pool.close();
 
     return result;
 };
@@ -121,7 +119,7 @@ async function getUserByPagePG(QUERY: string, OFFSET: number, parsedItemsPerPage
     cacheLife("max");
     cacheTag("readUser", "readUserByPage");
 
-    const pool = new Pool(pgSqlConfig);
+    const pool = getPgPool();
     const result = await pool.query(
         `SELECT u1.user_uid, u1.username, u1.role, u1.user_created_dt, u1.user_updated_dt, COALESCE(u.username, 'system') AS user_updated_by
         FROM "jiajunleeWeb"."user" u1
@@ -131,7 +129,6 @@ async function getUserByPagePG(QUERY: string, OFFSET: number, parsedItemsPerPage
         OFFSET $2 LIMIT $3;`,
         [QUERY, OFFSET, parsedItemsPerPage]
     );
-    await pool.end();
 
     return result;
 };
@@ -141,7 +138,7 @@ async function getUserByPageMSSQL(QUERY: string, OFFSET: number, parsedItemsPerP
     cacheLife("max");
     cacheTag("readUser", "readUserByPage");
 
-    let pool = await sql.connect(msSqlConfig);
+    const pool = await getMssqlPool();
     const result = await pool.request()
     .input('offset', sql.Int, OFFSET)
     .input('limit', sql.Int, parsedItemsPerPage)
@@ -154,7 +151,6 @@ async function getUserByPageMSSQL(QUERY: string, OFFSET: number, parsedItemsPerP
             OFFSET @offset ROWS
             FETCH NEXT @limit ROWS ONLY;
     `;
-    await pool.close();
 
     return result;
 };
@@ -227,14 +223,13 @@ async function getUserTotalPageAdminPG(QUERY: string) {
     cacheLife("max");
     cacheTag("readUser", "readUserTotalPageAdmin");
 
-    const pool = new Pool(pgSqlConfig);
+    const pool = getPgPool();
     const result = await pool.query(
         `SELECT user_uid, username, role, user_created_dt, user_updated_dt
         FROM "jiajunleeWeb"."user"
         WHERE role != 'boss' AND (CAST(user_uid AS TEXT) LIKE $1 OR username LIKE $1);`,
         [QUERY]
     );
-    await pool.end();
 
     return result;
 };
@@ -244,14 +239,13 @@ async function getUserTotalPageAdminMSSQL(QUERY: string) {
     cacheLife("max");
     cacheTag("readUser", "readUserTotalPageAdmin");
 
-    let pool = await sql.connect(msSqlConfig);
+    const pool = await getMssqlPool();
     const result = await pool.request()
         .input('query', sql.VarChar, QUERY)
         .query`SELECT user_uid, username, role, user_created_dt, user_updated_dt
                 FROM [jiajunleeWeb].[user]
                 WHERE role != 'boss' AND (user_uid like @query OR username like @query);
     `;
-    await pool.close();
 
     return result;
 };
@@ -324,7 +318,7 @@ async function getUserByPageAdminPG(QUERY: string, OFFSET: number, parsedItemsPe
     cacheLife("max");
     cacheTag("readUser", "readUserByPageAdmin");
 
-    const pool = new Pool(pgSqlConfig);
+    const pool = getPgPool();
     const result = await pool.query(
         `SELECT u1.user_uid, u1.username, u1.role, COALESCE(u.username, 'system') AS user_updated_by
         FROM "jiajunleeWeb"."user" u1
@@ -334,7 +328,6 @@ async function getUserByPageAdminPG(QUERY: string, OFFSET: number, parsedItemsPe
         OFFSET $2 LIMIT $3;`,
         [QUERY, OFFSET, parsedItemsPerPage]
     );
-    await pool.end();
 
     return result;
 };
@@ -344,7 +337,7 @@ async function getUserByPageAdminMSSQL(QUERY: string, OFFSET: number, parsedItem
     cacheLife("max");
     cacheTag("readUser", "readUserByPageAdmin");
 
-    let pool = await sql.connect(msSqlConfig);
+    const pool = await getMssqlPool();
     const result = await pool.request()
         .input('offset', sql.Int, OFFSET)
         .input('limit', sql.Int, parsedItemsPerPage)
@@ -357,7 +350,6 @@ async function getUserByPageAdminMSSQL(QUERY: string, OFFSET: number, parsedItem
                 OFFSET @offset ROWS
                 FETCH NEXT @limit ROWS ONLY;
         `;
-    await pool.close();
 
     return result;
 };
@@ -430,7 +422,7 @@ async function getUserByIdPG(user_uid: string) {
     cacheLife("max");
     cacheTag("readUser", "readUserById");
 
-    const pool = new Pool(pgSqlConfig);
+    const pool = getPgPool();
     const result = await pool.query(
         `SELECT u1.user_uid, u1.username, u1.role, u1.user_created_dt, u1.user_updated_dt,
                 COALESCE(u.username, 'system') AS user_updated_by
@@ -439,7 +431,6 @@ async function getUserByIdPG(user_uid: string) {
         WHERE u1.user_uid = $1;`,
         [user_uid]
     );
-    await pool.end();
 
     return result;
 };
@@ -449,7 +440,7 @@ async function getUserByIdMSSQL(user_uid: string) {
     cacheLife("max");
     cacheTag("readUser", "readUserById");
 
-    let pool = await sql.connect(msSqlConfig);
+    const pool = await getMssqlPool();
     const result = await pool.request()
         .input('user_uid', sql.UniqueIdentifier, user_uid)
         .query`SELECT u1.user_uid, u1.username, u1.role, u1.user_created_dt, u1.user_updated_dt, COALESCE(u.username, 'system') as user_updated_by
@@ -457,7 +448,6 @@ async function getUserByIdMSSQL(user_uid: string) {
                 left join [jiajunleeWeb].[user] u ON u1.user_updated_by = u.user_uid
                 WHERE u1.user_uid = @user_uid;
     `;
-    await pool.close();
 
     return result;
 };
@@ -559,27 +549,25 @@ export async function signInService(username: TUsernameSchema | unknown, passwor
     let parsedResult;
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
+            const pool = getPgPool();
             const result = await pool.query(
                             `SELECT user_uid, username, password, role
                             FROM "jiajunleeWeb"."user"
                             WHERE username = $1;`,
-                            [username]
+                            [parsedForm.data.username]
             );
             parsedResult = readUserSchema.safeParse(result.rows[0]);
-            await pool.end();
-        }
+                }
         
         else {
-            let pool = await sql.connect(msSqlConfig);
+            const pool = await getMssqlPool();
             const result = await pool.request()
                             .input('username', sql.VarChar, parsedForm.data.username)
                             .query`SELECT user_uid, username, password, role
                                     FROM [jiajunleeWeb].[user]
                                     WHERE username = @username;
                             `;
-            await pool.close();
-            parsedResult = readUserSchema.safeParse(result.recordset[0]);
+                    parsedResult = readUserSchema.safeParse(result.recordset[0]);
         }
     
         if (!parsedResult.success) {
@@ -698,18 +686,17 @@ export async function updateUserLDAPService(username: TUsernameSchema | unknown,
 
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
+            const pool = getPgPool();
             const result = await pool.query(
                             `UPDATE "jiajunleeWeb"."user"
                             SET password = $1, user_updated_dt = $2
                             WHERE user_uid = $3;`,
                             [await bcrypt.hash(parsedForm.data.password, 10), parsedForm.data.user_updated_dt, parsedForm.data.user_uid]
             );
-            await pool.end();
-        }
+                }
         
         else {
-            let pool = await sql.connect(msSqlConfig);
+            const pool = await getMssqlPool();
             const result = await pool.request()
                             .input('user_uid', sql.UniqueIdentifier, parsedForm.data.user_uid)
                             .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10))
@@ -718,8 +705,7 @@ export async function updateUserLDAPService(username: TUsernameSchema | unknown,
                                     SET password = @password, user_updated_dt = @user_updated_dt
                                     WHERE user_uid = @user_uid;
                             `;
-            await pool.close();
-        }
+                }
     } 
     catch (err) {
         return {
@@ -766,7 +752,7 @@ export async function signInAzureADService(username: TUsernameSchema | unknown):
     try {
         let parsedResult;
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
+            const pool = getPgPool();
             const result = await pool.query(
                             `INSERT INTO "jiajunleeWeb"."user" (user_uid, username, password, role, user_created_dt, user_updated_dt)
                             VALUES ($1, $2, $3, $4, $5, $6)
@@ -775,12 +761,11 @@ export async function signInAzureADService(username: TUsernameSchema | unknown):
                             RETURNING user_uid, username, role;`,
                             [uuidv5(parsedForm.data.username, UUID5_SECRET), parsedForm.data.username, await bcrypt.hash(uuidv5(parsedForm.data.username, UUID5_SECRET), 10), 'user', now, now]
             );
-            await pool.end();
-            parsedResult = readUserSchema.safeParse(result.rows[0]);
+                    parsedResult = readUserSchema.safeParse(result.rows[0]);
         }
         
         else {
-            let pool = await sql.connect(msSqlConfig);
+            const pool = await getMssqlPool();
             const result = await pool.request()
                             .input('user_uid', sql.UniqueIdentifier, uuidv5(parsedForm.data.username, UUID5_SECRET))
                             .input('username', sql.VarChar, parsedForm.data.username)
@@ -798,8 +783,7 @@ export async function signInAzureADService(username: TUsernameSchema | unknown):
                                     WHEN MATCHED THEN
                                         UPDATE SET target.user_updated_dt = source.user_updated_dt
                                     OUTPUT inserted.user_uid, inserted.username, inserted.role;`;
-            await pool.close();
-            parsedResult = readUserSchema.safeParse(result.recordset[0]);
+                    parsedResult = readUserSchema.safeParse(result.recordset[0]);
         }
 
         if (!parsedResult.success) {
@@ -859,18 +843,17 @@ export async function signUpService(username: TUsernameSchema | unknown, passwor
 
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
+            const pool = getPgPool();
             const result = await pool.query(
                             `INSERT INTO "jiajunleeWeb"."user"
                             (user_uid, username, password, role, user_created_dt, user_updated_dt)
                             VALUES ($1, $2, $3, $4, $5, $6);`,
                             [parsedForm.data.user_uid, parsedForm.data.username, await bcrypt.hash(parsedForm.data.password, 10), parsedForm.data.role, parsedForm.data.user_created_dt, parsedForm.data.user_updated_dt]
             );
-            await pool.end();
-        }
+                }
 
         else {
-            let pool = await sql.connect(msSqlConfig);
+            const pool = await getMssqlPool();
             const result = await pool.request()
                             .input('user_uid', sql.UniqueIdentifier, parsedForm.data.user_uid)
                             .input('username', sql.VarChar, parsedForm.data.username)
@@ -882,8 +865,7 @@ export async function signUpService(username: TUsernameSchema | unknown, passwor
                                     (user_uid, username, password, role, user_created_dt, user_updated_dt)
                                     VALUES (@user_uid, @username, @password, @role, @user_created_dt, @user_updated_dt);
                             `;
-            await pool.close();
-        }
+                }
     } 
     catch (err) {
         return {
@@ -950,18 +932,17 @@ export async function updateUserService(formData: FormData | unknown): Promise<S
     try {
 
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
+            const pool = getPgPool();
             const result = await pool.query(
                             `UPDATE "jiajunleeWeb"."user"
                             SET password = $1, user_updated_dt = $2, user_updated_by = $3
                             WHERE user_uid = $4;`,
                             [await bcrypt.hash(parsedForm.data.password, 10), parsedForm.data.user_updated_dt, session.user.user_uid, parsedForm.data.user_uid]
             );
-            await pool.end();
-        }      
+                }      
 
         else {
-            let pool = await sql.connect(msSqlConfig);
+            const pool = await getMssqlPool();
             const result = await pool.request()
                             .input('user_uid', sql.UniqueIdentifier, parsedForm.data.user_uid)
                             .input('password', sql.VarChar, await bcrypt.hash(parsedForm.data.password, 10))
@@ -971,8 +952,7 @@ export async function updateUserService(formData: FormData | unknown): Promise<S
                                     SET password = @password, user_updated_dt = @user_updated_dt, user_updated_by = @user_updated_by
                                     WHERE user_uid = @user_uid;
                             `;
-            await pool.close();
-        }
+                }
     } 
     catch (err) {
         return {
@@ -1025,24 +1005,22 @@ export async function deleteUserService(user_uid: string | unknown): Promise<Ser
 
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
+            const pool = getPgPool();
             const result = await pool.query(
                             `DELETE FROM "jiajunleeWeb"."user"
                             WHERE user_uid = $1;`,
                             [parsedForm.data.user_uid]
             );
-            await pool.end();
-        }
+                }
 
         else {
-            let pool = await sql.connect(msSqlConfig);
+            const pool = await getMssqlPool();
             const result = await pool.request()
                             .input('user_uid', sql.UniqueIdentifier, parsedForm.data.user_uid)
                             .query`DELETE FROM [jiajunleeWeb].[user] 
                                     WHERE user_uid = @user_uid;
                             `;
-            await pool.close();
-        }
+                }
     } 
     catch (err) {
         return {
@@ -1111,18 +1089,17 @@ export async function updateRoleService(formData: FormData | unknown): Promise<S
 
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
+            const pool = getPgPool();
             const result = await pool.query(
                             `UPDATE "jiajunleeWeb"."user"
                             SET role = $1, user_updated_dt = $2, user_updated_by = $3
                             WHERE user_uid = $4;`,
                             [parsedForm.data.role, parsedForm.data.user_updated_dt, session.user.user_uid, parsedForm.data.user_uid]
             );
-            await pool.end();
-        }
+                }
 
         else {
-            let pool = await sql.connect(msSqlConfig);
+            const pool = await getMssqlPool();
             const result = await pool.request()
                             .input('user_uid', sql.UniqueIdentifier, parsedForm.data.user_uid)
                             .input('role', sql.VarChar, parsedForm.data.role)
@@ -1132,8 +1109,7 @@ export async function updateRoleService(formData: FormData | unknown): Promise<S
                                     SET role = @role, user_updated_dt = @user_updated_dt, user_updated_by = @user_updated_by
                                     WHERE user_uid = @user_uid;
                             `;
-            await pool.close();
-        }
+                }
     } 
     catch (err) {
         return {
@@ -1202,18 +1178,17 @@ export async function updateRoleAdminService(formData: FormData | unknown): Prom
 
     try {
         if (parsedEnv.DB_TYPE === "PG") {
-            const pool = new Pool(pgSqlConfig);
+            const pool = getPgPool();
             const result = await pool.query(
                             `UPDATE "jiajunleeWeb"."user"
                             SET role = $1, user_updated_dt = $2, user_updated_by = $3
                             WHERE user_uid = $4 AND role <> 'boss';`,
                             [parsedForm.data.role, parsedForm.data.user_updated_dt, session.user.user_uid, parsedForm.data.user_uid]
             );
-            await pool.end();
-        }
+                }
 
         else {
-            let pool = await sql.connect(msSqlConfig);
+            const pool = await getMssqlPool();
             const result = await pool.request()
                             .input('user_uid', sql.UniqueIdentifier, parsedForm.data.user_uid)
                             .input('role', sql.VarChar, parsedForm.data.role)
@@ -1223,8 +1198,7 @@ export async function updateRoleAdminService(formData: FormData | unknown): Prom
                                     SET role = @role, user_updated_dt = @user_updated_dt, user_updated_by = @user_updated_by
                                     WHERE user_uid = @user_uid and role <> 'boss';
                             `;
-            await pool.close();
-        }
+                }
     } 
     catch (err) {
         return {
