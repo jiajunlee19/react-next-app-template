@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
-import { pgSqlConfig, msSqlConfig } from '@/app/_libs/sql_config';
+import { getPgPool, getMssqlPool } from '@/app/_libs/sql_config';
 import { parsedEnv } from '@/app/_libs/zod_env';
 import sql from 'mssql';
 import { rateLimitByIP } from '@/app/_libs/rate_limit';
@@ -58,7 +57,7 @@ export async function POST(req: NextRequest) {
             );
             await pool.end();
         } else {
-            const pool = await sql.connect(msSqlConfig);
+            const pool = await getMssqlPool();
             await pool.request()
                 .input('event_uid', sql.UniqueIdentifier, parsedBody.data.event_uid)
                 .input('tab_uid', sql.UniqueIdentifier, parsedBody.data.tab_uid)
