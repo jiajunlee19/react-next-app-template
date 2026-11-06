@@ -3,6 +3,7 @@ import { withAuth, NextRequestWithAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import { parsedEnv } from "@/app/_libs/zod_env";
 import { checkWidgetAccess } from "@/app/_libs/widgets";
+import { signDeniedInfo } from "@/app/_libs/denied_info";
 
 export default withAuth(
     // `withAuth` augments your `Request` with the user's token.
@@ -34,7 +35,7 @@ export default withAuth(
                 owners,
                 viewers,
             };
-            deniedUrl.searchParams.set("info", Buffer.from(JSON.stringify(info)).toString('base64'));
+            deniedUrl.searchParams.set("info", await signDeniedInfo(info));
             return NextResponse.redirect(deniedUrl);
         }
 

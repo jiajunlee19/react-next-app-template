@@ -45,18 +45,19 @@ export function flattenNestedObject(obj: NestedObject) {
 
 // create nested object
 // data['product_name']['uom_name'] = '?'
-export function createNestedObject( base: NestedObject, names: string[], value: TRowData) {
+export function createNestedObject( base: NestedObject, names: string[], ...rest:  [value?: TRowData]) {
     // If a value is given, remove the last name and keep it for later:
-    let lastName = arguments.length === 3 ? names.pop() : false;
+    const [value] = rest;
+    const lastName = rest.length > 0 ? names.pop() : false;
 
     // Walk the hierarchy, creating new objects where needed.
     // If the lastName was removed, then the last object is not set yet:
-    for( let i = 0; i < names.length; i++ ) {
+    for (let i = 0; i < names.length; i++ ) {
         base = base[ names[i] ] = (base[ names[i] ] as TRowData) || {};
     }
 
     // If a value was given, set it to the last name:
-    if( lastName ) base = base[ lastName ] = value;
+    if( lastName ) base = base[ lastName ] = value as TRowData;
 
     // Return the last object in the hierarchy:
     return base;
@@ -69,11 +70,13 @@ export function createNestedObject( base: NestedObject, names: string[], value: 
 export function accessNestedObject( base: NestedObject, names: string[]) {
 
     // Walk the hierarchy
-    for( let i = 0; i < names.length; i++ ) {
-        base = base[ names[i] ] = (base[ names[i] ] as TRowData) || {};
+    let current: NestedObject[string] = base;
+    for (let i = 0; i < names.length; i++ ) {
+        if (!current || typeof current !== "object") return undefined;
+        current = (current as NestedObject)[ names[i] ];
     }
 
     // Return the last object in the hierarchy:
-    return base;
+    return current;
 
 };

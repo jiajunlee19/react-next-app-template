@@ -14,6 +14,7 @@ import { getErrorMessage } from '@/app/_libs/error_handler';
 import { type ServerResponse } from '@/app/_libs/types';
 import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache'; 
 import { checkWidgetAccess } from "@/app/_libs/widgets";
+import { signDeniedInfo } from "@/app/_libs/denied_info";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
@@ -184,7 +185,7 @@ export async function readWidgetByPageService(itemsPerPage: number | unknown, cu
             owners,
             viewers,
         };
-        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
+        const encodedInfo = await signDeniedInfo(info);
         return {
             success: false,
             message: `Access denied. You are not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access.`,

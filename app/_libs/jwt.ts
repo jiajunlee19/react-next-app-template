@@ -20,7 +20,7 @@ export function verifyJwtToken(token: string) {
         return decoded
         
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return null
     }
 };

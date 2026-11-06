@@ -1,29 +1,11 @@
-"use client"
-
 import Page404 from "@/app/_components/page_404";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { verifyDeniedInfo } from "@/app/_libs/denied_info";
 
-export default function DeniedPage() {
+export default async function DeniedPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
 
-    const searchParams = useSearchParams();
-    const [info, setInfo] = useState<{
-        username?: string,
-        requestedPath?: string,
-        owners?: string[],
-        viewers?: string[],
-    }>({});
-
-    useEffect(() => {
-        const infoParams = searchParams.get("info");
-        if (infoParams) {
-            const decoded = JSON.parse(Buffer.from(infoParams, 'base64').toString());
-            setInfo(decoded);
-        } else {
-            setInfo({});
-        }
-    }, [searchParams])
-
+    const infoParams = (await searchParams).info;
+    const info = await verifyDeniedInfo(typeof infoParams === "string" ? infoParams : null);
+   
     let errMessage = "Access Denied.";
 
     if (info && "viewers" in info && "requestedPath" in info && "owners" in info) {
