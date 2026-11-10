@@ -13,7 +13,8 @@ import { parsedEnv } from '@/app/_libs/zod_env';
 import { getErrorMessage } from '@/app/_libs/error_handler';
 import { type ServerResponse } from '@/app/_libs/types';
 import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache'; 
-import { checkWidgetAccess } from "@/app/_libs/widgets";
+import { checkWidgetAccess, hrefsOverlap } from "@/app/_libs/widgets";
+import { signDeniedInfo } from "@/app/_libs/denied_info";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
@@ -184,7 +185,7 @@ export async function readWidgetByPageService(itemsPerPage: number | unknown, cu
             owners,
             viewers,
         };
-        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
+        const encodedInfo = await signDeniedInfo(info);
         return {
             success: false,
             message: `Access denied. You are not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access.`,
@@ -599,6 +600,40 @@ export async function createWidgetService(formData: FormData | unknown): Promise
             ),
         };
     };
+
+    try {
+        const existing = await readAllWidgetService();
+        if (!existing.success) {
+            return {
+                success: false,
+                message: "Could not verify the widget path is unused, please try again later.",
+                reason: "Unexpected Error",
+            }
+        }
+
+        const clash = existing.data.find(w => w.widget_href ? hrefsOverlap(parsedForm.data.widget_href, w.widget_href) : false);
+        if (clash) {
+            const message = clash.widget_href === parsedForm.data.widget_href
+                ? `Widget path ${parsedForm.data.widget_href} is already used by widget ${clash.widget_name}.`
+                : `Widget path ${parsedForm.data.widget_href} overlaps widget ${clash.widget_name} at ${clash.widget_href}. `
+            return {
+                success: false,
+                message,
+                reason: "Invalid Input",
+                error: { widget_href: [message] },
+                data: Object.fromEntries(
+                    Object.entries(Object.fromEntries(formData.entries())).map(([k, v]) => [k, v.toString()])
+                ),
+            };
+        }
+    }
+    catch (err) {
+        return {
+            success: false,
+            message: getErrorMessage(err),
+            reason: "Unexpected Error",
+        }
+    }
 
     try {
         if (parsedEnv.DB_TYPE === "PG") {

@@ -5,7 +5,6 @@ import { getServerSession } from "next-auth/next";
 import { options } from "@/app/_libs/nextAuth_options";
 import { v5 as uuidv5 } from 'uuid';
 import sql from 'mssql';
-import { Pool } from 'pg';
 import { getPgPool, getMssqlPool } from "@/app/_libs/sql_config";
 import { readExampleSchema, createExampleSchema, updateExampleSchema, deleteExampleSchema, ExampleSchema, type TReadExampleSchema } from "@/app/_libs/zod_server";
 import { itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/zod_server';
@@ -14,6 +13,7 @@ import { getErrorMessage } from '@/app/_libs/error_handler';
 import { type ServerResponse } from '@/app/_libs/types';
 import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache'; 
 import { checkWidgetAccess } from "@/app/_libs/widgets";
+import { signDeniedInfo } from "@/app/_libs/denied_info";
 import { snowflakePool } from "@/app/_libs/snowflake_config";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
@@ -201,7 +201,7 @@ export async function readExampleTotalPageService(itemsPerPage: number | unknown
             owners,
             viewers,
         };
-        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
+        const encodedInfo = await signDeniedInfo(info);
         return {
             success: false,
             message: `Access denied. You are not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access.`,
@@ -325,8 +325,8 @@ export async function readExampleByPageService(itemsPerPage: number | unknown, c
             requestedPath: "/authenticated/example",
             owners,
             viewers,
-        };
-        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
+        };;
+        const encodedInfo = await signDeniedInfo(info);
         return {
             success: false,
             message: `Access denied. You are not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access.`,
@@ -435,7 +435,7 @@ export async function readAllExampleService(): Promise<ServerResponse<TReadExamp
             owners,
             viewers,
         };
-        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
+        const encodedInfo = await signDeniedInfo(info);
         return {
             success: false,
             message: `Access denied. You are not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access.`,
@@ -558,7 +558,7 @@ export async function readExampleUidService(example: string | unknown): Promise<
             owners,
             viewers,
         };
-        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
+        const encodedInfo = await signDeniedInfo(info);
         return {
             success: false,
             message: `Access denied. You are not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access.`,
@@ -683,7 +683,7 @@ export async function readExampleByIdService(example_uid: string): Promise<Serve
             owners,
             viewers,
         };
-        const encodedInfo = Buffer.from(JSON.stringify(info)).toString('base64');
+        const encodedInfo = await signDeniedInfo(info);
         return {
             success: false,
             message: `Access denied. You are not part of the viewers (${viewers}). Kindly contact owners (${owners}) to get access.`,

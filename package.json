@@ -7,11 +7,12 @@
     "dev-build": "dotenv -e .env.dev.local -- next build",
     "build": "dotenv -e .env -- next build",
     "start": "dotenv -e .env -- next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "seed": "dotenv -e .env.dev.local -- npx esrun ./app/_scripts/seed.ts",
     "hash": "dotenv -e .env.dev.local -- npx esrun ./app/_scripts/generateHash.js"
   },
   "dependencies": {
+    "@eslint/eslintrc": "^3.1.0",
     "@digitak/esrun": "^3.2.26",
     "@heroicons/react": "^2.1.5",
     "@tanstack/react-table": "^8.20.5",

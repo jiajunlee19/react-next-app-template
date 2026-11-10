@@ -48,9 +48,7 @@ export const readUserWithoutPassSchema = readUserSchema.omit({
 });
 
 export type TReadUserWithTokenSchema = z.infer<typeof readUserWithTokenSchema>;
-export const readUserWithTokenSchema = readUserWithoutPassSchema.extend({
-    jwtToken: z.string(),
-}).partial();
+export const readUserWithTokenSchema = readUserWithoutPassSchema.partial();
 
 export type TReadUserWithoutPassAdminSchema = z.infer<typeof readUserWithoutPassAdminSchema>;
 export const readUserWithoutPassAdminSchema = readUserSchema.omit({

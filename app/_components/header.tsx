@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation"
 import { twMerge } from "tailwind-merge";
 import { CrossIcon, DarkIcon, HamburgerIcon, LightIcon, SearchIcon } from "@/app/_components/basic/icons";
 import { useThemeContext } from "@/app/_context/theme-context";
-import { checkWidgetAccess } from "@/app/_libs/widgets";
+import { checkWidgetAccess, isPathUnderWidget } from "@/app/_libs/widgets";
 import { type TReadWidgetSchema } from "@/app/_libs/zod_server";
 import Image from "next/image";
 
@@ -42,12 +42,8 @@ export default function Header({ baseUrl, widgets }: { baseUrl: string, widgets:
 
     // Find current widget and its tabs based on pathname
     const currentWidget = useMemo(() => {
-        for (const widget of widgets) {
-            if (pathname.startsWith(widget.widget_href ?? "")) {
-                return widget;
-            }
-        }
-        return null;
+        return widgets.filter((widget) => isPathUnderWidget(pathname, widget.widget_href))
+        .sort((a, b) => (b.widget_href?.length ?? 0) - (a.widget_href?.length ?? 0))[0] ?? null;
     }, [pathname, widgets])
 
     const currentTabs = useMemo(() => {

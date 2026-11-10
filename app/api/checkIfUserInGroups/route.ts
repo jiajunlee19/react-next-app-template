@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { rateLimitByIP } from "@/app/_libs/rate_limit";
 import { groupsUserSchema } from '@/app/_libs/zod_auth';
 import ldap_client from '@/app/_libs/ldap';
-import { getErrorMessage } from '@/app/_libs/error_handler';
+import { logAndRedact } from '@/app/_libs/response_handler';
 import { getGroupsLDAPService } from '@/app/_services/ldap';
 import { apiAnalytics } from '@/app/_libs/apiAnalytics';
 
@@ -66,9 +66,10 @@ async function handler(req: NextRequest) {
 
     } catch (error) {
         await ldap_client.unbind();
+        const safeMessage = logAndRedact(error, '[/api/checkIfUserInGroups]');
         return NextResponse.json({
-            error: {error: [getErrorMessage(error)]},
-            message: getErrorMessage(error),
+            error: {error: [safeMessage]},
+            message: safeMessage,
         }, { status: 500 });
     }
 };

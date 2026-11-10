@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth/next";
 import { options } from "@/app/_libs/nextAuth_options";
 import { checkWidgetAccess } from "@/app/_libs/widgets";
 import { NextRequest, NextResponse } from 'next/server';
-import { getErrorMessage } from '@/app/_libs/error_handler';
 import ExcelJS from 'exceljs';
 import { autoFitColumns } from '@/app/_libs/excel';
 import { parsedEnv } from '@/app/_libs/zod_env';
@@ -12,6 +11,7 @@ import { inputValuesSchema, selectedReportsSchema } from '@/app/_libs/zod_server
 import { type ServerResponse, type TRowData } from "@/app/_libs/types";
 import { readSnowflakeService } from "@/app/_services/example";
 import { apiAnalytics } from '@/app/_libs/apiAnalytics';
+import { logAndRedact } from "@/app/_libs/response_handler";
 
 const UUID5_SECRET = uuidv5(parsedEnv.UUID5_NAMESPACE, uuidv5.DNS);
 
@@ -96,7 +96,10 @@ async function handler(req: NextRequest) {
                 }
 
                 else {
-                    errorRows.push([timestamp, JSON.stringify(parsedInputValues.data), report, sheetName, '', response.message]);
+                    const cellMessage = response.reason === "Unexpected Error"
+                        ? logAndRedact(response.message, `[/api/getReports] ${report}`)
+                        : response.message;
+                    errorRows.push([timestamp, JSON.stringify(parsedInputValues.data), report, sheetName, '', cellMessage]);
                 }
                 
                 continue;
@@ -167,7 +170,7 @@ async function handler(req: NextRequest) {
         });
 
     } catch (err) {
-        return NextResponse.json({ message: getErrorMessage(err) }, { status: 500 });
+        return NextResponse.json({ message: logAndRedact(err, '[/api/getReports]') }, { status: 500 });
     }
 
 };

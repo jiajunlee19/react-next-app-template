@@ -14,6 +14,19 @@ export const widgets: TCreateWidgetSchema[] = [
     }
 ];
 
+export function isPathUnderWidget(pathname: string, href: string | null | undefined): boolean {
+    if (!href) return false;
+
+    const base = href.endsWith("/") ? href.slice(0, -1) : href;
+    if (!base) return false;
+
+    return pathname === base || pathname.startsWith(base + "/");
+};
+
+export function hrefsOverlap(a: string, b: string): boolean {
+    return isPathUnderWidget(a, b) || isPathUnderWidget(b, a);
+};
+
 async function fetchJson(url: string, init?: RequestInit): Promise<unknown | null> {
     try {
         const res = await fetch(url, init);
@@ -58,7 +71,8 @@ export async function checkWidgetAccess(base_url: string | unknown, pathname: st
     const readWidgetsBody = await fetchJson(`${base_url}/api/readWidgets`);
     const resWidgets = (readWidgetsBody as { response?: ServerResponse<TReadWidgetSchema[]> } | null)?.response;
     const widgets = resWidgets?.success ? resWidgets.data : [];
-    const widget = widgets.find((widget) => pathname.startsWith(widget.widget_href ?? ""));
+    const widget = widgets.filter((widget) => isPathUnderWidget(pathname, widget.widget_href))
+        .sort((a, b) => (b.widget_href?.length ?? 0) - (a.widget_href?.length ?? 0))[0];
 
     // Grant to everyone if its not a widget
     if (!widget) return {

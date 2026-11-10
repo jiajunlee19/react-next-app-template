@@ -6,12 +6,10 @@ import { options } from "@/app/_libs/nextAuth_options";
 import { v5 as uuidv5 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import sql from 'mssql';
-import { Pool } from 'pg';
 import { getPgPool, getMssqlPool } from "@/app/_libs/sql_config";
 import { type TUsernameSchema, type TPasswordSchema, signInSchema, signInWithoutPassSchema, signUpSchema, readUserSchema, readUserWithoutPassSchema, updateUserSchema, deleteUserSchema, updateRoleSchema, updateRoleAdminSchema, readUserWithoutPassAdminSchema, type TReadUserSchema, type TReadUserWithTokenSchema } from "@/app/_libs/zod_auth";
 import { itemsPerPageSchema, currentPageSchema, querySchema } from '@/app/_libs/zod_server';
 import { getErrorMessage } from '@/app/_libs/error_handler';
-import { signJwtToken } from '@/app/_libs/jwt';
 import { parsedEnv } from '@/app/_libs/zod_env';
 import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache';  
 import { type ServerResponse } from '@/app/_libs/types';
@@ -581,15 +579,11 @@ export async function signInService(username: TUsernameSchema | unknown, passwor
 
         if (parsedResult.data.password && (await bcrypt.compare(parsedForm.data.password, parsedResult.data.password))) {
             const {password, ...userWithoutPassword} = parsedResult.data;
-            const jwtToken = signJwtToken(userWithoutPassword);
-            const userWithToken = {
-                ...userWithoutPassword,
-                jwtToken,
-            };
+
             return {
                 success: true,
-                message: `Successfully sign in with user ${userWithToken.user_uid}`,
-                data: userWithToken,
+                message: `Successfully sign in with user ${userWithoutPassword.user_uid}`,
+                data: userWithoutPassword,
             }
         }
         else {
