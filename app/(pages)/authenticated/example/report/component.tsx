@@ -1,9 +1,24 @@
 "use client"
 
 import { getErrorMessage } from "@/app/_libs/error_handler";
+import { estimateDurationMs, formatDuration, formatEstimateRange, isOverdue, progressPercent } from "@/app/_libs/progress";
+import ProgressBar from "@/app/_components/basic/progress_bar";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+
+const REPORT_MS: Record<string, number> = {
+    sapBomCompilationByBomId: 90_000,
+    mamBomCompilationByBomId: 90_000,
+    sapBomCompilationByPcbId: 90_000,
+    mamBomCompilationByPcbId: 90_000,
+};
+
+const REPORT_FALLBACK_MS = 90_000;
+const REPORT_BASE_MS = 15_000;
+const TICK_MS = 500;
+
+type RunStatus = 'idle' | 'running' | 'success' | 'error';
 
 type ReportOption = {
     id: string,
@@ -26,6 +41,11 @@ export default function ReportsComponent( { inputTypeList, reportOptions }: Repo
     const [selectedReports, setSelectedReports] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+
+    const [status, setStatus] = useState<RunStatus>('idle');
+    const [elapsedMs, setElapsedMs] = useState(0);
+    const [runEstimateMs, setRunEstimateMs] = useState(0);
+    const startedAtRef = useRef(0);
 
     // Update url params on load
     const router = useRouter();
@@ -64,6 +84,16 @@ export default function ReportsComponent( { inputTypeList, reportOptions }: Repo
         }
     }, [inputType, selectedReports, router]);
 
+    useEffect(() => {
+        if (!loading) return;
+
+        const startedAt = Date.now();
+        startedAtRef.current = startedAt;
+
+        const id = setInterval(() => setElapsedMs(Date.now() - startedAt), TICK_MS);
+        return () => clearInterval(id);
+    }, [loading]);
+
     // On inputType change, filter out reports that doesn't belong to new inputType
     const handleInputTypeChange = (newInputType: string) => {
         const validReports = (reportOptions[newInputType] ?? []).map(report => report.id);
@@ -74,8 +104,23 @@ export default function ReportsComponent( { inputTypeList, reportOptions }: Repo
     const currentReportOptions = reportOptions[inputType] ?? [];
     const currentInputTypeList = getValidInputTypes().length > 0 ? getValidInputTypes() : inputTypeList;
 
+    const percent = status === 'success' ? 100 : progressPercent(elapsedMs, runEstimateMs);
+    const overdue = status === 'running' && isOverdue(elapsedMs, runEstimateMs);
+
+    const progressSublabel = status === 'success' ? `Completed in ${formatDuration(elapsedMs)}`
+        : status === 'error' ? `Failed after ${formatDuration(elapsedMs)}`
+        : overdue ? `Elapsed ${formatDuration(elapsedMs)} - this is taking longer than usual, still working...`
+        : `Elapsed ${formatDuration(elapsedMs)} - usually takes ${formatEstimateRange(runEstimateMs)}`;
+
+    const progressLabel = status === 'success' ? 'BOM Reports generated'
+        : status === 'error' ? 'Failed to generate BOM Reports'
+        : 'Generating BOM Reports';
+
     const handleSubmit = async () => {
         setLoading(true);
+        setStatus('running');
+        setElapsedMs(0);
+        setRunEstimateMs(estimateDurationMs(selectedReports, REPORT_MS, REPORT_FALLBACK_MS, REPORT_BASE_MS));
         try {
             const endpoint = '/api/example/getReports';
             const res= await fetch(endpoint, {
@@ -104,9 +149,12 @@ export default function ReportsComponent( { inputTypeList, reportOptions }: Repo
             a.download = filename;
             a.click();
             toast.success(`Successfully generated report ${filename}`, { duration: Infinity });
+            setStatus('success');
         } catch (err) {
             toast.error('Failed to generate reports.\n\n' + getErrorMessage(err), { duration: Infinity });
+            setStatus('error');
         } finally {
+            setElapsedMs(Date.now() - startedAtRef.current);
             setLoading(false);
         }
     };
@@ -165,6 +213,16 @@ export default function ReportsComponent( { inputTypeList, reportOptions }: Repo
             >
                 {loading ? 'Downloading Reports ...' : 'Download Reports'}
             </button>
+
+            {status !== 'idle' && (
+                <ProgressBar 
+                    className="mt-4"
+                    percent={percent}
+                    label={progressLabel}
+                    sublabel={progressSublabel}
+                    tone={status === 'error' ? 'error' : 'default'}
+                />
+            )}
         </div>
     );
 };
